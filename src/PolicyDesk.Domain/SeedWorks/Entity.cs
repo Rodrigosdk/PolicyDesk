@@ -1,11 +1,9 @@
-using System.ComponentModel;
-
 namespace PolicyDesk.Domain.SeedWorks;
 
 public abstract class Entity
 {
-    public Guid Id { get; protected set; } = Guid.NewGuid();
-    public DateTime CreatedAt { get; protected set; } = DateTime.UtcNow;
+    public Guid Id { get; private set; } = Guid.NewGuid();
+    public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; protected set; }
-    public bool IsDeleted { get; protected set; } = false;
+    public bool IsDeleted { get; protected set; }
 }
