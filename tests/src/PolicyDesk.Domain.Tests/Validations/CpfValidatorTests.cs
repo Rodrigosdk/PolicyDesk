@@ -1,4 +1,6 @@
 using PolicyDesk.Domain.Validations;
+using CommonTestUtilities.Requests;
+using Shouldly;
 
 namespace PolicyDesk.Domain.Tests.Validations;
 
@@ -9,9 +11,9 @@ public class CpfValidatorTests
     [InlineData("123.456.789-09", "12345678909")]
     [InlineData(" 123 456 789 09 ", "12345678909")]
     [InlineData("12345678909", "12345678909")]
-    public void Deve_RemoverMascara_Quando_CpfTiverFormatacao(string entrada, string esperado)
+    public void Deve_RemoverMascara_Quando_CpfTiverFormatacao(string input, string expected)
     {
-        Assert.Equal(esperado, CpfValidator.Normalize(entrada));
+        CpfValidator.Normalize(input).ShouldBe(expected);
     }
 
     [Theory(DisplayName = nameof(Deve_RetornarVazio_Quando_CpfForNuloOuEmBranco))]
@@ -19,9 +21,9 @@ public class CpfValidatorTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Deve_RetornarVazio_Quando_CpfForNuloOuEmBranco(string? entrada)
+    public void Deve_RetornarVazio_Quando_CpfForNuloOuEmBranco(string? input)
     {
-        Assert.Equal(string.Empty, CpfValidator.Normalize(entrada));
+        CpfValidator.Normalize(input).ShouldBeEmpty();
     }
 
     [Theory(DisplayName = nameof(Deve_SerValido_Quando_CpfForCorreto))]
@@ -31,7 +33,15 @@ public class CpfValidatorTests
     [InlineData("52998224725")]
     public void Deve_SerValido_Quando_CpfForCorreto(string cpf)
     {
-        Assert.True(CpfValidator.IsValid(cpf));
+        CpfValidator.IsValid(cpf).ShouldBeTrue();
+    }
+
+    [Fact(DisplayName = nameof(Deve_SerValido_Quando_CpfForGerado))]
+    [Trait("Domain", "CpfValidator - IsValid")]
+    public void Deve_SerValido_Quando_CpfForGerado()
+    {
+        CpfGenerator.Generate().ShouldSatisfyAllConditions(
+            cpf => CpfValidator.IsValid(cpf).ShouldBeTrue());
     }
 
     [Theory(DisplayName = nameof(Deve_SerInvalido_Quando_CpfForIncorreto))]
@@ -45,14 +55,14 @@ public class CpfValidatorTests
     [InlineData("abcdefghijk")]
     public void Deve_SerInvalido_Quando_CpfForIncorreto(string? cpf)
     {
-        Assert.False(CpfValidator.IsValid(cpf));
+        CpfValidator.IsValid(cpf).ShouldBeFalse();
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarSomenteDigitos_Quando_CpfForValido))]
     [Trait("Domain", "CpfValidator - NormalizeOrThrow")]
     public void Deve_RetornarSomenteDigitos_Quando_CpfForValido()
     {
-        Assert.Equal("12345678909", CpfValidator.NormalizeOrThrow("123.456.789-09"));
+        CpfValidator.NormalizeOrThrow("123.456.789-09").ShouldBe("12345678909");
     }
 
     [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_CpfForInvalido))]
@@ -63,20 +73,20 @@ public class CpfValidatorTests
     [InlineData(null)]
     public void Deve_LancarExcecao_Quando_CpfForInvalido(string? cpf)
     {
-        Assert.Throws<ArgumentException>(() => CpfValidator.NormalizeOrThrow(cpf));
+        Should.Throw<ArgumentException>(() => CpfValidator.NormalizeOrThrow(cpf));
     }
 
     [Fact(DisplayName = nameof(Deve_AplicarMascara_Quando_CpfTiver11Digitos))]
     [Trait("Domain", "CpfValidator - Format")]
     public void Deve_AplicarMascara_Quando_CpfTiver11Digitos()
     {
-        Assert.Equal("123.456.789-09", CpfValidator.Format("12345678909"));
+        CpfValidator.Format("12345678909").ShouldBe("123.456.789-09");
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarEntradaOriginal_Quando_CpfNaoTiver11Digitos))]
     [Trait("Domain", "CpfValidator - Format")]
     public void Deve_RetornarEntradaOriginal_Quando_CpfNaoTiver11Digitos()
     {
-        Assert.Equal("123", CpfValidator.Format("123"));
+        CpfValidator.Format("123").ShouldBe("123");
     }
 }

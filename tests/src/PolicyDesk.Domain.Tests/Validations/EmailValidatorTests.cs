@@ -1,4 +1,5 @@
 using PolicyDesk.Domain.Validations;
+using Shouldly;
 
 namespace PolicyDesk.Domain.Tests.Validations;
 
@@ -10,9 +11,9 @@ public class EmailValidatorTests
     [InlineData("john@example.com", "john@example.com")]
     [InlineData(null, "")]
     [InlineData("   ", "")]
-    public void Deve_NormalizarEmail_Quando_TiverEspacosOuMaiusculas(string? entrada, string esperado)
+    public void Deve_NormalizarEmail_Quando_TiverEspacosOuMaiusculas(string? input, string expected)
     {
-        Assert.Equal(esperado, EmailValidator.Normalize(entrada));
+        EmailValidator.Normalize(input).ShouldBe(expected);
     }
 
     [Theory(DisplayName = nameof(Deve_SerValido_Quando_EmailForCorreto))]
@@ -22,7 +23,7 @@ public class EmailValidatorTests
     [InlineData("  John@Example.com ")]
     public void Deve_SerValido_Quando_EmailForCorreto(string email)
     {
-        Assert.True(EmailValidator.IsValid(email));
+        EmailValidator.IsValid(email).ShouldBeTrue();
     }
 
     [Theory(DisplayName = nameof(Deve_SerInvalido_Quando_EmailForIncorreto))]
@@ -39,14 +40,14 @@ public class EmailValidatorTests
     [InlineData("John Doe <john@example.com>")]
     public void Deve_SerInvalido_Quando_EmailForIncorreto(string? email)
     {
-        Assert.False(EmailValidator.IsValid(email));
+        EmailValidator.IsValid(email).ShouldBeFalse();
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarEmailNormalizado_Quando_EmailForValido))]
     [Trait("Domain", "EmailValidator - NormalizeOrThrow")]
     public void Deve_RetornarEmailNormalizado_Quando_EmailForValido()
     {
-        Assert.Equal("john@example.com", EmailValidator.NormalizeOrThrow(" John@Example.com "));
+        EmailValidator.NormalizeOrThrow(" John@Example.com ").ShouldBe("john@example.com");
     }
 
     [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_EmailForInvalido))]
@@ -56,6 +57,6 @@ public class EmailValidatorTests
     [InlineData(null)]
     public void Deve_LancarExcecao_Quando_EmailForInvalido(string? email)
     {
-        Assert.Throws<ArgumentException>(() => EmailValidator.NormalizeOrThrow(email));
+        Should.Throw<ArgumentException>(() => EmailValidator.NormalizeOrThrow(email));
     }
 }

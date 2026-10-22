@@ -1,3 +1,5 @@
+using PolicyDesk.Exception;
+
 namespace PolicyDesk.Domain.Validations;
 
 public static class CpfValidator
@@ -28,7 +30,7 @@ public static class CpfValidator
         var digits = Normalize(cpf);
 
         return !IsValid(digits) 
-            ? throw new ArgumentException("CPF inválido.", nameof(cpf)) 
+            ? throw new ArgumentException(ResourcesMessageException.INVALID_CPF, nameof(cpf))
             : digits;
     }
 
