@@ -1,3 +1,5 @@
+using CommonTestUtilities.Entities;
+using Shouldly;
 using PolicyDesk.Domain.Entities;
 
 namespace PolicyDesk.Domain.Tests.Entities;
@@ -12,30 +14,30 @@ public class PolicyholdersTests
     private static readonly DateTime ValidBirthDate = new(1990, 1, 1);
 
     private static Policyholders CreatePolicyholder(
-        string name = ValidName,
-        string cpf = ValidCpf,
+        string? name = null,
+        string? cpf = null,
         DateTime? birthDate = null,
-        string email = ValidEmail,
-        string phone = ValidPhone) =>
-        new(name, cpf, birthDate ?? ValidBirthDate, email, phone);
+        string? email = null,
+        string? phone = null) =>
+        PolicyholderBuilder.Build(name, cpf, birthDate, email, phone);
 
     [Fact(DisplayName = nameof(Deve_Instanciar_Quando_DadosForemValidos))]
     [Trait("Domain", "Policyholders - Instancia")]
     public void Deve_Instanciar_Quando_DadosForemValidos()
     {
         var beforeCreation = DateTime.UtcNow;
-        var policyholder = CreatePolicyholder();
+        var policyholder = CreatePolicyholder(ValidName, ValidCpf, ValidBirthDate, ValidEmail, ValidPhone);
         var afterCreation = DateTime.UtcNow;
 
-        Assert.NotEqual(Guid.Empty, policyholder.Id);
-        Assert.Equal(ValidName, policyholder.Name);
-        Assert.Equal(ValidCpfDigits, policyholder.Cpf);
-        Assert.Equal(ValidBirthDate, policyholder.BirthDate);
-        Assert.Equal(ValidEmail, policyholder.Email);
-        Assert.Equal(ValidPhone, policyholder.Phone);
-        Assert.InRange(policyholder.CreatedAt, beforeCreation, afterCreation);
-        Assert.Null(policyholder.UpdatedAt);
-        Assert.False(policyholder.IsDeleted);
+        policyholder.Id.ShouldNotBe(Guid.Empty);
+        policyholder.Name.ShouldBe(ValidName);
+        policyholder.Cpf.ShouldBe(ValidCpfDigits);
+        policyholder.BirthDate.ShouldBe(ValidBirthDate);
+        policyholder.Email.ShouldBe(ValidEmail);
+        policyholder.Phone.ShouldBe(ValidPhone);
+        policyholder.CreatedAt.ShouldBeInRange(beforeCreation, afterCreation);
+        policyholder.UpdatedAt.ShouldBeNull();
+        policyholder.Active.ShouldBeTrue();
     }
 
     [Theory(DisplayName = nameof(Deve_RemoverEspacosEmBranco_Quando_NomeTiverEspacosNasExtremidades))]
@@ -45,9 +47,7 @@ public class PolicyholdersTests
     [InlineData("John Doe  ", "John Doe")]
     public void Deve_RemoverEspacosEmBranco_Quando_NomeTiverEspacosNasExtremidades(string name, string expected)
     {
-        var policyholder = CreatePolicyholder(name: name);
-
-        Assert.Equal(expected, policyholder.Name);
+        CreatePolicyholder(name: name).Name.ShouldBe(expected);
     }
 
     [Theory(DisplayName = nameof(Deve_ArmazenarSomenteDigitos_Quando_CpfTiverMascara))]
@@ -57,9 +57,7 @@ public class PolicyholdersTests
     [InlineData(" 123 456 789 09 ")]
     public void Deve_ArmazenarSomenteDigitos_Quando_CpfTiverMascara(string cpf)
     {
-        var policyholder = CreatePolicyholder(cpf: cpf);
-
-        Assert.Equal(ValidCpfDigits, policyholder.Cpf);
+        CreatePolicyholder(cpf: cpf).Cpf.ShouldBe(ValidCpfDigits);
     }
 
     [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_CpfForInvalido))]
@@ -70,16 +68,14 @@ public class PolicyholdersTests
     [InlineData("111.111.111-11")]
     public void Deve_LancarExcecao_Quando_CpfForInvalido(string cpf)
     {
-        Assert.Throws<ArgumentException>(() => CreatePolicyholder(cpf: cpf));
+        Should.Throw<ArgumentException>(() => CreatePolicyholder(cpf: cpf));
     }
 
     [Fact(DisplayName = nameof(Deve_NormalizarEmail_Quando_Instanciar))]
     [Trait("Domain", "Policyholders - Email")]
     public void Deve_NormalizarEmail_Quando_Instanciar()
     {
-        var policyholder = CreatePolicyholder(email: "  John.Doe@Example.com ");
-
-        Assert.Equal(ValidEmail, policyholder.Email);
+        CreatePolicyholder(email: "  John.Doe@Example.com ").Email.ShouldBe(ValidEmail);
     }
 
     [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_InstanciarComEmailInvalido))]
@@ -91,7 +87,7 @@ public class PolicyholdersTests
     [InlineData("john@@example.com")]
     public void Deve_LancarExcecao_Quando_InstanciarComEmailInvalido(string email)
     {
-        Assert.Throws<ArgumentException>(() => CreatePolicyholder(email: email));
+        Should.Throw<ArgumentException>(() => CreatePolicyholder(email: email));
     }
 
     [Fact(DisplayName = nameof(Deve_AtualizarOsDados_Quando_DadosForemValidos))]
@@ -105,12 +101,12 @@ public class PolicyholdersTests
         policyholder.Update("Jane Doe", newBirthDate, "jane.doe@example.com", "(83) 9 1234-5678");
         var afterUpdate = DateTime.UtcNow;
 
-        Assert.Equal("Jane Doe", policyholder.Name);
-        Assert.Equal(newBirthDate, policyholder.BirthDate);
-        Assert.Equal("jane.doe@example.com", policyholder.Email);
-        Assert.Equal("(83) 9 1234-5678", policyholder.Phone);
-        Assert.NotNull(policyholder.UpdatedAt);
-        Assert.InRange(policyholder.UpdatedAt.Value, beforeUpdate, afterUpdate);
+        policyholder.Name.ShouldBe("Jane Doe");
+        policyholder.BirthDate.ShouldBe(newBirthDate);
+        policyholder.Email.ShouldBe("jane.doe@example.com");
+        policyholder.Phone.ShouldBe("(83) 9 1234-5678");
+        policyholder.UpdatedAt.ShouldNotBeNull();
+        policyholder.UpdatedAt.Value.ShouldBeInRange(beforeUpdate, afterUpdate);
     }
 
     [Fact(DisplayName = nameof(Deve_ManterCpf_Quando_Atualizar))]
@@ -118,10 +114,11 @@ public class PolicyholdersTests
     public void Deve_ManterCpf_Quando_Atualizar()
     {
         var policyholder = CreatePolicyholder();
+        var originalCpf = policyholder.Cpf;
 
         policyholder.Update("Jane Doe", new DateTime(1991, 2, 2), "jane.doe@example.com", "(83) 9 1234-5678");
 
-        Assert.Equal(ValidCpfDigits, policyholder.Cpf);
+        policyholder.Cpf.ShouldBe(originalCpf);
     }
 
     [Fact(DisplayName = nameof(Deve_NormalizarEmail_Quando_Atualizar))]
@@ -132,19 +129,23 @@ public class PolicyholdersTests
 
         policyholder.Update("Jane Doe", new DateTime(1991, 2, 2), " Jane.Doe@Example.com ", "(83) 9 1234-5678");
 
-        Assert.Equal("jane.doe@example.com", policyholder.Email);
+        policyholder.Email.ShouldBe("jane.doe@example.com");
     }
 
-    [Fact(DisplayName = nameof(Deve_LancarExcecaoEManterEmail_Quando_AtualizarComEmailInvalido))]
+    [Fact(DisplayName = nameof(Deve_ManterOsDados_Quando_AtualizarComEmailInvalido))]
     [Trait("Domain", "Policyholders - Update")]
-    public void Deve_LancarExcecaoEManterEmail_Quando_AtualizarComEmailInvalido()
+    public void Deve_ManterOsDados_Quando_AtualizarComEmailInvalido()
     {
-        var policyholder = CreatePolicyholder();
+        var policyholder = CreatePolicyholder(ValidName, birthDate: ValidBirthDate, email: ValidEmail, phone: ValidPhone);
 
-        Assert.Throws<ArgumentException>(() =>
+        Should.Throw<ArgumentException>(() =>
             policyholder.Update("Jane Doe", new DateTime(1991, 2, 2), "invalido", "(83) 9 1234-5678"));
 
-        Assert.Equal(ValidEmail, policyholder.Email);
+        policyholder.Name.ShouldBe(ValidName);
+        policyholder.BirthDate.ShouldBe(ValidBirthDate);
+        policyholder.Email.ShouldBe(ValidEmail);
+        policyholder.Phone.ShouldBe(ValidPhone);
+        policyholder.UpdatedAt.ShouldBeNull();
     }
 
     [Fact(DisplayName = nameof(Deve_Inativar_Quando_Solicitado))]
@@ -155,7 +156,7 @@ public class PolicyholdersTests
 
         policyholder.Deactivate();
 
-        Assert.True(policyholder.IsDeleted);
-        Assert.NotNull(policyholder.UpdatedAt);
+        policyholder.Active.ShouldBeFalse();
+        policyholder.UpdatedAt.ShouldNotBeNull();
     }
 }

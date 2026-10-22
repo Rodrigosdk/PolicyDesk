@@ -18,18 +18,21 @@ public class Policyholders(
 
     public void Update(string name, DateTime birthDate, string email, string phone)
     {
+        var normalizedEmail = EmailValidator.NormalizeOrThrow(email);
+
         Name = RemoveWhitespace(name);
         BirthDate = birthDate;
-        Email = EmailValidator.NormalizeOrThrow(email);
+        Email = normalizedEmail;
         Phone = phone;
         UpdatedAt = DateTime.UtcNow;
     }
     
     public void Deactivate()
     {
-        IsDeleted = true;
+        Active = false;
         UpdatedAt = DateTime.UtcNow;
     }
+    
     
     private static string RemoveWhitespace(string input)
     {
