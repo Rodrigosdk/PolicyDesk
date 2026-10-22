@@ -8,15 +8,18 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1"/>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Controllers\" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.13">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.0" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\PolicyDesk.Application\PolicyDesk.Application.csproj" />
       <ProjectReference Include="..\PolicyDesk.Infrastructure\PolicyDesk.Infrastructure.csproj" />
+      <ProjectReference Include="..\Shared\PolicyDesk.Exception\PolicyDesk.Exception.csproj" />
     </ItemGroup>
 
 </Project>
