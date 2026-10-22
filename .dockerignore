@@ -1,0 +1,7 @@
+.git
+.idea
+**/bin
+**/obj
+**/.vs
+**/.vscode
+PolicyDesk.sln.DotSettings.user
