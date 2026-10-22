@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+    <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+        <xsd:element name="root" msdata:IsDataSet="true">
+            
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="UNKNOWN_ERROR" xml:space="preserve">
+        <value>Ocorreu um erro inesperado. Tente novamente mais tarde.</value>
+    </data>
+    <data name="POLICYHOLDER_NOT_FOUND" xml:space="preserve">
+        <value>Segurado não encontrado.</value>
+    </data>
+    <data name="POLICYHOLDER_HAS_ACTIVE_POLICY" xml:space="preserve">
+        <value>Não é possível remover um segurado com apólice ativa.</value>
+    </data>
+    <data name="CLAIM_NOT_FOUND" xml:space="preserve">
+        <value>Sinistro não encontrado.</value>
+    </data>
+    <data name="POLICY_NOT_FOUND" xml:space="preserve">
+        <value>Apólice não encontrada.</value>
+    </data>
+    <data name="CLAIM_MUST_BE_PENDING_FOR_ANALYSIS" xml:space="preserve">
+        <value>Somente sinistros pendentes podem entrar em análise.</value>
+    </data>
+    <data name="CLAIM_MUST_BE_IN_ANALYSIS_FOR_APPROVAL" xml:space="preserve">
+        <value>Somente sinistros em análise podem ser aprovados.</value>
+    </data>
+    <data name="CLAIM_MUST_BE_IN_ANALYSIS_FOR_DENIAL" xml:space="preserve">
+        <value>Somente sinistros em análise podem ser negados.</value>
+    </data>
+    <data name="CLAIM_MUST_BE_APPROVED_FOR_PAYMENT" xml:space="preserve">
+        <value>Somente sinistros aprovados podem ser pagos.</value>
+    </data>
+    <data name="CLAIM_DENIAL_REASON_REQUIRED" xml:space="preserve">
+        <value>O motivo da negação é obrigatório.</value>
+    </data>
+    <data name="POLICY_CANCELLED_CANNOT_REGISTER_CLAIM" xml:space="preserve">
+        <value>Não é possível registrar sinistro em uma apólice cancelada.</value>
+    </data>
+    <data name="CLAIM_DATE_OUTSIDE_POLICY_PERIOD" xml:space="preserve">
+        <value>A data do sinistro está fora da vigência da apólice.</value>
+    </data>
+    <data name="CLAIM_AMOUNT_EXCEEDS_COVERAGE" xml:space="preserve">
+        <value>O valor do sinistro excede a cobertura da apólice.</value>
+    </data>
+    <data name="DESCRIPTION_REQUIRED" xml:space="preserve">
+        <value>A descrição é obrigatória.</value>
+    </data>
+    <data name="CLAIM_AMOUNT_MUST_BE_POSITIVE" xml:space="preserve">
+        <value>O valor do sinistro deve ser maior que zero.</value>
+    </data>
+    <data name="CLAIM_OCCURRENCE_DATE_REQUIRED" xml:space="preserve">
+        <value>A data de ocorrência é obrigatória.</value>
+    </data>
+    <data name="POLICYHOLDER_INACTIVE" xml:space="preserve">
+        <value>O segurado está inativo.</value>
+    </data>
+    <data name="POLICYHOLDER_REQUIRED" xml:space="preserve">
+        <value>O segurado é obrigatório.</value>
+    </data>
+    <data name="COVERAGE_AMOUNT_MUST_BE_POSITIVE" xml:space="preserve">
+        <value>O valor da cobertura deve ser maior que zero.</value>
+    </data>
+    <data name="PREMIUM_AMOUNT_MUST_BE_POSITIVE" xml:space="preserve">
+        <value>O valor do prêmio deve ser maior que zero.</value>
+    </data>
+    <data name="POLICY_DATES_REQUIRED" xml:space="preserve">
+        <value>As datas de início e fim da vigência são obrigatórias.</value>
+    </data>
+    <data name="POLICY_END_DATE_MUST_BE_AFTER_START_DATE" xml:space="preserve">
+        <value>A data de fim deve ser posterior à data de início.</value>
+    </data>
+    <data name="INVALID_POLICY_STATUS" xml:space="preserve">
+        <value>Status de apólice inválido.</value>
+    </data>
+    <data name="POLICY_ALREADY_CANCELLED" xml:space="preserve">
+        <value>A apólice já está cancelada.</value>
+    </data>
+    <data name="POLICYHOLDER_ACTIVE_CPF_EXISTS" xml:space="preserve">
+        <value>Já existe um segurado ativo com este CPF.</value>
+    </data>
+    <data name="POLICYHOLDER_ACTIVE_EMAIL_EXISTS" xml:space="preserve">
+        <value>Já existe um segurado ativo com este Email.</value>
+    </data>
+    <data name="INVALID_CPF" xml:space="preserve">
+        <value>CPF inválido.</value>
+    </data>
+    <data name="INVALID_EMAIL" xml:space="preserve">
+        <value>Email inválido.</value>
+    </data>
+    <data name="INVALID_EMAIL_ARGUMENT" xml:space="preserve">
+        <value>E-mail inválido.</value>
+    </data>
+</root>
