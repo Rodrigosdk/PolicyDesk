@@ -34,7 +34,7 @@ public sealed class PostgreSqlInfrastructureFixture : IAsyncLifetime
     {
         var dbContext = CreateDbContext();
         await dbContext.Database.ExecuteSqlRawAsync(
-            "TRUNCATE TABLE claims, policies, policyholders CASCADE;");
+            "TRUNCATE TABLE policies, policyholders CASCADE;");
 
         return dbContext;
     }

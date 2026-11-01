@@ -1,0 +1,57 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using PolicyDesk.Domain.Entities;
+
+namespace PolicyDesk.Infrastructure.DataAccess.Mappings;
+
+internal class PolicyMap : IEntityTypeConfiguration<Policy>
+{
+    public void Configure(EntityTypeBuilder<Policy> builder)
+    {
+        builder.ToTable("policies");
+
+        builder.HasKey(policy => policy.Id);
+        builder.Property(policy => policy.Id)
+            .HasColumnName("id")
+            .ValueGeneratedNever();
+        builder.Property(policy => policy.PolicyholderId)
+            .HasColumnName("policyholder_id")
+            .IsRequired();
+        builder.Property(policy => policy.Description)
+            .HasColumnName("description")
+            .IsRequired();
+        builder.Property(policy => policy.CoverageAmount)
+            .HasColumnName("coverage_amount")
+            .IsRequired();
+        builder.Property(policy => policy.PremiumAmount)
+            .HasColumnName("premium_amount")
+            .IsRequired();
+        builder.Property(policy => policy.StartDate)
+            .HasColumnName("start_date")
+            .HasColumnType("date")
+            .IsRequired();
+        builder.Property(policy => policy.EndDate)
+            .HasColumnName("end_date")
+            .HasColumnType("date")
+            .IsRequired();
+        builder.Property(policy => policy.Status)
+            .HasColumnName("status")
+            .HasConversion<int>()
+            .IsRequired();
+        builder.Property(policy => policy.CancelledAt)
+            .HasColumnName("cancelled_at");
+        builder.Property(policy => policy.CreatedAt)
+            .HasColumnName("created_at")
+            .IsRequired();
+        builder.Property(policy => policy.UpdatedAt)
+            .HasColumnName("updated_at");
+        builder.Property(policy => policy.Active)
+            .HasColumnName("active")
+            .IsRequired();
+
+        builder.HasOne<Policyholders>()
+            .WithMany()
+            .HasForeignKey(policy => policy.PolicyholderId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}

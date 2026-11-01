@@ -22,6 +22,64 @@ namespace PolicyDesk.Infrastructure.DataAccess.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("PolicyDesk.Domain.Entities.Policy", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean")
+                        .HasColumnName("active");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at");
+
+                    b.Property<decimal>("CoverageAmount")
+                        .HasColumnType("numeric")
+                        .HasColumnName("coverage_amount");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("date")
+                        .HasColumnName("end_date");
+
+                    b.Property<Guid>("PolicyholderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("policyholder_id");
+
+                    b.Property<decimal>("PremiumAmount")
+                        .HasColumnType("numeric")
+                        .HasColumnName("premium_amount");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("date")
+                        .HasColumnName("start_date");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PolicyholderId");
+
+                    b.ToTable("policies", (string)null);
+                });
+
             modelBuilder.Entity("PolicyDesk.Domain.Entities.Policyholders", b =>
                 {
                     b.Property<Guid>("Id")
@@ -77,6 +135,15 @@ namespace PolicyDesk.Infrastructure.DataAccess.Migrations
                         .HasFilter("\"active\" = TRUE");
 
                     b.ToTable("policyholders", (string)null);
+                });
+
+            modelBuilder.Entity("PolicyDesk.Domain.Entities.Policy", b =>
+                {
+                    b.HasOne("PolicyDesk.Domain.Entities.Policyholders", null)
+                        .WithMany()
+                        .HasForeignKey("PolicyholderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }
