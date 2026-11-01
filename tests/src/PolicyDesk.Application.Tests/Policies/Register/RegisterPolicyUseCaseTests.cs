@@ -1,0 +1,133 @@
+using CommonTestUtilities.Entities;
+using CommonTestUtilities.Repositories;
+using CommonTestUtilities.Requests;
+using Moq;
+using PolicyDesk.Application.Policies.Register;
+using PolicyDesk.Domain.Entities;
+using PolicyDesk.Domain.Repositories;
+using PolicyDesk.Domain.Repositories.Policies;
+using PolicyDesk.Domain.Repositories.Policyholders;
+using PolicyDesk.Exception;
+using PolicyDesk.Exception.Exception;
+using Shouldly;
+
+namespace PolicyDesk.Application.Tests.Policies.Register;
+
+using Policyholder = PolicyDesk.Domain.Entities.Policyholders;
+
+public class RegisterPolicyUseCaseTests
+{
+    [Fact(DisplayName = nameof(Deve_RegistrarApolice_Quando_RequisicaoForValida))]
+    [Trait("Application", "Policies - Register")]
+    public async Task Deve_RegistrarApolice_Quando_RequisicaoForValida()
+    {
+        var policyholder = PolicyholderBuilder.Build();
+        var request = RequestPolicyJsonBuilder.Build(
+            policyholder.Id,
+            description: "  Home policy  ",
+            coverageAmount: 10000,
+            premiumAmount: 100);
+        var (useCase, writeRepository, unitOfWork, _) = CreateUseCase(policyholder);
+
+        var result = await useCase.Execute(request);
+
+        result.Id.ShouldNotBe(Guid.Empty);
+        writeRepository.Verify(repository => repository.Add(It.Is<Policy>(policy =>
+            policy.PolicyholderId == policyholder.Id &&
+            policy.Description == "Home policy" &&
+            policy.CoverageAmount == request.CoverageAmount &&
+            policy.PremiumAmount == request.PremiumAmount &&
+            policy.StartDate == request.StartDate.Date &&
+            policy.EndDate == request.EndDate.Date)), Times.Once);
+        unitOfWork.Verify(work => work.Commit(), Times.Once);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarNaoEncontradoSemSalvar_Quando_SeguradoNaoExistir))]
+    [Trait("Application", "Policies - Register")]
+    public async Task Deve_LancarNaoEncontradoSemSalvar_Quando_SeguradoNaoExistir()
+    {
+        var (useCase, writeRepository, unitOfWork, _) = CreateUseCase();
+
+        await Should.ThrowAsync<NotFoundException>(
+            () => useCase.Execute(RequestPolicyJsonBuilder.Build()));
+
+        writeRepository.Verify(repository => repository.Add(It.IsAny<Policy>()), Times.Never);
+        unitOfWork.Verify(work => work.Commit(), Times.Never);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarValidacaoSemSalvar_Quando_SeguradoEstiverInativo))]
+    [Trait("Application", "Policies - Register")]
+    public async Task Deve_LancarValidacaoSemSalvar_Quando_SeguradoEstiverInativo()
+    {
+        var policyholder = PolicyholderBuilder.Build();
+        policyholder.Deactivate();
+        var (useCase, writeRepository, unitOfWork, _) = CreateUseCase(policyholder);
+
+        await Should.ThrowAsync<ErrorOnValidationException>(
+            () => useCase.Execute(RequestPolicyJsonBuilder.Build(policyholder.Id)));
+
+        writeRepository.Verify(repository => repository.Add(It.IsAny<Policy>()), Times.Never);
+        unitOfWork.Verify(work => work.Commit(), Times.Never);
+    }
+
+    [Theory(DisplayName = nameof(Deve_LancarValidacaoAntesDaBusca_Quando_DadosObrigatoriosForemInvalidos))]
+    [Trait("Application", "Policies - Register")]
+    [InlineData("", 10000, 100, false)]
+    [InlineData("Description", 0, 100, false)]
+    [InlineData("Description", 10000, 0, false)]
+    [InlineData("Description", 10000, 100, true)]
+    public async Task Deve_LancarValidacaoAntesDaBusca_Quando_DadosObrigatoriosForemInvalidos(
+        string description,
+        decimal coverage,
+        decimal premium,
+        bool missingDates)
+    {
+        var (useCase, writeRepository, unitOfWork, policyholdersRepository) = CreateUseCase();
+        var request = RequestPolicyJsonBuilder.Build(
+            Guid.NewGuid(),
+            description,
+            coverage,
+            premium,
+            missingDates ? default : DateTime.UtcNow.Date,
+            missingDates ? default : DateTime.UtcNow.Date.AddDays(1));
+
+        await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(request));
+
+        writeRepository.Verify(repository => repository.Add(It.IsAny<Policy>()), Times.Never);
+        unitOfWork.Verify(work => work.Commit(), Times.Never);
+        policyholdersRepository.Verify(repository => repository.GetById(It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarValidacao_Quando_DataFinalNaoForPosteriorAInicial))]
+    [Trait("Application", "Policies - Register")]
+    public async Task Deve_LancarValidacao_Quando_DataFinalNaoForPosteriorAInicial()
+    {
+        var today = DateTime.UtcNow.Date;
+        var (useCase, writeRepository, unitOfWork, _) = CreateUseCase();
+        var request = RequestPolicyJsonBuilder.Build(startDate: today, endDate: today);
+
+        await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(request));
+
+        writeRepository.Verify(repository => repository.Add(It.IsAny<Policy>()), Times.Never);
+        unitOfWork.Verify(work => work.Commit(), Times.Never);
+    }
+
+    private static (
+        RegisterPolicyUseCase UseCase,
+        Mock<IPoliciesWriteOnlyRepository> WriteRepository,
+        Mock<IUnitOfWork> UnitOfWork,
+        Mock<IPolicyholdersReadOnlyRepository> PolicyholdersRepository)
+        CreateUseCase(Policyholder? policyholder = null)
+    {
+        var writeRepository = PoliciesWriteOnlyRepositoryBuilder.Build();
+        var policyholdersRepository = new Mock<IPolicyholdersReadOnlyRepository>();
+        if (policyholder is not null)
+            policyholdersRepository.Setup(repository => repository.GetById(policyholder.Id)).ReturnsAsync(policyholder);
+        var unitOfWork = UnitOfWorkBuilder.Build();
+        return (
+            new RegisterPolicyUseCase(writeRepository.Object, policyholdersRepository.Object, unitOfWork.Object),
+            writeRepository,
+            unitOfWork,
+            policyholdersRepository);
+    }
+}
