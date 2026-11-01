@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PolicyDesk.Domain.Repositories;
+using PolicyDesk.Domain.Repositories.Policies;
 using PolicyDesk.Domain.Repositories.Policyholders;
 using PolicyDesk.Infrastructure.DataAccess;
 using PolicyDesk.Infrastructure.DataAccess.Repositories;
@@ -17,6 +18,8 @@ public static class DependencyInjectionExtension
         {
             services.AddScoped<IPolicyholdersWriteOnlyRepository, PolicyholdersRepository>();
             services.AddScoped<IPolicyholdersReadOnlyRepository, PolicyholdersRepository>();
+            services.AddScoped<IPoliciesWriteOnlyRepository, PoliciesRepository>();
+            services.AddScoped<IPoliciesReadOnlyRepository, PoliciesRepository>();
             
             services.AddDbContext<PolicyDeskDbContext>(config =>
             {
