@@ -105,4 +105,19 @@
     <data name="INVALID_EMAIL_ARGUMENT" xml:space="preserve">
         <value>E-mail inválido.</value>
     </data>
+    <data name="POLICYHOLDER_NAME_REQUIRED" xml:space="preserve">
+        <value>O nome é obrigatório.</value>
+    </data>
+    <data name="POLICYHOLDER_BIRTH_DATE_REQUIRED" xml:space="preserve">
+        <value>A data de nascimento é obrigatória.</value>
+    </data>
+    <data name="POLICYHOLDER_BIRTH_DATE_IN_FUTURE" xml:space="preserve">
+        <value>A data de nascimento não pode estar no futuro.</value>
+    </data>
+    <data name="POLICYHOLDER_PHONE_REQUIRED" xml:space="preserve">
+        <value>O telefone é obrigatório.</value>
+    </data>
+    <data name="INVALID_PHONE" xml:space="preserve">
+        <value>Telefone inválido.</value>
+    </data>
 </root>
