@@ -49,6 +49,10 @@ internal class PolicyMap : IEntityTypeConfiguration<Policy>
             .HasColumnName("active")
             .IsRequired();
 
+        // Concorrência otimista: o Npgsql mapeia este uint para a coluna de sistema xmin,
+        // que o PostgreSQL altera a cada UPDATE. Gravar com um xmin desatualizado falha.
+        builder.Property<uint>("Version").IsRowVersion();
+
         builder.HasOne<Policyholders>()
             .WithMany()
             .HasForeignKey(policy => policy.PolicyholderId)

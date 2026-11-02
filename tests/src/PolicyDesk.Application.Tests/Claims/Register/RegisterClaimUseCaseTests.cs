@@ -99,10 +99,11 @@ public class RegisterClaimUseCaseTests
     public async Task Deve_RegistrarSinistro_Quando_OcorrenciaForHoje()
     {
         var today = DateTime.UtcNow.Date;
-        var policy = PolicyBuilder.Build(startDate: today.AddDays(-1), endDate: today.AddDays(30));
+        // Valores fixos: com cobertura e valor aleatórios o sinistro podia exceder a cobertura
+        var policy = PolicyBuilder.Build(coverageAmount: 10000, startDate: today.AddDays(-1), endDate: today.AddDays(30));
         var (useCase, writeRepository, unitOfWork) = CreateUseCase(policy);
 
-        await useCase.Execute(policy.Id, RequestClaimJsonBuilder.Build(occurredOn: today));
+        await useCase.Execute(policy.Id, RequestClaimJsonBuilder.Build(amount: 500, occurredOn: today));
 
         writeRepository.Verify(repository => repository.Add(It.Is<Claim>(claim => claim.OccurredOn == today)), Times.Once);
         unitOfWork.Verify(work => work.Commit(), Times.Once);

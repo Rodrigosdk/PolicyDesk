@@ -57,5 +57,9 @@ internal class PolicyholdersMap : IEntityTypeConfiguration<Policyholders>
         builder.Property(policyholder => policyholder.Active)
             .HasColumnName("active")
             .IsRequired();
+
+        // Concorrência otimista: o Npgsql mapeia este uint para a coluna de sistema xmin,
+        // que o PostgreSQL altera a cada UPDATE. Gravar com um xmin desatualizado falha.
+        builder.Property<uint>("Version").IsRowVersion();
     }
 }
