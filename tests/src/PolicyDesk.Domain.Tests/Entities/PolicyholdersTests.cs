@@ -177,6 +177,20 @@ public class PolicyholdersTests
         policyholder.UpdatedAt.ShouldBeNull();
     }
 
+    [Fact(DisplayName = nameof(Deve_RegistrarAlteracao_Quando_ApoliceForCadastrada))]
+    [Trait("Domain", "Policyholders - Apólice")]
+    public void Deve_RegistrarAlteracao_Quando_ApoliceForCadastrada()
+    {
+        var policyholder = CreatePolicyholder();
+        var before = DateTime.UtcNow;
+
+        policyholder.RegisterPolicy();
+
+        policyholder.UpdatedAt.ShouldNotBeNull();
+        policyholder.UpdatedAt.Value.ShouldBeInRange(before, DateTime.UtcNow);
+        policyholder.Active.ShouldBeTrue();
+    }
+
     [Fact(DisplayName = nameof(Deve_Inativar_Quando_Solicitado))]
     [Trait("Domain", "Policyholders - Deactivate")]
     public void Deve_Inativar_Quando_Solicitado()

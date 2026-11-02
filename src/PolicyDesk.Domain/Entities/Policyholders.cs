@@ -29,6 +29,13 @@ public class Policyholders(
         UpdatedAt = DateTime.UtcNow;
     }
     
+    // Chamado ao cadastrar uma apólice. Alterar o segurado é intencional: a gravação muda a versão
+    // do registro (xmin), e uma inativação concorrente passa a ser recusada como conflito.
+    public void RegisterPolicy()
+    {
+        UpdatedAt = DateTime.UtcNow;
+    }
+
     public void Deactivate()
     {
         Active = false;
