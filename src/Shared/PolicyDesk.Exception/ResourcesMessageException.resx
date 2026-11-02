@@ -123,4 +123,7 @@
     <data name="CLAIM_OCCURRENCE_DATE_IN_FUTURE" xml:space="preserve">
         <value>A data de ocorrência não pode estar no futuro.</value>
     </data>
+    <data name="CONCURRENCY_CONFLICT" xml:space="preserve">
+        <value>O registro foi alterado por outra operação. Consulte novamente e repita a solicitação.</value>
+    </data>
 </root>

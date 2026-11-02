@@ -24,6 +24,10 @@ internal class ClaimMap : IEntityTypeConfiguration<Claim>
         builder.Property(claim => claim.UpdatedAt).HasColumnName("updated_at");
         builder.Property(claim => claim.Active).HasColumnName("active").IsRequired();
 
+        // Concorrência otimista: o Npgsql mapeia este uint para a coluna de sistema xmin,
+        // que o PostgreSQL altera a cada UPDATE. Gravar com um xmin desatualizado falha.
+        builder.Property<uint>("Version").IsRowVersion();
+
         builder.HasOne<Policy>()
             .WithMany()
             .HasForeignKey(claim => claim.PolicyId)

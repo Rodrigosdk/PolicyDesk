@@ -254,5 +254,11 @@ namespace PolicyDesk.Exception {
                 return ResourceManager.GetString("CLAIM_OCCURRENCE_DATE_IN_FUTURE", resourceCulture);
             }
         }
+
+        public static string CONCURRENCY_CONFLICT {
+            get {
+                return ResourceManager.GetString("CONCURRENCY_CONFLICT", resourceCulture);
+            }
+        }
     }
 }
