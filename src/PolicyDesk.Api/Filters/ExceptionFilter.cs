@@ -16,6 +16,10 @@ public class ExceptionFilter : IExceptionFilter
                 context.HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
                 context.Result = new BadRequestObjectResult(new ResponseErrorJson(errorOnValidationException.GetErrors()));
                 break;
+            case DomainRuleException domainRuleException:
+                context.HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+                context.Result = new BadRequestObjectResult(new ResponseErrorJson(domainRuleException.Message));
+                break;
             case NotFoundException notFoundException:
                 context.HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
                 context.Result = new NotFoundObjectResult(new ResponseErrorJson(notFoundException.Message));
