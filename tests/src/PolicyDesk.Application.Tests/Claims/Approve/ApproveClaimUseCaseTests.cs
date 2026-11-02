@@ -45,7 +45,7 @@ public class ApproveClaimUseCaseTests
         var claim = ClaimBuilder.Build();
         var (useCase, unitOfWork) = CreateUseCase(claim);
 
-        await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(claim.Id));
+        await Should.ThrowAsync<DomainRuleException>(() => useCase.Execute(claim.Id));
 
         claim.Status.ShouldBe(ClaimStatus.Pending);
         unitOfWork.Verify(work => work.Commit(), Times.Never);

@@ -45,7 +45,7 @@ public class CancelPolicyUseCaseTests
         policy.Cancel();
         var (useCase, unitOfWork) = CreateUseCase(policy);
 
-        await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(policy.Id));
+        await Should.ThrowAsync<DomainRuleException>(() => useCase.Execute(policy.Id));
 
         policy.Status.ShouldBe(PolicyStatus.Cancelled);
         unitOfWork.Verify(work => work.Commit(), Times.Never);

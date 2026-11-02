@@ -23,6 +23,21 @@ public class RegisterPolicyholderTests(PolicyDeskApplicationFactory factory) : P
         saved.Email.ShouldBe(request.Email.ToLowerInvariant());
     }
 
+    [Theory(DisplayName = nameof(Deve_Cadastrar_Quando_TelefoneTiverCodigoDePais))]
+    [Trait("Integration", "Policyholders - Cadastro")]
+    [InlineData("+55 (83) 98647-1687")]
+    [InlineData("+44 20 7946 0958")]
+    public async Task Deve_Cadastrar_Quando_TelefoneTiverCodigoDePais(string phone)
+    {
+        var request = RequestPolicyholdersJsonBuilder.Build();
+        request.PhoneNumber = phone;
+
+        var response = await Post(RequestUri, request);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await FindByCpf(request.Cpf)).Phone.ShouldBe(phone);
+    }
+
     [Fact(DisplayName = nameof(Deve_RetornarBadRequest_Quando_CpfForInvalido))]
     [Trait("Integration", "Policyholders - Cadastro")]
     public async Task Deve_RetornarBadRequest_Quando_CpfForInvalido()

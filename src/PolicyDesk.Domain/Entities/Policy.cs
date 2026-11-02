@@ -15,6 +15,19 @@ public class Policy : Entity
         DateTime startDate,
         DateTime endDate)
     {
+        if (policyholderId == Guid.Empty)
+            throw new DomainRuleException(ResourcesMessageException.POLICYHOLDER_REQUIRED);
+        if (string.IsNullOrWhiteSpace(description))
+            throw new DomainRuleException(ResourcesMessageException.DESCRIPTION_REQUIRED);
+        if (coverageAmount <= 0)
+            throw new DomainRuleException(ResourcesMessageException.COVERAGE_AMOUNT_MUST_BE_POSITIVE);
+        if (premiumAmount <= 0)
+            throw new DomainRuleException(ResourcesMessageException.PREMIUM_AMOUNT_MUST_BE_POSITIVE);
+        if (startDate == default || endDate == default)
+            throw new DomainRuleException(ResourcesMessageException.POLICY_DATES_REQUIRED);
+        if (endDate.Date <= startDate.Date)
+            throw new DomainRuleException(ResourcesMessageException.POLICY_END_DATE_MUST_BE_AFTER_START_DATE);
+
         PolicyholderId = policyholderId;
         Description = description.Trim();
         CoverageAmount = coverageAmount;
@@ -23,8 +36,13 @@ public class Policy : Entity
         EndDate = endDate.Date;
     }
 
+    // Usado pelo EF Core ao carregar do banco: não reaplica as regras de criação
+    private Policy()
+    {
+    }
+
     public Guid PolicyholderId { get; private set; }
-    public string Description { get; private set; }
+    public string Description { get; private set; } = string.Empty;
     public decimal CoverageAmount { get; private set; }
     public decimal PremiumAmount { get; private set; }
     public DateTime StartDate { get; private set; }
@@ -39,7 +57,7 @@ public class Policy : Entity
     public void Cancel()
     {
         if (IsCancelled)
-            throw new ErrorOnValidationException(ResourcesMessageException.POLICY_ALREADY_CANCELLED);
+            throw new DomainRuleException(ResourcesMessageException.POLICY_ALREADY_CANCELLED);
 
         Status = PolicyStatus.Cancelled;
         CancelledAt = DateTime.UtcNow;

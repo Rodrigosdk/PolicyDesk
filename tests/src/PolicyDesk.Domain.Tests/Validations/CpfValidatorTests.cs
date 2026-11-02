@@ -1,5 +1,6 @@
 using PolicyDesk.Domain.Validations;
 using CommonTestUtilities.Requests;
+using PolicyDesk.Exception.Exception;
 using Shouldly;
 
 namespace PolicyDesk.Domain.Tests.Validations;
@@ -73,7 +74,7 @@ public class CpfValidatorTests
     [InlineData(null)]
     public void Deve_LancarExcecao_Quando_CpfForInvalido(string? cpf)
     {
-        Should.Throw<ArgumentException>(() => CpfValidator.NormalizeOrThrow(cpf));
+        Should.Throw<DomainRuleException>(() => CpfValidator.NormalizeOrThrow(cpf));
     }
 
     [Fact(DisplayName = nameof(Deve_AplicarMascara_Quando_CpfTiver11Digitos))]

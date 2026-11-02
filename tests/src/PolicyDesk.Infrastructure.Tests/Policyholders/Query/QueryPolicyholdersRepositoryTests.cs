@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using CommonTestUtilities.Entities;
 using Shouldly;
 
@@ -23,6 +24,27 @@ public class QueryPolicyholdersRepositoryTests(PostgreSqlInfrastructureFixture f
 
         listed.Select(item => item.Id).ShouldBe([active.Id]);
         inactiveById.ShouldBeNull();
+    }
+
+    [Fact(DisplayName = nameof(Deve_CarregarRegistroLegado_Quando_DadosNaoAtendemRegrasAtuais))]
+    [Trait("Infrastructure", "PolicyholdersRepository - Consulta")]
+    public async Task Deve_CarregarRegistroLegado_Quando_DadosNaoAtendemRegrasAtuais()
+    {
+        // Registro gravado antes das regras atuais: e-mail sem domínio, telefone curto, nascimento padrão.
+        // As regras valem para criar e alterar; carregar do banco não pode falhar.
+        await using var dbContext = await Fixture.CreateCleanDbContextAsync();
+        var id = Guid.NewGuid();
+        await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO policyholders (id, name, cpf, birth_date, email, phone, created_at, updated_at, active)
+            VALUES ({id}, '', '00000000000', '0001-01-01', 'legacy', '123', {DateTime.UtcNow}, NULL, TRUE)
+            """);
+
+        var listed = await CreateRepository(dbContext).GetAll();
+        var byId = await CreateRepository(dbContext).GetById(id);
+
+        listed.Select(item => item.Id).ShouldBe([id]);
+        byId.ShouldNotBeNull();
+        byId.Email.ShouldBe("legacy");
     }
 
     [Fact(DisplayName = nameof(Deve_IgnorarSeguradoAtual_Quando_VerificarEmailExistente))]

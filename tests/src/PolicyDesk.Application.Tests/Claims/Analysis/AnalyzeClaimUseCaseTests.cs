@@ -44,7 +44,7 @@ public class AnalyzeClaimUseCaseTests
         claim.StartAnalysis();
         var (useCase, unitOfWork) = CreateUseCase(claim);
 
-        await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(claim.Id));
+        await Should.ThrowAsync<DomainRuleException>(() => useCase.Execute(claim.Id));
 
         claim.Status.ShouldBe(ClaimStatus.InAnalysis);
         unitOfWork.Verify(work => work.Commit(), Times.Never);
