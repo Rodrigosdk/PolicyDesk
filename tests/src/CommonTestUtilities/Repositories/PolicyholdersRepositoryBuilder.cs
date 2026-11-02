@@ -30,9 +30,9 @@ public class PolicyholdersReadOnlyRepositoryBuilder
         return this;
     }
 
-    public PolicyholdersReadOnlyRepositoryBuilder HasActivePolicy(Guid policyholderId, bool value = true)
+    public PolicyholdersReadOnlyRepositoryBuilder HasActiveOrFuturePolicy(Guid policyholderId, bool value = true)
     {
-        _repository.Setup(r => r.HasActivePolicy(policyholderId)).ReturnsAsync(value);
+        _repository.Setup(r => r.HasActiveOrFuturePolicy(policyholderId)).ReturnsAsync(value);
         return this;
     }
 

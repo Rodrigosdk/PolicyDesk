@@ -68,13 +68,12 @@ internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) :
             (exceptPolicyholderId == null || policyholder.Id != exceptPolicyholderId));
     }
 
-    public Task<bool> HasActivePolicy(Guid policyholderId)
+    public Task<bool> HasActiveOrFuturePolicy(Guid policyholderId)
     {
         var today = DateTime.UtcNow.Date;
         return dbContext.Policies.AnyAsync(policy =>
             policy.PolicyholderId == policyholderId &&
             policy.Status == PolicyStatus.Active &&
-            policy.StartDate <= today &&
             policy.EndDate >= today);
     }
 }

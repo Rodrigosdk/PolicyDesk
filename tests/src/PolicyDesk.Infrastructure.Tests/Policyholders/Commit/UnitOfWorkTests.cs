@@ -125,6 +125,70 @@ public class UnitOfWorkTests(PostgreSqlInfrastructureFixture fixture) : Policyho
         savedSecond.Email.ShouldBe(second.Email);
     }
 
+    [Fact(DisplayName = nameof(Deve_LancarConflitoNaInativacao_Quando_ApoliceForCadastradaAoMesmoTempo))]
+    [Trait("Infrastructure", "UnitOfWork - Concorrência")]
+    public async Task Deve_LancarConflitoNaInativacao_Quando_ApoliceForCadastradaAoMesmoTempo()
+    {
+        var policyholderId = await SavePolicyholder();
+        await using var deactivation = Fixture.CreateDbContext();
+        await using var registration = Fixture.CreateDbContext();
+
+        // Inativação: lê o segurado e confirma que não há apólice
+        var holderInDeactivation = await deactivation.Policyholders.SingleAsync(p => p.Id == policyholderId);
+        (await CreateRepository(deactivation).HasActiveOrFuturePolicy(policyholderId)).ShouldBeFalse();
+
+        // Cadastro de apólice: lê o segurado ativo, cadastra e grava primeiro
+        var holderInRegistration = await registration.Policyholders.SingleAsync(p => p.Id == policyholderId);
+        holderInRegistration.RegisterPolicy();
+        registration.Policies.Add(PolicyBuilder.Build(policyholderId));
+        await new UnitOfWork(registration).Commit();
+
+        // A inativação grava com a versão antiga do segurado
+        holderInDeactivation.Deactivate();
+        await Should.ThrowAsync<ConflictException>(() => new UnitOfWork(deactivation).Commit());
+
+        await using var verificationContext = Fixture.CreateDbContext();
+        (await verificationContext.Policyholders.AsNoTracking().SingleAsync(p => p.Id == policyholderId))
+            .Active.ShouldBeTrue();
+        (await verificationContext.Policies.AnyAsync(policy => policy.PolicyholderId == policyholderId)).ShouldBeTrue();
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarConflitoSemGravarApolice_Quando_SeguradoForInativadoAoMesmoTempo))]
+    [Trait("Infrastructure", "UnitOfWork - Concorrência")]
+    public async Task Deve_LancarConflitoSemGravarApolice_Quando_SeguradoForInativadoAoMesmoTempo()
+    {
+        var policyholderId = await SavePolicyholder();
+        await using var deactivation = Fixture.CreateDbContext();
+        await using var registration = Fixture.CreateDbContext();
+
+        // As duas leem o segurado ativo antes de qualquer gravação
+        var holderInDeactivation = await deactivation.Policyholders.SingleAsync(p => p.Id == policyholderId);
+        var holderInRegistration = await registration.Policyholders.SingleAsync(p => p.Id == policyholderId);
+
+        // A inativação grava primeiro
+        holderInDeactivation.Deactivate();
+        await new UnitOfWork(deactivation).Commit();
+
+        // O cadastro de apólice grava com a versão antiga: a apólice e a alteração do segurado
+        // estão no mesmo SaveChanges (mesma transação), então nenhuma das duas é gravada
+        holderInRegistration.RegisterPolicy();
+        registration.Policies.Add(PolicyBuilder.Build(policyholderId));
+        await Should.ThrowAsync<ConflictException>(() => new UnitOfWork(registration).Commit());
+
+        await using var verificationContext = Fixture.CreateDbContext();
+        (await verificationContext.Policyholders.AsNoTracking().SingleAsync(p => p.Id == policyholderId))
+            .Active.ShouldBeFalse();
+        (await verificationContext.Policies.AnyAsync(policy => policy.PolicyholderId == policyholderId)).ShouldBeFalse();
+    }
+
+    private async Task<Guid> SavePolicyholder()
+    {
+        await using var dbContext = Fixture.CreateDbContext();
+        var policyholder = PolicyholderBuilder.Build();
+        await CreateRepository(dbContext).RegisterOrReactivate(policyholder);
+        return policyholder.Id;
+    }
+
     private async Task<Guid> SaveClaimInAnalysis()
     {
         await using var dbContext = Fixture.CreateDbContext();
