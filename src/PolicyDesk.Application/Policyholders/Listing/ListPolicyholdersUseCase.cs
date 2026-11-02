@@ -5,43 +5,31 @@ using PolicyDesk.Exception.Exception;
 
 namespace PolicyDesk.Application.Policyholders.Listing;
 
-public class ListPolicyholdersUseCase(
-    IPolicyholdersReadOnlyRepository policyholdersReadOnlyRepository
-    ) : IListPolicyholdersUseCase
+internal class ListPolicyholdersUseCase(
+    IPolicyholdersReadOnlyRepository policyholdersReadOnlyRepository) : IListPolicyholdersUseCase
 {
-    public Task<IEnumerable<ResponsePolicyholdersListingJson>> Listing()
+    public async Task<IEnumerable<ResponsePolicyholdersListingJson>> Listing()
     {
-        var policyholders = policyholdersReadOnlyRepository.GetAll();
-        return policyholders.ContinueWith(task =>
-        {
-            var result = task.Result.Select(MapToResponsePolicyholdersListingJson);
-            return result;
-        });
+        var policyholders = await policyholdersReadOnlyRepository.GetAll();
+        return policyholders.Select(MapToResponse);
     }
 
-    public Task<ResponsePolicyholdersListingJson> GetById(Guid policyholderId)
+    public async Task<ResponsePolicyholdersListingJson> GetById(Guid policyholderId)
     {
-       return policyholdersReadOnlyRepository.GetById(policyholderId).ContinueWith(task =>
-        {
-            var p = task.Result;
-            return p == null 
-                ? throw new NotFoundException(ResourcesMessageException.POLICYHOLDER_NOT_FOUND) 
-                : MapToResponsePolicyholdersListingJson(p);
-        });
+        var policyholder = await policyholdersReadOnlyRepository.GetById(policyholderId)
+                           ?? throw new NotFoundException(ResourcesMessageException.POLICYHOLDER_NOT_FOUND);
+        return MapToResponse(policyholder);
     }
-    
-    private ResponsePolicyholdersListingJson MapToResponsePolicyholdersListingJson(Domain.Entities.Policyholders p)
+
+    private static ResponsePolicyholdersListingJson MapToResponse(Domain.Entities.Policyholders policyholder) => new()
     {
-        return new ResponsePolicyholdersListingJson
-        {
-            Id = p.Id,
-            Name = p.Name,
-            Email = p.Email,
-            Cpf = p.Cpf,
-            BirthDate = p.BirthDate,
-            Phone = p.Phone,
-            CreatedAt = p.CreatedAt,
-            UpdatedAt = p.UpdatedAt
-        };
-    }
+        Id = policyholder.Id,
+        Name = policyholder.Name,
+        Email = policyholder.Email,
+        Cpf = policyholder.Cpf,
+        BirthDate = policyholder.BirthDate,
+        Phone = policyholder.Phone,
+        CreatedAt = policyholder.CreatedAt,
+        UpdatedAt = policyholder.UpdatedAt
+    };
 }
