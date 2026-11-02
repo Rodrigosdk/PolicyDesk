@@ -120,4 +120,7 @@
     <data name="INVALID_PHONE" xml:space="preserve">
         <value>Telefone inválido.</value>
     </data>
+    <data name="CLAIM_OCCURRENCE_DATE_IN_FUTURE" xml:space="preserve">
+        <value>A data de ocorrência não pode estar no futuro.</value>
+    </data>
 </root>

@@ -1,5 +1,7 @@
 using PolicyDesk.Domain.Enums;
 using PolicyDesk.Domain.SeedWorks;
+using PolicyDesk.Exception;
+using PolicyDesk.Exception.Exception;
 
 namespace PolicyDesk.Domain.Entities;
 
@@ -22,7 +24,7 @@ public class Policy : Entity
     }
 
     public Guid PolicyholderId { get; private set; }
-    public string Description { get; private set; } = string.Empty;
+    public string Description { get; private set; }
     public decimal CoverageAmount { get; private set; }
     public decimal PremiumAmount { get; private set; }
     public DateTime StartDate { get; private set; }
@@ -36,6 +38,9 @@ public class Policy : Entity
 
     public void Cancel()
     {
+        if (IsCancelled)
+            throw new ErrorOnValidationException(ResourcesMessageException.POLICY_ALREADY_CANCELLED);
+
         Status = PolicyStatus.Cancelled;
         CancelledAt = DateTime.UtcNow;
         UpdatedAt = CancelledAt;

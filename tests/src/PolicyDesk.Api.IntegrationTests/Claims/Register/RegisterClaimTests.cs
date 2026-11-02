@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using CommonTestUtilities.Requests;
+using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Communication.Responses;
 using PolicyDesk.Domain.Enums;
 using PolicyDesk.Exception;
@@ -85,6 +86,22 @@ public class RegisterClaimTests(PolicyDeskApplicationFactory factory) : ClaimsTe
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await response.Content.ReadAsStringAsync())
             .ShouldContain(ResourcesMessageException.CLAIM_DATE_OUTSIDE_POLICY_PERIOD);
+    }
+
+    [Fact(DisplayName = nameof(Deve_RetornarBadRequestSemGravar_Quando_DataDeOcorrenciaForFutura))]
+    [Trait("Integration", "Claims - Cadastro")]
+    public async Task Deve_RetornarBadRequestSemGravar_Quando_DataDeOcorrenciaForFutura()
+    {
+        var policy = await RegisterPolicyForNewHolder();
+
+        var response = await Post(
+            $"/api/apolices/{policy.Id}/sinistros",
+            RequestClaimJsonBuilder.Build(amount: 100, occurredOn: DateTime.UtcNow.Date.AddDays(1)));
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync())
+            .ShouldContain(ResourcesMessageException.CLAIM_OCCURRENCE_DATE_IN_FUTURE);
+        (await DbContext.Claims.AnyAsync(claim => claim.PolicyId == policy.Id)).ShouldBeFalse();
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarBadRequest_Quando_ApoliceEstiverCancelada))]

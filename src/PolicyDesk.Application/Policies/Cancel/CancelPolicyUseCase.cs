@@ -14,13 +14,7 @@ internal class CancelPolicyUseCase(
         var policy = await policiesReadOnlyRepository.GetById(policyId)
                      ?? throw new NotFoundException(ResourcesMessageException.POLICY_NOT_FOUND);
 
-        if (policy.IsCancelled)
-        {
-            throw new ErrorOnValidationException(ResourcesMessageException.POLICY_ALREADY_CANCELLED);
-        }
-
         policy.Cancel();
-
         await unitOfWork.Commit();
     }
 }

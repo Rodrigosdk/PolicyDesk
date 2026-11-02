@@ -1,5 +1,8 @@
 using CommonTestUtilities.Entities;
+using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Enums;
+using PolicyDesk.Exception;
+using PolicyDesk.Exception.Exception;
 using Shouldly;
 
 namespace PolicyDesk.Domain.Tests.Entities;
@@ -32,9 +35,9 @@ public class ClaimsTests
         claim.Active.ShouldBeTrue();
     }
 
-    [Fact(DisplayName = nameof(Deve_IniciarAnalise_Quando_Solicitado))]
+    [Fact(DisplayName = nameof(Deve_IniciarAnalise_Quando_SinistroEstiverPendente))]
     [Trait("Domain", "Claims - Análise")]
-    public void Deve_IniciarAnalise_Quando_Solicitado()
+    public void Deve_IniciarAnalise_Quando_SinistroEstiverPendente()
     {
         var claim = ClaimBuilder.Build();
 
@@ -44,11 +47,25 @@ public class ClaimsTests
         claim.UpdatedAt.ShouldNotBeNull();
     }
 
-    [Fact(DisplayName = nameof(Deve_AprovarERegistrarData_Quando_Solicitado))]
-    [Trait("Domain", "Claims - Aprovação")]
-    public void Deve_AprovarERegistrarData_Quando_Solicitado()
+    [Theory(DisplayName = nameof(Deve_LancarExcecaoSemAlterar_Quando_IniciarAnaliseDeSinistroNaoPendente))]
+    [Trait("Domain", "Claims - Análise")]
+    [InlineData(ClaimStatus.InAnalysis)]
+    [InlineData(ClaimStatus.Approved)]
+    [InlineData(ClaimStatus.Denied)]
+    [InlineData(ClaimStatus.Paid)]
+    public void Deve_LancarExcecaoSemAlterar_Quando_IniciarAnaliseDeSinistroNaoPendente(ClaimStatus status)
     {
-        var claim = ClaimBuilder.Build();
+        ShouldRejectTransition(
+            status,
+            claim => claim.StartAnalysis(),
+            ResourcesMessageException.CLAIM_MUST_BE_PENDING_FOR_ANALYSIS);
+    }
+
+    [Fact(DisplayName = nameof(Deve_AprovarERegistrarData_Quando_SinistroEstiverEmAnalise))]
+    [Trait("Domain", "Claims - Aprovação")]
+    public void Deve_AprovarERegistrarData_Quando_SinistroEstiverEmAnalise()
+    {
+        var claim = ClaimBuilder.BuildWithStatus(ClaimStatus.InAnalysis);
         var before = DateTime.UtcNow;
 
         claim.Approve();
@@ -61,11 +78,25 @@ public class ClaimsTests
         claim.UpdatedAt.ShouldBe(claim.ApprovedAt);
     }
 
-    [Fact(DisplayName = nameof(Deve_NegarERegistrarMotivoSemEspacos_Quando_Solicitado))]
-    [Trait("Domain", "Claims - Negação")]
-    public void Deve_NegarERegistrarMotivoSemEspacos_Quando_Solicitado()
+    [Theory(DisplayName = nameof(Deve_LancarExcecaoSemAlterar_Quando_AprovarSinistroForaDeAnalise))]
+    [Trait("Domain", "Claims - Aprovação")]
+    [InlineData(ClaimStatus.Pending)]
+    [InlineData(ClaimStatus.Approved)]
+    [InlineData(ClaimStatus.Denied)]
+    [InlineData(ClaimStatus.Paid)]
+    public void Deve_LancarExcecaoSemAlterar_Quando_AprovarSinistroForaDeAnalise(ClaimStatus status)
     {
-        var claim = ClaimBuilder.Build();
+        ShouldRejectTransition(
+            status,
+            claim => claim.Approve(),
+            ResourcesMessageException.CLAIM_MUST_BE_IN_ANALYSIS_FOR_APPROVAL);
+    }
+
+    [Fact(DisplayName = nameof(Deve_NegarERegistrarMotivoSemEspacos_Quando_SinistroEstiverEmAnalise))]
+    [Trait("Domain", "Claims - Negação")]
+    public void Deve_NegarERegistrarMotivoSemEspacos_Quando_SinistroEstiverEmAnalise()
+    {
+        var claim = ClaimBuilder.BuildWithStatus(ClaimStatus.InAnalysis);
 
         claim.Deny("  Not covered  ");
 
@@ -75,11 +106,38 @@ public class ClaimsTests
         claim.UpdatedAt.ShouldNotBeNull();
     }
 
-    [Fact(DisplayName = nameof(Deve_RegistrarPagamento_Quando_Solicitado))]
-    [Trait("Domain", "Claims - Pagamento")]
-    public void Deve_RegistrarPagamento_Quando_Solicitado()
+    [Theory(DisplayName = nameof(Deve_LancarExcecaoSemAlterar_Quando_NegarSinistroForaDeAnalise))]
+    [Trait("Domain", "Claims - Negação")]
+    [InlineData(ClaimStatus.Pending)]
+    [InlineData(ClaimStatus.Approved)]
+    [InlineData(ClaimStatus.Denied)]
+    [InlineData(ClaimStatus.Paid)]
+    public void Deve_LancarExcecaoSemAlterar_Quando_NegarSinistroForaDeAnalise(ClaimStatus status)
     {
-        var claim = ClaimBuilder.Build();
+        ShouldRejectTransition(
+            status,
+            claim => claim.Deny("Reason"),
+            ResourcesMessageException.CLAIM_MUST_BE_IN_ANALYSIS_FOR_DENIAL);
+    }
+
+    [Theory(DisplayName = nameof(Deve_LancarExcecaoSemAlterar_Quando_NegarSemMotivo))]
+    [Trait("Domain", "Claims - Negação")]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Deve_LancarExcecaoSemAlterar_Quando_NegarSemMotivo(string? reason)
+    {
+        ShouldRejectTransition(
+            ClaimStatus.InAnalysis,
+            claim => claim.Deny(reason!),
+            ResourcesMessageException.CLAIM_DENIAL_REASON_REQUIRED);
+    }
+
+    [Fact(DisplayName = nameof(Deve_RegistrarPagamento_Quando_SinistroEstiverAprovado))]
+    [Trait("Domain", "Claims - Pagamento")]
+    public void Deve_RegistrarPagamento_Quando_SinistroEstiverAprovado()
+    {
+        var claim = ClaimBuilder.BuildWithStatus(ClaimStatus.Approved);
         var before = DateTime.UtcNow;
 
         claim.RegisterPayment();
@@ -89,5 +147,38 @@ public class ClaimsTests
         claim.PaidAt.ShouldNotBeNull();
         claim.PaidAt.Value.ShouldBeInRange(before, after);
         claim.UpdatedAt.ShouldBe(claim.PaidAt);
+    }
+
+    [Theory(DisplayName = nameof(Deve_LancarExcecaoSemAlterar_Quando_PagarSinistroNaoAprovado))]
+    [Trait("Domain", "Claims - Pagamento")]
+    [InlineData(ClaimStatus.Pending)]
+    [InlineData(ClaimStatus.InAnalysis)]
+    [InlineData(ClaimStatus.Denied)]
+    [InlineData(ClaimStatus.Paid)]
+    public void Deve_LancarExcecaoSemAlterar_Quando_PagarSinistroNaoAprovado(ClaimStatus status)
+    {
+        ShouldRejectTransition(
+            status,
+            claim => claim.RegisterPayment(),
+            ResourcesMessageException.CLAIM_MUST_BE_APPROVED_FOR_PAYMENT);
+    }
+
+    // Verifica que a transição é rejeitada com a mensagem esperada e que nenhum campo foi alterado
+    private static void ShouldRejectTransition(ClaimStatus status, Action<Claim> transition, string expectedError)
+    {
+        var claim = ClaimBuilder.BuildWithStatus(status);
+        var updatedAt = claim.UpdatedAt;
+        var approvedAt = claim.ApprovedAt;
+        var denialReason = claim.DenialReason;
+        var paidAt = claim.PaidAt;
+
+        var exception = Should.Throw<ErrorOnValidationException>(() => transition(claim));
+
+        exception.GetErrors().ShouldBe([expectedError]);
+        claim.Status.ShouldBe(status);
+        claim.UpdatedAt.ShouldBe(updatedAt);
+        claim.ApprovedAt.ShouldBe(approvedAt);
+        claim.DenialReason.ShouldBe(denialReason);
+        claim.PaidAt.ShouldBe(paidAt);
     }
 }

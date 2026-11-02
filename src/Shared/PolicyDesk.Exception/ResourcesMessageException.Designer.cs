@@ -248,5 +248,11 @@ namespace PolicyDesk.Exception {
                 return ResourceManager.GetString("INVALID_PHONE", resourceCulture);
             }
         }
+
+        public static string CLAIM_OCCURRENCE_DATE_IN_FUTURE {
+            get {
+                return ResourceManager.GetString("CLAIM_OCCURRENCE_DATE_IN_FUTURE", resourceCulture);
+            }
+        }
     }
 }
