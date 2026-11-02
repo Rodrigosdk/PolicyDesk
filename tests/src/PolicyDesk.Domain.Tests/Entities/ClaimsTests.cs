@@ -26,13 +26,11 @@ public class ClaimsTests
         claim.Amount.ShouldBe(1500);
         claim.OccurredOn.ShouldBe(occurredOn.Date);
         claim.Status.ShouldBe(ClaimStatus.Pending);
-        claim.IsApproved.ShouldBeFalse();
         claim.CreatedAt.ShouldBeInRange(beforeCreation, afterCreation);
         claim.UpdatedAt.ShouldBeNull();
         claim.ApprovedAt.ShouldBeNull();
         claim.DenialReason.ShouldBeNull();
         claim.PaidAt.ShouldBeNull();
-        claim.Active.ShouldBeTrue();
     }
 
     [Fact(DisplayName = nameof(Deve_IniciarAnalise_Quando_SinistroEstiverPendente))]
@@ -72,7 +70,6 @@ public class ClaimsTests
 
         var after = DateTime.UtcNow;
         claim.Status.ShouldBe(ClaimStatus.Approved);
-        claim.IsApproved.ShouldBeTrue();
         claim.ApprovedAt.ShouldNotBeNull();
         claim.ApprovedAt.Value.ShouldBeInRange(before, after);
         claim.UpdatedAt.ShouldBe(claim.ApprovedAt);
@@ -102,7 +99,6 @@ public class ClaimsTests
 
         claim.Status.ShouldBe(ClaimStatus.Denied);
         claim.DenialReason.ShouldBe("Not covered");
-        claim.IsApproved.ShouldBeFalse();
         claim.UpdatedAt.ShouldNotBeNull();
     }
 

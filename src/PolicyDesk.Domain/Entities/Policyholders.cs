@@ -27,6 +27,7 @@ public class Policyholders : Entity
     public DateTime BirthDate { get; private set; }
     public string Email { get; private set; } = string.Empty;
     public string Phone { get; private set; } = string.Empty;
+    public bool Active { get; private set; } = true;
 
     public void Update(string name, DateTime birthDate, string email, string phone)
     {

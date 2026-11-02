@@ -38,8 +38,6 @@ public class Claim : Entity
     public string? DenialReason { get; private set; }
     public DateTime? PaidAt { get; private set; }
 
-    public bool IsApproved => Status == ClaimStatus.Approved;
-
     public void StartAnalysis()
     {
         EnsureStatus(ClaimStatus.Pending, ResourcesMessageException.CLAIM_MUST_BE_PENDING_FOR_ANALYSIS);

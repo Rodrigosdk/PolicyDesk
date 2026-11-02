@@ -12,7 +12,6 @@ namespace PolicyDesk.Infrastructure;
 
 public static class DependencyInjectionExtension
 {
-    // Nova forma de extension no .net 10
     extension(IServiceCollection services)
     {
         public void AddInfrastructure(IConfiguration configuration)
