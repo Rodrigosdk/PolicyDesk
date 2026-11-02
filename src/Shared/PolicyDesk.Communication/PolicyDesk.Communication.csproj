@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\PolicyDesk.Domain\PolicyDesk.Domain.csproj" />
+      <ProjectReference Include="..\..\Backend\PolicyDesk.Domain\PolicyDesk.Domain.csproj" />
     </ItemGroup>
 
 </Project>

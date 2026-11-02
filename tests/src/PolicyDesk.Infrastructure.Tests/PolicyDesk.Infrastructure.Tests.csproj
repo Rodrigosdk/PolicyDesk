@@ -22,7 +22,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\CommonTestUtilities\CommonTestUtilities.csproj" />
-        <ProjectReference Include="..\..\..\src\PolicyDesk.Infrastructure\PolicyDesk.Infrastructure.csproj" />
+        <ProjectReference Include="..\..\..\src\Backend\PolicyDesk.Infrastructure\PolicyDesk.Infrastructure.csproj" />
     </ItemGroup>
 
 </Project>

@@ -8,8 +8,8 @@
 
     <ItemGroup>
       <ProjectReference Include="..\PolicyDesk.Domain\PolicyDesk.Domain.csproj" />
-      <ProjectReference Include="..\Shared\PolicyDesk.Communication\PolicyDesk.Communication.csproj" />
-      <ProjectReference Include="..\Shared\PolicyDesk.Exception\PolicyDesk.Exception.csproj" />
+      <ProjectReference Include="..\..\Shared\PolicyDesk.Communication\PolicyDesk.Communication.csproj" />
+      <ProjectReference Include="..\..\Shared\PolicyDesk.Exception\PolicyDesk.Exception.csproj" />
     </ItemGroup>
 
     <ItemGroup>

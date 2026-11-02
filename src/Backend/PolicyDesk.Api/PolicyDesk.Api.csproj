@@ -20,7 +20,7 @@
     <ItemGroup>
       <ProjectReference Include="..\PolicyDesk.Application\PolicyDesk.Application.csproj" />
       <ProjectReference Include="..\PolicyDesk.Infrastructure\PolicyDesk.Infrastructure.csproj" />
-      <ProjectReference Include="..\Shared\PolicyDesk.Exception\PolicyDesk.Exception.csproj" />
+      <ProjectReference Include="..\..\Shared\PolicyDesk.Exception\PolicyDesk.Exception.csproj" />
     </ItemGroup>
 
 </Project>
