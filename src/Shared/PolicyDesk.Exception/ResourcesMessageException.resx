@@ -126,4 +126,7 @@
     <data name="CONCURRENCY_CONFLICT" xml:space="preserve">
         <value>O registro foi alterado por outra operação. Consulte novamente e repita a solicitação.</value>
     </data>
+    <data name="POLICY_REQUIRED" xml:space="preserve">
+        <value>A apólice é obrigatória.</value>
+    </data>
 </root>

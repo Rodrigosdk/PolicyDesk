@@ -260,5 +260,11 @@ namespace PolicyDesk.Exception {
                 return ResourceManager.GetString("CONCURRENCY_CONFLICT", resourceCulture);
             }
         }
+
+        public static string POLICY_REQUIRED {
+            get {
+                return ResourceManager.GetString("POLICY_REQUIRED", resourceCulture);
+            }
+        }
     }
 }
