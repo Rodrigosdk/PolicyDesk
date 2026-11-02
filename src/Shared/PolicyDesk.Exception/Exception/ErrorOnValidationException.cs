@@ -1,13 +1,13 @@
 namespace PolicyDesk.Exception.Exception;
 
-public class ErrorOnValidationException(List<string> message) : PolicyDeskException
+public class ErrorOnValidationException(List<string> errors) : PolicyDeskException(string.Join("; ", errors))
 {
-    public ErrorOnValidationException(string message) : this([message])
+    public ErrorOnValidationException(string error) : this([error])
     {
     }
 
     public List<string> GetErrors()
     {
-        return message;
+        return errors;
     }
 }
