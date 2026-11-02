@@ -20,6 +20,10 @@ public class ExceptionFilter : IExceptionFilter
                 context.HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
                 context.Result = new NotFoundObjectResult(new ResponseErrorJson(notFoundException.Message));
                 break;
+            case ConflictException conflictException:
+                context.HttpContext.Response.StatusCode = StatusCodes.Status409Conflict;
+                context.Result = new ConflictObjectResult(new ResponseErrorJson(conflictException.Message));
+                break;
             default:
                 context.HttpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 context.Result = new ObjectResult(new ResponseErrorJson(ResourcesMessageException.UNKNOWN_ERROR));
