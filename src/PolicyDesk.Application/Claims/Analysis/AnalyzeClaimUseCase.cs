@@ -1,4 +1,3 @@
-using PolicyDesk.Domain.Enums;
 using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Claims;
 using PolicyDesk.Exception;
@@ -14,8 +13,6 @@ internal class AnalyzeClaimUseCase(
     {
         var claim = await claimsReadOnlyRepository.GetById(claimId)
                     ?? throw new NotFoundException(ResourcesMessageException.CLAIM_NOT_FOUND);
-        if (claim.Status != ClaimStatus.Pending)
-            throw new ErrorOnValidationException(ResourcesMessageException.CLAIM_MUST_BE_PENDING_FOR_ANALYSIS);
 
         claim.StartAnalysis();
         await unitOfWork.Commit();

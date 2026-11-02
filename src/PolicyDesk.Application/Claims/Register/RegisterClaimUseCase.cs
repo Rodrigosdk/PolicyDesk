@@ -56,6 +56,8 @@ internal class RegisterClaimUseCase(
 
         if (request.OccurredOn == default)
             errors.Add(ResourcesMessageException.CLAIM_OCCURRENCE_DATE_REQUIRED);
+        else if (request.OccurredOn.Date > DateTime.UtcNow.Date)
+            errors.Add(ResourcesMessageException.CLAIM_OCCURRENCE_DATE_IN_FUTURE);
 
         if (errors.Count > 0)
             throw new ErrorOnValidationException(errors);

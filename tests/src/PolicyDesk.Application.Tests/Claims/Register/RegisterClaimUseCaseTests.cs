@@ -6,6 +6,7 @@ using PolicyDesk.Application.Claims.Register;
 using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Claims;
+using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 using Shouldly;
 
@@ -60,18 +61,51 @@ public class RegisterClaimUseCaseTests
 
     [Theory(DisplayName = nameof(Deve_LancarValidacaoSemSalvar_Quando_DataEstiverForaDaVigencia))]
     [Trait("Application", "Claims - Register")]
-    [InlineData(-10)]
-    [InlineData(31)]
+    [InlineData(-40)]
+    [InlineData(-5)]
     public async Task Deve_LancarValidacaoSemSalvar_Quando_DataEstiverForaDaVigencia(int dayOffset)
+    {
+        // Vigência inteira no passado: -40 cai antes do início e -5 depois do fim, ambos sem ser data futura
+        var today = DateTime.UtcNow.Date;
+        var policy = PolicyBuilder.Build(startDate: today.AddDays(-30), endDate: today.AddDays(-10));
+        var (useCase, writeRepository, unitOfWork) = CreateUseCase(policy);
+
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(
+            () => useCase.Execute(policy.Id, RequestClaimJsonBuilder.Build(occurredOn: today.AddDays(dayOffset))));
+
+        exception.GetErrors().ShouldBe([ResourcesMessageException.CLAIM_DATE_OUTSIDE_POLICY_PERIOD]);
+        VerifyNothingSaved(writeRepository, unitOfWork);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarValidacaoAntesDaBusca_Quando_DataDeOcorrenciaForFutura))]
+    [Trait("Application", "Claims - Register")]
+    public async Task Deve_LancarValidacaoAntesDaBusca_Quando_DataDeOcorrenciaForFutura()
+    {
+        var policiesRepository = new PoliciesReadOnlyRepositoryBuilder();
+        var writeRepository = ClaimsWriteOnlyRepositoryBuilder.Build();
+        var unitOfWork = UnitOfWorkBuilder.Build();
+        var useCase = new RegisterClaimUseCase(writeRepository.Object, policiesRepository.Build(), unitOfWork.Object);
+        var request = RequestClaimJsonBuilder.Build(occurredOn: DateTime.UtcNow.Date.AddDays(1));
+
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(Guid.NewGuid(), request));
+
+        exception.GetErrors().ShouldBe([ResourcesMessageException.CLAIM_OCCURRENCE_DATE_IN_FUTURE]);
+        policiesRepository.Mock.Verify(repository => repository.GetById(It.IsAny<Guid>()), Times.Never);
+        VerifyNothingSaved(writeRepository, unitOfWork);
+    }
+
+    [Fact(DisplayName = nameof(Deve_RegistrarSinistro_Quando_OcorrenciaForHoje))]
+    [Trait("Application", "Claims - Register")]
+    public async Task Deve_RegistrarSinistro_Quando_OcorrenciaForHoje()
     {
         var today = DateTime.UtcNow.Date;
         var policy = PolicyBuilder.Build(startDate: today.AddDays(-1), endDate: today.AddDays(30));
         var (useCase, writeRepository, unitOfWork) = CreateUseCase(policy);
 
-        await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.Execute(policy.Id, RequestClaimJsonBuilder.Build(occurredOn: today.AddDays(dayOffset))));
+        await useCase.Execute(policy.Id, RequestClaimJsonBuilder.Build(occurredOn: today));
 
-        VerifyNothingSaved(writeRepository, unitOfWork);
+        writeRepository.Verify(repository => repository.Add(It.Is<Claim>(claim => claim.OccurredOn == today)), Times.Once);
+        unitOfWork.Verify(work => work.Commit(), Times.Once);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarValidacaoSemSalvar_Quando_ValorExcederCobertura))]
