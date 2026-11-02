@@ -6,9 +6,6 @@ namespace PolicyDesk.Application.Policyholders;
 // Regras comuns ao cadastro e à atualização de segurado
 internal static class PolicyholderDataValidator
 {
-    private const int MinPhoneDigits = 10;
-    private const int MaxPhoneDigits = 11;
-
     public static List<string> Validate(string? name, DateTime birthDate, string? email, string? phone)
     {
         var errors = new List<string>();
@@ -26,7 +23,7 @@ internal static class PolicyholderDataValidator
 
         if (string.IsNullOrWhiteSpace(phone))
             errors.Add(ResourcesMessageException.POLICYHOLDER_PHONE_REQUIRED);
-        else if (phone.Count(char.IsAsciiDigit) is < MinPhoneDigits or > MaxPhoneDigits)
+        else if (!PhoneValidator.IsValid(phone))
             errors.Add(ResourcesMessageException.INVALID_PHONE);
 
         return errors;

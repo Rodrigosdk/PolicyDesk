@@ -64,7 +64,7 @@ public class DenyClaimUseCaseTests
         var claim = ClaimBuilder.Build();
         var (useCase, unitOfWork) = CreateUseCase(claim);
 
-        await Should.ThrowAsync<ErrorOnValidationException>(
+        await Should.ThrowAsync<DomainRuleException>(
             () => useCase.Execute(claim.Id, new RequestDenyClaimJson { Motivo = "Reason" }));
 
         claim.Status.ShouldBe(ClaimStatus.Pending);
