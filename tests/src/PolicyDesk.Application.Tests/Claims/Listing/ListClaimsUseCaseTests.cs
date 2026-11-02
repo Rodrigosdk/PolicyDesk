@@ -1,0 +1,91 @@
+using CommonTestUtilities.Entities;
+using CommonTestUtilities.Repositories;
+using Moq;
+using PolicyDesk.Application.Claims.Listing;
+using PolicyDesk.Domain.Entities;
+using PolicyDesk.Domain.Enums;
+using PolicyDesk.Exception.Exception;
+using Shouldly;
+
+namespace PolicyDesk.Application.Tests.Claims.Listing;
+
+public class ListClaimsUseCaseTests
+{
+    [Fact(DisplayName = nameof(Deve_ListarSinistrosDaApolice_Quando_ApoliceExistir))]
+    [Trait("Application", "Claims - Listing")]
+    public async Task Deve_ListarSinistrosDaApolice_Quando_ApoliceExistir()
+    {
+        var policy = PolicyBuilder.Build();
+        var claims = new[]
+        {
+            ClaimBuilder.Build(policy.Id),
+            ClaimBuilder.Build(policy.Id)
+        };
+        claims[1].StartAnalysis();
+        var useCase = CreateUseCase(policy, claims);
+
+        var result = (await useCase.ListByPolicy(policy.Id)).ToList();
+
+        result.Select(claim => claim.Id).ShouldBe(claims.Select(claim => claim.Id));
+        result.ShouldAllBe(claim => claim.ApoliceId == policy.Id);
+        result[1].Status.ShouldBe(ClaimStatus.InAnalysis.ToString());
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarNaoEncontrado_Quando_ListarDeApoliceInexistente))]
+    [Trait("Application", "Claims - Listing")]
+    public async Task Deve_LancarNaoEncontrado_Quando_ListarDeApoliceInexistente()
+    {
+        var useCase = CreateUseCase();
+
+        await Should.ThrowAsync<NotFoundException>(() => useCase.ListByPolicy(Guid.NewGuid()));
+    }
+
+    [Fact(DisplayName = nameof(Deve_RetornarSinistroMapeado_Quando_BuscarPorId))]
+    [Trait("Application", "Claims - Listing")]
+    public async Task Deve_RetornarSinistroMapeado_Quando_BuscarPorId()
+    {
+        var claim = ClaimBuilder.Build(description: "Fire", amount: 2000);
+        claim.StartAnalysis();
+        claim.Deny("No coverage");
+        var useCase = CreateUseCase(claim: claim);
+
+        var result = await useCase.GetById(claim.Id);
+
+        result.Id.ShouldBe(claim.Id);
+        result.ApoliceId.ShouldBe(claim.PolicyId);
+        result.Descricao.ShouldBe("Fire");
+        result.Valor.ShouldBe(2000);
+        result.DataOcorrencia.ShouldBe(claim.OccurredOn);
+        result.Status.ShouldBe(ClaimStatus.Denied.ToString());
+        result.MotivoNegacao.ShouldBe("No coverage");
+        result.DataAprovacao.ShouldBeNull();
+        result.DataPagamento.ShouldBeNull();
+        result.CreatedAt.ShouldBe(claim.CreatedAt);
+        result.UpdatedAt.ShouldBe(claim.UpdatedAt);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarNaoEncontrado_Quando_BuscarSinistroInexistente))]
+    [Trait("Application", "Claims - Listing")]
+    public async Task Deve_LancarNaoEncontrado_Quando_BuscarSinistroInexistente()
+    {
+        var useCase = CreateUseCase();
+
+        await Should.ThrowAsync<NotFoundException>(() => useCase.GetById(Guid.NewGuid()));
+    }
+
+    private static ListClaimsUseCase CreateUseCase(
+        Policy? policy = null,
+        IEnumerable<Claim>? claims = null,
+        Claim? claim = null)
+    {
+        var claimsRepository = new ClaimsReadOnlyRepositoryBuilder();
+        if (claims is not null)
+            claimsRepository.GetByPolicyId(claims);
+        if (claim is not null)
+            claimsRepository.GetById(claim);
+        var policiesRepository = new PoliciesReadOnlyRepositoryBuilder();
+        if (policy is not null)
+            policiesRepository.GetById(policy);
+        return new ListClaimsUseCase(claimsRepository.Build(), policiesRepository.Build());
+    }
+}
