@@ -57,7 +57,7 @@ public class DeactivatePolicyholderUseCaseTests
     {
         var readBuilder = new PolicyholdersReadOnlyRepositoryBuilder();
         if (policyholder is not null)
-            readBuilder.GetById(policyholder).HasActivePolicy(policyholder.Id, hasActivePolicy);
+            readBuilder.GetById(policyholder).HasActiveOrFuturePolicy(policyholder.Id, hasActivePolicy);
 
         var unitOfWork = UnitOfWorkBuilder.Build();
 

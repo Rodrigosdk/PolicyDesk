@@ -40,6 +40,8 @@ public class RegisterPolicyUseCaseTests
             policy.StartDate == request.StartDate.Date &&
             policy.EndDate == request.EndDate.Date)), Times.Once);
         unitOfWork.Verify(work => work.Commit(), Times.Once);
+        // O segurado é alterado junto para que uma inativação concorrente seja detectada como conflito
+        policyholder.UpdatedAt.ShouldNotBeNull();
     }
 
     [Fact(DisplayName = nameof(Deve_LancarNaoEncontradoSemSalvar_Quando_SeguradoNaoExistir))]

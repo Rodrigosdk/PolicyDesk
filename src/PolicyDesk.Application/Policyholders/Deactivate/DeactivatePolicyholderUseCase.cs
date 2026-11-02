@@ -17,7 +17,7 @@ internal class DeactivatePolicyholderUseCase(
             throw new NotFoundException(ResourcesMessageException.POLICYHOLDER_NOT_FOUND);
         }
 
-        if (await policyholdersReadOnlyRepository.HasActivePolicy(policyholderId))
+        if (await policyholdersReadOnlyRepository.HasActiveOrFuturePolicy(policyholderId))
         {
             throw new ErrorOnValidationException(ResourcesMessageException.POLICYHOLDER_HAS_ACTIVE_POLICY);
         }

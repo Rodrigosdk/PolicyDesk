@@ -34,6 +34,8 @@ internal class RegisterPolicyUseCase(
             request.StartDate,
             request.EndDate);
 
+        policyholder.RegisterPolicy();
+
         await policiesWriteOnlyRepository.Add(policy);
         await unitOfWork.Commit();
 
