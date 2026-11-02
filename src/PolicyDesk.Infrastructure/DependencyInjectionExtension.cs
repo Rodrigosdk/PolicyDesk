@@ -27,7 +27,14 @@ public static class DependencyInjectionExtension
             services.AddDbContext<PolicyDeskDbContext>(config =>
             {
                 var connectionString = configuration.GetConnectionString("DbConnection");
-                
+                if (string.IsNullOrWhiteSpace(connectionString))
+                {
+                    throw new InvalidOperationException(
+                        "ConnectionStrings:DbConnection não configurada. Informe-a via User Secrets " +
+                        "(dotnet user-secrets set \"ConnectionStrings:DbConnection\" \"...\") " +
+                        "ou pela variável de ambiente ConnectionStrings__DbConnection.");
+                }
+
                 config.UseNpgsql(connectionString);
             });
             
