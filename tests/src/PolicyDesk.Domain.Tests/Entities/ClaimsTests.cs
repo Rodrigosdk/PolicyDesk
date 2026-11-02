@@ -163,6 +163,51 @@ public class ClaimsTests
             ResourcesMessageException.CLAIM_MUST_BE_APPROVED_FOR_PAYMENT);
     }
 
+    [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_InstanciarComDescricaoVazia))]
+    [Trait("Domain", "Claims - Instancia")]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Deve_LancarExcecao_Quando_InstanciarComDescricaoVazia(string? description)
+    {
+        var exception = Should.Throw<DomainRuleException>(
+            () => new Claim(Guid.NewGuid(), description!, 100, DateTime.UtcNow.Date));
+
+        exception.Message.ShouldBe(ResourcesMessageException.DESCRIPTION_REQUIRED);
+    }
+
+    [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_InstanciarComValorNaoPositivo))]
+    [Trait("Domain", "Claims - Instancia")]
+    [InlineData(0)]
+    [InlineData(-0.01)]
+    public void Deve_LancarExcecao_Quando_InstanciarComValorNaoPositivo(decimal amount)
+    {
+        var exception = Should.Throw<DomainRuleException>(
+            () => new Claim(Guid.NewGuid(), "Description", amount, DateTime.UtcNow.Date));
+
+        exception.Message.ShouldBe(ResourcesMessageException.CLAIM_AMOUNT_MUST_BE_POSITIVE);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarExcecao_Quando_InstanciarSemApolice))]
+    [Trait("Domain", "Claims - Instancia")]
+    public void Deve_LancarExcecao_Quando_InstanciarSemApolice()
+    {
+        var exception = Should.Throw<DomainRuleException>(
+            () => new Claim(Guid.Empty, "Description", 100, DateTime.UtcNow.Date));
+
+        exception.Message.ShouldBe(ResourcesMessageException.POLICY_REQUIRED);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarExcecao_Quando_InstanciarSemDataDeOcorrencia))]
+    [Trait("Domain", "Claims - Instancia")]
+    public void Deve_LancarExcecao_Quando_InstanciarSemDataDeOcorrencia()
+    {
+        var exception = Should.Throw<DomainRuleException>(
+            () => new Claim(Guid.NewGuid(), "Description", 100, default));
+
+        exception.Message.ShouldBe(ResourcesMessageException.CLAIM_OCCURRENCE_DATE_REQUIRED);
+    }
+
     // Verifica que a transição é rejeitada com a mensagem esperada e que nenhum campo foi alterado
     private static void ShouldRejectTransition(ClaimStatus status, Action<Claim> transition, string expectedError)
     {
@@ -172,9 +217,9 @@ public class ClaimsTests
         var denialReason = claim.DenialReason;
         var paidAt = claim.PaidAt;
 
-        var exception = Should.Throw<ErrorOnValidationException>(() => transition(claim));
+        var exception = Should.Throw<DomainRuleException>(() => transition(claim));
 
-        exception.GetErrors().ShouldBe([expectedError]);
+        exception.Message.ShouldBe(expectedError);
         claim.Status.ShouldBe(status);
         claim.UpdatedAt.ShouldBe(updatedAt);
         claim.ApprovedAt.ShouldBe(approvedAt);

@@ -1,4 +1,5 @@
 using CommonTestUtilities.Entities;
+using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Enums;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
@@ -93,11 +94,36 @@ public class PoliciesTests
         policy.Cancel();
         var cancelledAt = policy.CancelledAt;
 
-        var exception = Should.Throw<ErrorOnValidationException>(() => policy.Cancel());
+        var exception = Should.Throw<DomainRuleException>(() => policy.Cancel());
 
-        exception.GetErrors().ShouldBe([ResourcesMessageException.POLICY_ALREADY_CANCELLED]);
+        exception.Message.ShouldBe(ResourcesMessageException.POLICY_ALREADY_CANCELLED);
         policy.Status.ShouldBe(PolicyStatus.Cancelled);
         policy.CancelledAt.ShouldBe(cancelledAt);
         policy.UpdatedAt.ShouldBe(cancelledAt);
+    }
+
+    [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_InstanciarComDadosInvalidos))]
+    [Trait("Domain", "Policies - Instancia")]
+    [InlineData("policyholder", "POLICYHOLDER_REQUIRED")]
+    [InlineData("description", "DESCRIPTION_REQUIRED")]
+    [InlineData("coverage", "COVERAGE_AMOUNT_MUST_BE_POSITIVE")]
+    [InlineData("premium", "PREMIUM_AMOUNT_MUST_BE_POSITIVE")]
+    [InlineData("dates", "POLICY_DATES_REQUIRED")]
+    [InlineData("endBeforeStart", "POLICY_END_DATE_MUST_BE_AFTER_START_DATE")]
+    public void Deve_LancarExcecao_Quando_InstanciarComDadosInvalidos(string invalidField, string expectedMessageKey)
+    {
+        // InlineData só aceita constantes: o campo inválido chega como texto e o valor é montado aqui
+        var today = DateTime.UtcNow.Date;
+        var policyholderId = invalidField == "policyholder" ? Guid.Empty : Guid.NewGuid();
+        var description = invalidField == "description" ? "   " : "Home coverage";
+        var coverage = invalidField == "coverage" ? 0m : 10000m;
+        var premium = invalidField == "premium" ? -1m : 100m;
+        var startDate = invalidField == "dates" ? default : today;
+        var endDate = invalidField == "endBeforeStart" ? today : today.AddDays(30);
+
+        var exception = Should.Throw<DomainRuleException>(
+            () => new Policy(policyholderId, description, coverage, premium, startDate, endDate));
+
+        exception.Message.ShouldBe(ResourcesMessageException.ResourceManager.GetString(expectedMessageKey));
     }
 }

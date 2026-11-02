@@ -1,5 +1,6 @@
 using System.Net.Mail;
 using PolicyDesk.Exception;
+using PolicyDesk.Exception.Exception;
 
 namespace PolicyDesk.Domain.Validations;
 
@@ -34,7 +35,7 @@ public static class EmailValidator
         var normalized = Normalize(email);
 
         return !IsValid(normalized) 
-            ? throw new ArgumentException(ResourcesMessageException.INVALID_EMAIL_ARGUMENT, nameof(email))
+            ? throw new DomainRuleException(ResourcesMessageException.INVALID_EMAIL_ARGUMENT)
             : normalized;
     }
 }

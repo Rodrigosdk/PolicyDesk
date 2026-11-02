@@ -1,4 +1,5 @@
 using PolicyDesk.Domain.Validations;
+using PolicyDesk.Exception.Exception;
 using Shouldly;
 
 namespace PolicyDesk.Domain.Tests.Validations;
@@ -57,6 +58,6 @@ public class EmailValidatorTests
     [InlineData(null)]
     public void Deve_LancarExcecao_Quando_EmailForInvalido(string? email)
     {
-        Should.Throw<ArgumentException>(() => EmailValidator.NormalizeOrThrow(email));
+        Should.Throw<DomainRuleException>(() => EmailValidator.NormalizeOrThrow(email));
     }
 }

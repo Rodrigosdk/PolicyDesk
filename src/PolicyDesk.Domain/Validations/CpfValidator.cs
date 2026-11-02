@@ -1,4 +1,5 @@
 using PolicyDesk.Exception;
+using PolicyDesk.Exception.Exception;
 
 namespace PolicyDesk.Domain.Validations;
 
@@ -30,7 +31,7 @@ public static class CpfValidator
         var digits = Normalize(cpf);
 
         return !IsValid(digits) 
-            ? throw new ArgumentException(ResourcesMessageException.INVALID_CPF, nameof(cpf))
+            ? throw new DomainRuleException(ResourcesMessageException.INVALID_CPF)
             : digits;
     }
 

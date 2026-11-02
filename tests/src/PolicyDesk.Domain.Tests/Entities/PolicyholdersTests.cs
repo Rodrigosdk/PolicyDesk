@@ -1,4 +1,6 @@
 using CommonTestUtilities.Entities;
+using PolicyDesk.Exception;
+using PolicyDesk.Exception.Exception;
 using Shouldly;
 using PolicyDesk.Domain.Entities;
 
@@ -57,7 +59,7 @@ public class PolicyholdersTests
     [InlineData("   ")]
     public void Deve_LancarExcecao_Quando_NomeForVazio(string? name)
     {
-        Should.Throw<ArgumentException>(() => new Policyholders(name!, ValidCpf, ValidBirthDate, ValidEmail, ValidPhone));
+        Should.Throw<DomainRuleException>(() => new Policyholders(name!, ValidCpf, ValidBirthDate, ValidEmail, ValidPhone));
     }
 
     [Theory(DisplayName = nameof(Deve_ArmazenarSomenteDigitos_Quando_CpfTiverMascara))]
@@ -78,7 +80,7 @@ public class PolicyholdersTests
     [InlineData("111.111.111-11")]
     public void Deve_LancarExcecao_Quando_CpfForInvalido(string cpf)
     {
-        Should.Throw<ArgumentException>(() => CreatePolicyholder(cpf: cpf));
+        Should.Throw<DomainRuleException>(() => CreatePolicyholder(cpf: cpf));
     }
 
     [Fact(DisplayName = nameof(Deve_NormalizarEmail_Quando_Instanciar))]
@@ -97,7 +99,7 @@ public class PolicyholdersTests
     [InlineData("john@@example.com")]
     public void Deve_LancarExcecao_Quando_InstanciarComEmailInvalido(string email)
     {
-        Should.Throw<ArgumentException>(() => CreatePolicyholder(email: email));
+        Should.Throw<DomainRuleException>(() => CreatePolicyholder(email: email));
     }
 
     [Fact(DisplayName = nameof(Deve_AtualizarOsDados_Quando_DadosForemValidos))]
@@ -148,7 +150,7 @@ public class PolicyholdersTests
     {
         var policyholder = CreatePolicyholder(ValidName, birthDate: ValidBirthDate, email: ValidEmail, phone: ValidPhone);
 
-        Should.Throw<ArgumentException>(() =>
+        Should.Throw<DomainRuleException>(() =>
             policyholder.Update("Jane Doe", new DateTime(1991, 2, 2), "invalido", "(83) 9 1234-5678"));
 
         policyholder.Name.ShouldBe(ValidName);
@@ -167,8 +169,73 @@ public class PolicyholdersTests
     {
         var policyholder = CreatePolicyholder(ValidName, birthDate: ValidBirthDate, email: ValidEmail, phone: ValidPhone);
 
-        Should.Throw<ArgumentException>(() =>
+        Should.Throw<DomainRuleException>(() =>
             policyholder.Update(name!, new DateTime(1991, 2, 2), "jane.doe@example.com", "(83) 9 1234-5678"));
+
+        policyholder.Name.ShouldBe(ValidName);
+        policyholder.BirthDate.ShouldBe(ValidBirthDate);
+        policyholder.Email.ShouldBe(ValidEmail);
+        policyholder.Phone.ShouldBe(ValidPhone);
+        policyholder.UpdatedAt.ShouldBeNull();
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarExcecao_Quando_InstanciarSemDataDeNascimento))]
+    [Trait("Domain", "Policyholders - Nascimento")]
+    public void Deve_LancarExcecao_Quando_InstanciarSemDataDeNascimento()
+    {
+        var exception = Should.Throw<DomainRuleException>(
+            () => new Policyholders(ValidName, ValidCpf, default, ValidEmail, ValidPhone));
+
+        exception.Message.ShouldBe(ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_REQUIRED);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarExcecao_Quando_InstanciarComDataDeNascimentoFutura))]
+    [Trait("Domain", "Policyholders - Nascimento")]
+    public void Deve_LancarExcecao_Quando_InstanciarComDataDeNascimentoFutura()
+    {
+        var exception = Should.Throw<DomainRuleException>(
+            () => new Policyholders(ValidName, ValidCpf, DateTime.UtcNow.Date.AddDays(1), ValidEmail, ValidPhone));
+
+        exception.Message.ShouldBe(ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_IN_FUTURE);
+    }
+
+    [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_InstanciarSemTelefone))]
+    [Trait("Domain", "Policyholders - Telefone")]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Deve_LancarExcecao_Quando_InstanciarSemTelefone(string? phone)
+    {
+        var exception = Should.Throw<DomainRuleException>(
+            () => new Policyholders(ValidName, ValidCpf, ValidBirthDate, ValidEmail, phone!));
+
+        exception.Message.ShouldBe(ResourcesMessageException.POLICYHOLDER_PHONE_REQUIRED);
+    }
+
+    [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_InstanciarComTelefoneInvalido))]
+    [Trait("Domain", "Policyholders - Telefone")]
+    [InlineData("123")]
+    [InlineData("(83) 8647-168")]
+    [InlineData("(83) 9 8647-16871")]
+    public void Deve_LancarExcecao_Quando_InstanciarComTelefoneInvalido(string phone)
+    {
+        var exception = Should.Throw<DomainRuleException>(
+            () => new Policyholders(ValidName, ValidCpf, ValidBirthDate, ValidEmail, phone));
+
+        exception.Message.ShouldBe(ResourcesMessageException.INVALID_PHONE);
+    }
+
+    [Theory(DisplayName = nameof(Deve_ManterOsDados_Quando_AtualizarComNascimentoOuTelefoneInvalido))]
+    [Trait("Domain", "Policyholders - Update")]
+    [InlineData(true, "(83) 9 1234-5678")]   // nascimento futuro
+    [InlineData(false, "123")]               // telefone inválido
+    public void Deve_ManterOsDados_Quando_AtualizarComNascimentoOuTelefoneInvalido(bool futureBirthDate, string phone)
+    {
+        var policyholder = CreatePolicyholder(ValidName, birthDate: ValidBirthDate, email: ValidEmail, phone: ValidPhone);
+        var birthDate = futureBirthDate ? DateTime.UtcNow.Date.AddDays(1) : new DateTime(1991, 2, 2);
+
+        Should.Throw<DomainRuleException>(() =>
+            policyholder.Update("Jane Doe", birthDate, "jane.doe@example.com", phone));
 
         policyholder.Name.ShouldBe(ValidName);
         policyholder.BirthDate.ShouldBe(ValidBirthDate);

@@ -5,17 +5,34 @@ using PolicyDesk.Exception.Exception;
 
 namespace PolicyDesk.Domain.Entities;
 
-public class Claim(
-    Guid policyId,
-    string description,
-    decimal amount,
-    DateTime occurredOn
-    ) : Entity
+public class Claim : Entity
 {
-    public Guid PolicyId { get; private set; } = policyId;
-    public string Description { get; private set; } = description.Trim();
-    public decimal Amount { get; private set; } = amount;
-    public DateTime OccurredOn { get; private set; } = occurredOn.Date;
+    public Claim(Guid policyId, string description, decimal amount, DateTime occurredOn)
+    {
+        if (policyId == Guid.Empty)
+            throw new DomainRuleException(ResourcesMessageException.POLICY_REQUIRED);
+        if (string.IsNullOrWhiteSpace(description))
+            throw new DomainRuleException(ResourcesMessageException.DESCRIPTION_REQUIRED);
+        if (amount <= 0)
+            throw new DomainRuleException(ResourcesMessageException.CLAIM_AMOUNT_MUST_BE_POSITIVE);
+        if (occurredOn == default)
+            throw new DomainRuleException(ResourcesMessageException.CLAIM_OCCURRENCE_DATE_REQUIRED);
+
+        PolicyId = policyId;
+        Description = description.Trim();
+        Amount = amount;
+        OccurredOn = occurredOn.Date;
+    }
+
+    // Usado pelo EF Core ao carregar do banco: não reaplica as regras de criação
+    private Claim()
+    {
+    }
+
+    public Guid PolicyId { get; private set; }
+    public string Description { get; private set; } = string.Empty;
+    public decimal Amount { get; private set; }
+    public DateTime OccurredOn { get; private set; }
     public ClaimStatus Status { get; private set; } = ClaimStatus.Pending;
     public DateTime? ApprovedAt { get; private set; }
     public string? DenialReason { get; private set; }
@@ -43,7 +60,7 @@ public class Claim(
     public void Deny(string reason)
     {
         if (string.IsNullOrWhiteSpace(reason))
-            throw new ErrorOnValidationException(ResourcesMessageException.CLAIM_DENIAL_REASON_REQUIRED);
+            throw new DomainRuleException(ResourcesMessageException.CLAIM_DENIAL_REASON_REQUIRED);
 
         EnsureStatus(ClaimStatus.InAnalysis, ResourcesMessageException.CLAIM_MUST_BE_IN_ANALYSIS_FOR_DENIAL);
 
@@ -64,6 +81,6 @@ public class Claim(
     private void EnsureStatus(ClaimStatus expected, string error)
     {
         if (Status != expected)
-            throw new ErrorOnValidationException(error);
+            throw new DomainRuleException(error);
     }
 }
