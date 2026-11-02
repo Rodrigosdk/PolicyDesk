@@ -1,5 +1,7 @@
 using CommonTestUtilities.Entities;
 using PolicyDesk.Domain.Enums;
+using PolicyDesk.Exception;
+using PolicyDesk.Exception.Exception;
 using Shouldly;
 
 namespace PolicyDesk.Domain.Tests.Entities;
@@ -81,5 +83,21 @@ public class PoliciesTests
         policy.CancelledAt.ShouldNotBeNull();
         policy.CancelledAt.Value.ShouldBeInRange(beforeCancellation, afterCancellation);
         policy.UpdatedAt.ShouldBe(policy.CancelledAt);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarExcecaoSemAlterarDatas_Quando_CancelarApoliceJaCancelada))]
+    [Trait("Domain", "Policies - Cancelamento")]
+    public void Deve_LancarExcecaoSemAlterarDatas_Quando_CancelarApoliceJaCancelada()
+    {
+        var policy = PolicyBuilder.Build();
+        policy.Cancel();
+        var cancelledAt = policy.CancelledAt;
+
+        var exception = Should.Throw<ErrorOnValidationException>(() => policy.Cancel());
+
+        exception.GetErrors().ShouldBe([ResourcesMessageException.POLICY_ALREADY_CANCELLED]);
+        policy.Status.ShouldBe(PolicyStatus.Cancelled);
+        policy.CancelledAt.ShouldBe(cancelledAt);
+        policy.UpdatedAt.ShouldBe(cancelledAt);
     }
 }
