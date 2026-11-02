@@ -1,12 +1,14 @@
 using PolicyDesk.Domain.Enums;
 using PolicyDesk.Domain.SeedWorks;
+using PolicyDesk.Exception;
+using PolicyDesk.Exception.Exception;
 
 namespace PolicyDesk.Domain.Entities;
 
 public class Claim(
-    Guid policyId, 
-    string description, 
-    decimal amount, 
+    Guid policyId,
+    string description,
+    decimal amount,
     DateTime occurredOn
     ) : Entity
 {
@@ -23,12 +25,16 @@ public class Claim(
 
     public void StartAnalysis()
     {
+        EnsureStatus(ClaimStatus.Pending, ResourcesMessageException.CLAIM_MUST_BE_PENDING_FOR_ANALYSIS);
+
         Status = ClaimStatus.InAnalysis;
         UpdatedAt = DateTime.UtcNow;
     }
 
     public void Approve()
     {
+        EnsureStatus(ClaimStatus.InAnalysis, ResourcesMessageException.CLAIM_MUST_BE_IN_ANALYSIS_FOR_APPROVAL);
+
         Status = ClaimStatus.Approved;
         ApprovedAt = DateTime.UtcNow;
         UpdatedAt = ApprovedAt;
@@ -36,6 +42,11 @@ public class Claim(
 
     public void Deny(string reason)
     {
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new ErrorOnValidationException(ResourcesMessageException.CLAIM_DENIAL_REASON_REQUIRED);
+
+        EnsureStatus(ClaimStatus.InAnalysis, ResourcesMessageException.CLAIM_MUST_BE_IN_ANALYSIS_FOR_DENIAL);
+
         Status = ClaimStatus.Denied;
         DenialReason = reason.Trim();
         UpdatedAt = DateTime.UtcNow;
@@ -43,8 +54,16 @@ public class Claim(
 
     public void RegisterPayment()
     {
+        EnsureStatus(ClaimStatus.Approved, ResourcesMessageException.CLAIM_MUST_BE_APPROVED_FOR_PAYMENT);
+
         Status = ClaimStatus.Paid;
         PaidAt = DateTime.UtcNow;
         UpdatedAt = PaidAt;
+    }
+
+    private void EnsureStatus(ClaimStatus expected, string error)
+    {
+        if (Status != expected)
+            throw new ErrorOnValidationException(error);
     }
 }
