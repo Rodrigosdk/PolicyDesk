@@ -12,10 +12,12 @@ internal class PolicyDeskDbContext(DbContextOptions options) : DbContext(options
 {
     public DbSet<Policyholders> Policyholders { get; set; }
     public DbSet<Policy> Policies { get; set; }
+    public DbSet<Claim> Claims { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new PolicyholdersMap());
         modelBuilder.ApplyConfiguration(new PolicyMap());
+        modelBuilder.ApplyConfiguration(new ClaimMap());
     }
 }
