@@ -1,0 +1,43 @@
+using PolicyDesk.Communication.Responses;
+using PolicyDesk.Domain.Repositories.Claims;
+using PolicyDesk.Domain.Repositories.Policies;
+using PolicyDesk.Exception;
+using PolicyDesk.Exception.Exception;
+
+namespace PolicyDesk.Application.Claims.Listing;
+
+internal class ListClaimsUseCase(
+    IClaimsReadOnlyRepository claimsReadOnlyRepository,
+    IPoliciesReadOnlyRepository policiesReadOnlyRepository) : IListClaimsUseCase
+{
+    public async Task<IEnumerable<ResponseClaimJson>> ListByPolicy(Guid policyId)
+    {
+        if (await policiesReadOnlyRepository.GetById(policyId) is null)
+            throw new NotFoundException(ResourcesMessageException.POLICY_NOT_FOUND);
+
+        var claims = await claimsReadOnlyRepository.GetByPolicyId(policyId);
+        return claims.Select(MapToResponse);
+    }
+
+    public async Task<ResponseClaimJson> GetById(Guid claimId)
+    {
+        var claim = await claimsReadOnlyRepository.GetById(claimId)
+                    ?? throw new NotFoundException(ResourcesMessageException.CLAIM_NOT_FOUND);
+        return MapToResponse(claim);
+    }
+
+    private static ResponseClaimJson MapToResponse(Domain.Entities.Claim claim) => new()
+    {
+        Id = claim.Id,
+        ApoliceId = claim.PolicyId,
+        Descricao = claim.Description,
+        Valor = claim.Amount,
+        DataOcorrencia = claim.OccurredOn,
+        Status = claim.Status.ToString(),
+        MotivoNegacao = claim.DenialReason,
+        DataAprovacao = claim.ApprovedAt,
+        DataPagamento = claim.PaidAt,
+        CreatedAt = claim.CreatedAt,
+        UpdatedAt = claim.UpdatedAt
+    };
+}

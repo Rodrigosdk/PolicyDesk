@@ -1,5 +1,11 @@
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
+using PolicyDesk.Application.Claims.Analysis;
+using PolicyDesk.Application.Claims.Approve;
+using PolicyDesk.Application.Claims.Deny;
+using PolicyDesk.Application.Claims.Listing;
+using PolicyDesk.Application.Claims.Payment;
+using PolicyDesk.Application.Claims.Register;
 using PolicyDesk.Application.Policies.Cancel;
 using PolicyDesk.Application.Policies.Listing;
 using PolicyDesk.Application.Policies.Register;
@@ -26,5 +32,13 @@ public static class DependencyInjectionExtension
         services.AddScoped<IListPoliciesUseCase, ListPoliciesUseCase>();
         services.AddScoped<IRegisterPolicyUseCase, RegisterPolicyUseCase>();
         services.AddScoped<ICancelPolicyUseCase, CancelPolicyUseCase>();
+
+        // Claims
+        services.AddScoped<IRegisterClaimUseCase, RegisterClaimUseCase>();
+        services.AddScoped<IListClaimsUseCase, ListClaimsUseCase>();
+        services.AddScoped<IAnalyzeClaimUseCase, AnalyzeClaimUseCase>();
+        services.AddScoped<IApproveClaimUseCase, ApproveClaimUseCase>();
+        services.AddScoped<IDenyClaimUseCase, DenyClaimUseCase>();
+        services.AddScoped<IPayClaimUseCase, PayClaimUseCase>();
     }
 }
