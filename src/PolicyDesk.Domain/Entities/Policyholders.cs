@@ -1,5 +1,6 @@
 using PolicyDesk.Domain.SeedWorks;
 using PolicyDesk.Domain.Validations;
+using PolicyDesk.Exception;
 
 namespace PolicyDesk.Domain.Entities;
 
@@ -10,7 +11,7 @@ public class Policyholders(
     string email,
     string phone) : Entity
 {
-    public string Name { get; private set; } = RemoveWhitespace(name);
+    public string Name { get; private set; } = NormalizeNameOrThrow(name);
     public string Cpf { get; private set; } = CpfValidator.NormalizeOrThrow(cpf);
     public DateTime BirthDate { get; private set; } = birthDate;
     public string Email { get; private set; } = EmailValidator.NormalizeOrThrow(email);
@@ -18,9 +19,10 @@ public class Policyholders(
 
     public void Update(string name, DateTime birthDate, string email, string phone)
     {
+        var normalizedName = NormalizeNameOrThrow(name);
         var normalizedEmail = EmailValidator.NormalizeOrThrow(email);
 
-        Name = RemoveWhitespace(name);
+        Name = normalizedName;
         BirthDate = birthDate;
         Email = normalizedEmail;
         Phone = phone;
@@ -34,9 +36,11 @@ public class Policyholders(
     }
     
     
-    private static string RemoveWhitespace(string input)
+    private static string NormalizeNameOrThrow(string? name)
     {
-        return input.Trim();
+        return string.IsNullOrWhiteSpace(name)
+            ? throw new ArgumentException(ResourcesMessageException.POLICYHOLDER_NAME_REQUIRED, nameof(name))
+            : name.Trim();
     }
 
 }
