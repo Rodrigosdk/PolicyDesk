@@ -18,7 +18,7 @@ internal class RegisterPolicyUseCase(
     {
         Validate(request);
 
-        var policyholder = await policyholdersReadOnlyRepository.GetById(request.PolicyholderId)
+        var policyholder = await policyholdersReadOnlyRepository.GetByIdIncludingInactive(request.PolicyholderId)
                            ?? throw new NotFoundException(ResourcesMessageException.POLICYHOLDER_NOT_FOUND);
 
         if (!policyholder.Active)

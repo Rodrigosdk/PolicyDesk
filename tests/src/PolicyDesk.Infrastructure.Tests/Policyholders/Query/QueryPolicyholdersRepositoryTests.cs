@@ -1,5 +1,6 @@
-using Microsoft.EntityFrameworkCore;
 using CommonTestUtilities.Entities;
+using Microsoft.EntityFrameworkCore;
+using PolicyDesk.Infrastructure.DataAccess;
 using Shouldly;
 
 namespace PolicyDesk.Infrastructure.Tests.Policyholders.Query;
@@ -45,6 +46,45 @@ public class QueryPolicyholdersRepositoryTests(PostgreSqlInfrastructureFixture f
         listed.Select(item => item.Id).ShouldBe([id]);
         byId.ShouldNotBeNull();
         byId.Email.ShouldBe("legacy");
+    }
+
+    [Fact(DisplayName = nameof(Deve_RetornarSeguradoInativo_Quando_BuscarIncluindoInativos))]
+    [Trait("Infrastructure", "PolicyholdersRepository - Consulta")]
+    public async Task Deve_RetornarSeguradoInativo_Quando_BuscarIncluindoInativos()
+    {
+        await using var dbContext = await Fixture.CreateCleanDbContextAsync();
+        var repository = CreateRepository(dbContext);
+        var inactive = PolicyholderBuilder.Build();
+        await repository.RegisterOrReactivate(inactive);
+        await DeactivateAndCommit(dbContext, inactive);
+
+        var found = await repository.GetByIdIncludingInactive(inactive.Id);
+        var missing = await repository.GetByIdIncludingInactive(Guid.NewGuid());
+
+        found.ShouldNotBeNull();
+        found.Active.ShouldBeFalse();
+        missing.ShouldBeNull();
+    }
+
+    [Fact(DisplayName = nameof(Deve_RastrearSegurado_Quando_BuscarIncluindoInativos))]
+    [Trait("Infrastructure", "PolicyholdersRepository - Consulta")]
+    public async Task Deve_RastrearSegurado_Quando_BuscarIncluindoInativos()
+    {
+        // O cadastro de apólice altera o segurado retornado; se a consulta não fosse rastreada,
+        // a alteração não seria gravada e a proteção contra inativação concorrente (A13) se perderia
+        await using var dbContext = await Fixture.CreateCleanDbContextAsync();
+        var repository = CreateRepository(dbContext);
+        var policyholder = PolicyholderBuilder.Build();
+        await repository.RegisterOrReactivate(policyholder);
+
+        var found = await repository.GetByIdIncludingInactive(policyholder.Id);
+        found.ShouldNotBeNull();
+        found.RegisterPolicy();
+        await new UnitOfWork(dbContext).Commit();
+
+        await using var verificationContext = Fixture.CreateDbContext();
+        (await verificationContext.Policyholders.AsNoTracking().SingleAsync(p => p.Id == policyholder.Id))
+            .UpdatedAt.ShouldNotBeNull();
     }
 
     [Fact(DisplayName = nameof(Deve_IgnorarSeguradoAtual_Quando_VerificarEmailExistente))]

@@ -59,6 +59,13 @@ internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) :
         return dbContext.Policyholders.FirstOrDefaultAsync(policyholder =>
             policyholder.Id == id && policyholder.Active);
     }
+
+    // Consulta rastreada de propósito: o cadastro de apólice altera o segurado retornado
+    // (RegisterPolicy), e é essa gravação que detecta a inativação concorrente
+    public Task<Policyholders?> GetByIdIncludingInactive(Guid id)
+    {
+        return dbContext.Policyholders.FirstOrDefaultAsync(policyholder => policyholder.Id == id);
+    }
     
     public Task<bool> ExistActivePolicyholdersWithEmail(string email, Guid? exceptPolicyholderId = null)
     {

@@ -65,9 +65,10 @@ public class RegisterPolicyUseCaseTests
         policyholder.Deactivate();
         var (useCase, writeRepository, unitOfWork, _) = CreateUseCase(policyholder);
 
-        await Should.ThrowAsync<ErrorOnValidationException>(
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(
             () => useCase.Execute(RequestPolicyJsonBuilder.Build(policyholder.Id)));
 
+        exception.GetErrors().ShouldBe([ResourcesMessageException.POLICYHOLDER_INACTIVE]);
         writeRepository.Verify(repository => repository.Add(It.IsAny<Policy>()), Times.Never);
         unitOfWork.Verify(work => work.Commit(), Times.Never);
     }
@@ -97,7 +98,7 @@ public class RegisterPolicyUseCaseTests
 
         writeRepository.Verify(repository => repository.Add(It.IsAny<Policy>()), Times.Never);
         unitOfWork.Verify(work => work.Commit(), Times.Never);
-        policyholdersRepository.Verify(repository => repository.GetById(It.IsAny<Guid>()), Times.Never);
+        policyholdersRepository.Verify(repository => repository.GetByIdIncludingInactive(It.IsAny<Guid>()), Times.Never);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarValidacao_Quando_DataFinalNaoForPosteriorAInicial))]
@@ -122,14 +123,14 @@ public class RegisterPolicyUseCaseTests
         CreateUseCase(Policyholder? policyholder = null)
     {
         var writeRepository = PoliciesWriteOnlyRepositoryBuilder.Build();
-        var policyholdersRepository = new Mock<IPolicyholdersReadOnlyRepository>();
+        var policyholdersRepository = new PolicyholdersReadOnlyRepositoryBuilder();
         if (policyholder is not null)
-            policyholdersRepository.Setup(repository => repository.GetById(policyholder.Id)).ReturnsAsync(policyholder);
+            policyholdersRepository.GetByIdIncludingInactive(policyholder);
         var unitOfWork = UnitOfWorkBuilder.Build();
         return (
-            new RegisterPolicyUseCase(writeRepository.Object, policyholdersRepository.Object, unitOfWork.Object),
+            new RegisterPolicyUseCase(writeRepository.Object, policyholdersRepository.Build(), unitOfWork.Object),
             writeRepository,
             unitOfWork,
-            policyholdersRepository);
+            policyholdersRepository.Mock);
     }
 }

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using CommonTestUtilities.Requests;
+using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Communication.Responses;
 using PolicyDesk.Exception;
 using Shouldly;
@@ -55,6 +56,20 @@ public class RegisterPolicyTests(PolicyDeskApplicationFactory factory) : Policie
         var response = await Post("/api/apolices", RequestPolicyJsonBuilder.Build());
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact(DisplayName = nameof(Deve_RetornarBadRequestSemGravar_Quando_SeguradoEstiverInativo))]
+    [Trait("Integration", "Policies - Cadastro")]
+    public async Task Deve_RetornarBadRequestSemGravar_Quando_SeguradoEstiverInativo()
+    {
+        var policyholder = await RegisterPolicyholder();
+        (await Delete($"{RequestUri}/{policyholder.Id}")).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        var response = await Post("/api/apolices", RequestPolicyJsonBuilder.Build(policyholder.Id));
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).ShouldContain(ResourcesMessageException.POLICYHOLDER_INACTIVE);
+        (await DbContext.Policies.AnyAsync(policy => policy.PolicyholderId == policyholder.Id)).ShouldBeFalse();
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarBadRequest_Quando_DataFinalNaoForPosteriorAInicial))]

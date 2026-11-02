@@ -22,6 +22,12 @@ public class PolicyholdersReadOnlyRepositoryBuilder
         return this;
     }
 
+    public PolicyholdersReadOnlyRepositoryBuilder GetByIdIncludingInactive(Policyholder policyholder)
+    {
+        _repository.Setup(r => r.GetByIdIncludingInactive(policyholder.Id)).ReturnsAsync(policyholder);
+        return this;
+    }
+
     public PolicyholdersReadOnlyRepositoryBuilder ExistActiveWithEmail()
     {
         _repository
