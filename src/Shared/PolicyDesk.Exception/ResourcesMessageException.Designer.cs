@@ -218,5 +218,35 @@ namespace PolicyDesk.Exception {
                 return ResourceManager.GetString("INVALID_EMAIL_ARGUMENT", resourceCulture);
             }
         }
+
+        public static string POLICYHOLDER_NAME_REQUIRED {
+            get {
+                return ResourceManager.GetString("POLICYHOLDER_NAME_REQUIRED", resourceCulture);
+            }
+        }
+
+        public static string POLICYHOLDER_BIRTH_DATE_REQUIRED {
+            get {
+                return ResourceManager.GetString("POLICYHOLDER_BIRTH_DATE_REQUIRED", resourceCulture);
+            }
+        }
+
+        public static string POLICYHOLDER_BIRTH_DATE_IN_FUTURE {
+            get {
+                return ResourceManager.GetString("POLICYHOLDER_BIRTH_DATE_IN_FUTURE", resourceCulture);
+            }
+        }
+
+        public static string POLICYHOLDER_PHONE_REQUIRED {
+            get {
+                return ResourceManager.GetString("POLICYHOLDER_PHONE_REQUIRED", resourceCulture);
+            }
+        }
+
+        public static string INVALID_PHONE {
+            get {
+                return ResourceManager.GetString("INVALID_PHONE", resourceCulture);
+            }
+        }
     }
 }

@@ -38,18 +38,17 @@ internal class RegisterPolicyholderUseCase(
     
     private static void ValidateAndThrowOnFailures(RequestPolicyholdersJson request)
     {
-        var validatorCpf = CpfValidator.IsValid(request.Cpf);
-        var validatorEmail = EmailValidator.IsValid(request.Email);
-        
-        if (!validatorCpf)
-        {
-            throw new ErrorOnValidationException(ResourcesMessageException.INVALID_CPF);
-        }
+        var errors = PolicyholderDataValidator.Validate(
+            request.Name,
+            request.BirthDate,
+            request.Email,
+            request.PhoneNumber);
 
-        if (!validatorEmail)
-        {
-            throw new ErrorOnValidationException(ResourcesMessageException.INVALID_EMAIL);
-        }
+        if (!CpfValidator.IsValid(request.Cpf))
+            errors.Insert(0, ResourcesMessageException.INVALID_CPF);
+
+        if (errors.Count > 0)
+            throw new ErrorOnValidationException(errors);
     }
     
 }

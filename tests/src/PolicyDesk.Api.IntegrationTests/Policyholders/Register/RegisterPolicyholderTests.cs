@@ -1,5 +1,6 @@
 using System.Net;
 using CommonTestUtilities.Requests;
+using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Exception;
 using Shouldly;
 
@@ -32,6 +33,36 @@ public class RegisterPolicyholderTests(PolicyDeskApplicationFactory factory) : P
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await response.Content.ReadAsStringAsync()).ShouldContain(ResourcesMessageException.INVALID_CPF);
+    }
+
+    [Fact(DisplayName = nameof(Deve_RetornarBadRequestSemGravar_Quando_NomeForEmBranco))]
+    [Trait("Integration", "Policyholders - Cadastro")]
+    public async Task Deve_RetornarBadRequestSemGravar_Quando_NomeForEmBranco()
+    {
+        var request = RequestPolicyholdersJsonBuilder.Build();
+        request.Name = "   ";
+
+        var response = await Post(RequestUri, request);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).ShouldContain(ResourcesMessageException.POLICYHOLDER_NAME_REQUIRED);
+        (await DbContext.Policyholders.AnyAsync(p => p.Cpf == request.Cpf)).ShouldBeFalse();
+    }
+
+    [Fact(DisplayName = nameof(Deve_RetornarBadRequest_Quando_CamposObrigatoriosForemOmitidos))]
+    [Trait("Integration", "Policyholders - Cadastro")]
+    public async Task Deve_RetornarBadRequest_Quando_CamposObrigatoriosForemOmitidos()
+    {
+        var cpf = CpfGenerator.Generate();
+
+        var response = await Post(RequestUri, new { cpf, email = "omitted.fields@example.com" });
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadAsStringAsync();
+        body.ShouldContain(ResourcesMessageException.POLICYHOLDER_NAME_REQUIRED);
+        body.ShouldContain(ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_REQUIRED);
+        body.ShouldContain(ResourcesMessageException.POLICYHOLDER_PHONE_REQUIRED);
+        (await DbContext.Policyholders.AnyAsync(p => p.Cpf == cpf)).ShouldBeFalse();
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarBadRequest_Quando_CpfJaEstiverAtivo))]

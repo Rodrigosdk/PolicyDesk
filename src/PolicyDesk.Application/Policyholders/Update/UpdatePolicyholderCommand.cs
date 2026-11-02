@@ -27,11 +27,15 @@ internal class UpdatePolicyholderCommand(
     }
     private async Task<Domain.Entities.Policyholders> ValidateAndThrowOnFailures(Guid policyholderId, RequestPolicyholdersUpdateJson request)
     {
-        var validatorEmail = EmailValidator.IsValid(request.Email);
+        var errors = PolicyholderDataValidator.Validate(
+            request.Name,
+            request.BirthDate,
+            request.Email,
+            request.PhoneNumber);
 
-        if (!validatorEmail)
+        if (errors.Count > 0)
         {
-            throw new ErrorOnValidationException(ResourcesMessageException.INVALID_EMAIL);
+            throw new ErrorOnValidationException(errors);
         }
         var policyholder = await policyholdersReadOnlyRepository.GetById(policyholderId);
         
