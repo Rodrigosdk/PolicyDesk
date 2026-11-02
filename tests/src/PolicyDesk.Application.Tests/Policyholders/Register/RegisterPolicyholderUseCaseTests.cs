@@ -2,6 +2,7 @@ using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Requests;
 using Moq;
 using PolicyDesk.Application.Policyholders.Register;
+using PolicyDesk.Communication.Requests;
 using PolicyDesk.Domain.Repositories.Policyholders;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
@@ -73,6 +74,115 @@ public class RegisterPolicyholderUseCaseTests
             : ResourcesMessageException.POLICYHOLDER_ACTIVE_EMAIL_EXISTS;
         exception.GetErrors().ShouldContain(expectedError);
         writeRepository.Verify(r => r.RegisterOrReactivate(It.IsAny<Policyholder>()), Times.Once);
+    }
+
+    [Theory(DisplayName = nameof(Deve_LancarExcecaoSemChamarRepositorio_Quando_NomeForVazio))]
+    [Trait("Application", "Policyholders - Register")]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task Deve_LancarExcecaoSemChamarRepositorio_Quando_NomeForVazio(string? name)
+    {
+        var request = RequestPolicyholdersJsonBuilder.Build();
+        request.Name = name!;
+
+        await ShouldFailWithoutCallingRepository(request, ResourcesMessageException.POLICYHOLDER_NAME_REQUIRED);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarExcecaoSemChamarRepositorio_Quando_DataDeNascimentoNaoForInformada))]
+    [Trait("Application", "Policyholders - Register")]
+    public async Task Deve_LancarExcecaoSemChamarRepositorio_Quando_DataDeNascimentoNaoForInformada()
+    {
+        var request = RequestPolicyholdersJsonBuilder.Build();
+        request.BirthDate = default;
+
+        await ShouldFailWithoutCallingRepository(request, ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_REQUIRED);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarExcecaoSemChamarRepositorio_Quando_DataDeNascimentoForFutura))]
+    [Trait("Application", "Policyholders - Register")]
+    public async Task Deve_LancarExcecaoSemChamarRepositorio_Quando_DataDeNascimentoForFutura()
+    {
+        var request = RequestPolicyholdersJsonBuilder.Build();
+        request.BirthDate = DateTime.UtcNow.Date.AddDays(1);
+
+        await ShouldFailWithoutCallingRepository(request, ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_IN_FUTURE);
+    }
+
+    [Theory(DisplayName = nameof(Deve_LancarExcecaoSemChamarRepositorio_Quando_TelefoneForVazio))]
+    [Trait("Application", "Policyholders - Register")]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task Deve_LancarExcecaoSemChamarRepositorio_Quando_TelefoneForVazio(string? phone)
+    {
+        var request = RequestPolicyholdersJsonBuilder.Build();
+        request.PhoneNumber = phone!;
+
+        await ShouldFailWithoutCallingRepository(request, ResourcesMessageException.POLICYHOLDER_PHONE_REQUIRED);
+    }
+
+    [Theory(DisplayName = nameof(Deve_LancarExcecaoSemChamarRepositorio_Quando_TelefoneTiverQuantidadeDeDigitosInvalida))]
+    [Trait("Application", "Policyholders - Register")]
+    [InlineData("123")]
+    [InlineData("(83) 8647-168")]
+    [InlineData("(83) 9 8647-16871")]
+    [InlineData("telefone")]
+    public async Task Deve_LancarExcecaoSemChamarRepositorio_Quando_TelefoneTiverQuantidadeDeDigitosInvalida(string phone)
+    {
+        var request = RequestPolicyholdersJsonBuilder.Build();
+        request.PhoneNumber = phone;
+
+        await ShouldFailWithoutCallingRepository(request, ResourcesMessageException.INVALID_PHONE);
+    }
+
+    [Theory(DisplayName = nameof(Deve_Registrar_Quando_TelefoneTiverDezOuOnzeDigitos))]
+    [Trait("Application", "Policyholders - Register")]
+    [InlineData("(83) 3333-4444")]
+    [InlineData("(83) 9 8647-1687")]
+    [InlineData("83986471687")]
+    public async Task Deve_Registrar_Quando_TelefoneTiverDezOuOnzeDigitos(string phone)
+    {
+        var writeRepository = PolicyholdersWriteOnlyRepositoryBuilder.Build();
+        var useCase = CreateUseCase(writeRepository);
+        var request = RequestPolicyholdersJsonBuilder.Build();
+        request.PhoneNumber = phone;
+
+        await useCase.Execute(request);
+
+        writeRepository.Verify(r => r.RegisterOrReactivate(It.Is<Policyholder>(p => p.Phone == phone)), Times.Once);
+    }
+
+    [Fact(DisplayName = nameof(Deve_RetornarTodosOsErros_Quando_VariosCamposForemInvalidos))]
+    [Trait("Application", "Policyholders - Register")]
+    public async Task Deve_RetornarTodosOsErros_Quando_VariosCamposForemInvalidos()
+    {
+        var writeRepository = PolicyholdersWriteOnlyRepositoryBuilder.Build();
+        var useCase = CreateUseCase(writeRepository);
+        var request = new RequestPolicyholdersJson { Cpf = "111.111.111-11", Email = "invalid" };
+
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(request));
+
+        exception.GetErrors().ShouldBe(
+        [
+            ResourcesMessageException.INVALID_CPF,
+            ResourcesMessageException.POLICYHOLDER_NAME_REQUIRED,
+            ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_REQUIRED,
+            ResourcesMessageException.INVALID_EMAIL,
+            ResourcesMessageException.POLICYHOLDER_PHONE_REQUIRED
+        ], ignoreOrder: true);
+        writeRepository.Verify(r => r.RegisterOrReactivate(It.IsAny<Policyholder>()), Times.Never);
+    }
+
+    private static async Task ShouldFailWithoutCallingRepository(RequestPolicyholdersJson request, string expectedError)
+    {
+        var writeRepository = PolicyholdersWriteOnlyRepositoryBuilder.Build();
+        var useCase = CreateUseCase(writeRepository);
+
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(request));
+
+        exception.GetErrors().ShouldBe([expectedError]);
+        writeRepository.Verify(r => r.RegisterOrReactivate(It.IsAny<Policyholder>()), Times.Never);
     }
 
     private static RegisterPolicyholderUseCase CreateUseCase(Mock<IPolicyholdersWriteOnlyRepository> writeRepository) =>

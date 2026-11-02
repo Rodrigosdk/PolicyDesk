@@ -3,6 +3,7 @@ using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Requests;
 using Moq;
 using PolicyDesk.Application.Policyholders.Update;
+using PolicyDesk.Communication.Requests;
 using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
@@ -46,6 +47,63 @@ public class UpdatePolicyholderCommandTests
         unitOfWork.Verify(u => u.Commit(), Times.Never);
     }
 
+    [Theory(DisplayName = nameof(Deve_LancarExcecaoAntesDaBusca_Quando_NomeForVazio))]
+    [Trait("Application", "Policyholders - Update")]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task Deve_LancarExcecaoAntesDaBusca_Quando_NomeForVazio(string? name)
+    {
+        var request = RequestPolicyholdersUpdateJsonBuilder.Build();
+        request.Name = name!;
+
+        await ShouldFailBeforeSearching(request, ResourcesMessageException.POLICYHOLDER_NAME_REQUIRED);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarExcecaoAntesDaBusca_Quando_DataDeNascimentoNaoForInformada))]
+    [Trait("Application", "Policyholders - Update")]
+    public async Task Deve_LancarExcecaoAntesDaBusca_Quando_DataDeNascimentoNaoForInformada()
+    {
+        var request = RequestPolicyholdersUpdateJsonBuilder.Build();
+        request.BirthDate = default;
+
+        await ShouldFailBeforeSearching(request, ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_REQUIRED);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarExcecaoAntesDaBusca_Quando_DataDeNascimentoForFutura))]
+    [Trait("Application", "Policyholders - Update")]
+    public async Task Deve_LancarExcecaoAntesDaBusca_Quando_DataDeNascimentoForFutura()
+    {
+        var request = RequestPolicyholdersUpdateJsonBuilder.Build();
+        request.BirthDate = DateTime.UtcNow.Date.AddDays(1);
+
+        await ShouldFailBeforeSearching(request, ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_IN_FUTURE);
+    }
+
+    [Theory(DisplayName = nameof(Deve_LancarExcecaoAntesDaBusca_Quando_TelefoneForVazio))]
+    [Trait("Application", "Policyholders - Update")]
+    [InlineData(null)]
+    [InlineData("")]
+    public async Task Deve_LancarExcecaoAntesDaBusca_Quando_TelefoneForVazio(string? phone)
+    {
+        var request = RequestPolicyholdersUpdateJsonBuilder.Build();
+        request.PhoneNumber = phone!;
+
+        await ShouldFailBeforeSearching(request, ResourcesMessageException.POLICYHOLDER_PHONE_REQUIRED);
+    }
+
+    [Theory(DisplayName = nameof(Deve_LancarExcecaoAntesDaBusca_Quando_TelefoneForInvalido))]
+    [Trait("Application", "Policyholders - Update")]
+    [InlineData("123")]
+    [InlineData("(83) 9 8647-16871")]
+    public async Task Deve_LancarExcecaoAntesDaBusca_Quando_TelefoneForInvalido(string phone)
+    {
+        var request = RequestPolicyholdersUpdateJsonBuilder.Build();
+        request.PhoneNumber = phone;
+
+        await ShouldFailBeforeSearching(request, ResourcesMessageException.INVALID_PHONE);
+    }
+
     [Fact(DisplayName = nameof(Deve_LancarNaoEncontradoSemConfirmar_Quando_SeguradoNaoExistir))]
     [Trait("Application", "Policyholders - Update")]
     public async Task Deve_LancarNaoEncontradoSemConfirmar_Quando_SeguradoNaoExistir()
@@ -80,6 +138,18 @@ public class UpdatePolicyholderCommandTests
         readBuilder.Mock.Verify(
             r => r.ExistActivePolicyholdersWithEmail("taken@example.com", policyholder.Id),
             Times.Once);
+    }
+
+    private static async Task ShouldFailBeforeSearching(RequestPolicyholdersUpdateJson request, string expectedError)
+    {
+        var (command, readBuilder, unitOfWork) = CreateCommand();
+
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(
+            () => command.Execute(Guid.NewGuid(), request));
+
+        exception.GetErrors().ShouldBe([expectedError]);
+        readBuilder.Mock.Verify(r => r.GetById(It.IsAny<Guid>()), Times.Never);
+        unitOfWork.Verify(u => u.Commit(), Times.Never);
     }
 
     private static (UpdatePolicyholderCommand Command, PolicyholdersReadOnlyRepositoryBuilder ReadBuilder, Mock<IUnitOfWork> UnitOfWork)
