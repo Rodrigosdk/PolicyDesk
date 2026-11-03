@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+using PolicyDesk.Application.Logging;
 using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Policyholders;
 using PolicyDesk.Exception;
@@ -7,7 +9,8 @@ namespace PolicyDesk.Application.Policyholders.Deactivate;
 
 internal class DeactivatePolicyholderUseCase(
     IPolicyholdersReadOnlyRepository policyholdersReadOnlyRepository,
-    IUnitOfWork unitOfWork) : IDeactivatePolicyholderUseCase
+    IUnitOfWork unitOfWork,
+    ILogger<DeactivatePolicyholderUseCase> logger) : IDeactivatePolicyholderUseCase
 {
     public async Task Execute(Guid policyholderId)
     {
@@ -25,5 +28,6 @@ internal class DeactivatePolicyholderUseCase(
         policyholder.Deactivate();
         
         await unitOfWork.Commit();
+        logger.PolicyholderDeactivated(policyholder.Id);
     }
 }

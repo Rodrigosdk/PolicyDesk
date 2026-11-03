@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+using PolicyDesk.Application.Logging;
 using PolicyDesk.Communication.Requests;
 using PolicyDesk.Communication.Responses;
 using PolicyDesk.Domain.Entities;
@@ -12,7 +14,8 @@ namespace PolicyDesk.Application.Claims.Register;
 internal class RegisterClaimUseCase(
     IClaimsWriteOnlyRepository claimsWriteOnlyRepository,
     IPoliciesReadOnlyRepository policiesReadOnlyRepository,
-    IUnitOfWork unitOfWork) : IRegisterClaimUseCase
+    IUnitOfWork unitOfWork,
+    ILogger<RegisterClaimUseCase> logger) : IRegisterClaimUseCase
 {
     public async Task<ResponseCreatedJson> Execute(Guid policyId, RequestClaimJson request)
     {
@@ -40,6 +43,7 @@ internal class RegisterClaimUseCase(
 
         await claimsWriteOnlyRepository.Add(claim);
         await unitOfWork.Commit();
+        logger.ClaimRegistered(claim.Id, policy.Id, claim.Amount);
 
         return new ResponseCreatedJson { Id = claim.Id };
     }

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Requests;
 using Moq;
@@ -186,5 +187,5 @@ public class RegisterPolicyholderUseCaseTests
     }
 
     private static RegisterPolicyholderUseCase CreateUseCase(Mock<IPolicyholdersWriteOnlyRepository> writeRepository) =>
-        new(writeRepository.Object);
+        new(writeRepository.Object, NullLogger<RegisterPolicyholderUseCase>.Instance);
 }

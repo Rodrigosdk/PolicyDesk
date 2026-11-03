@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+using PolicyDesk.Application.Logging;
 using PolicyDesk.Communication.Requests;
 using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Policyholders;
@@ -9,7 +11,8 @@ namespace PolicyDesk.Application.Policyholders.Update;
 
 internal class UpdatePolicyholderCommand(
     IPolicyholdersReadOnlyRepository policyholdersReadOnlyRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ILogger<UpdatePolicyholderCommand> logger)
     : IUpdatePolicyholderCommand
 {
     public async Task Execute(Guid policyholderId, RequestPolicyholdersUpdateJson request)
@@ -24,6 +27,7 @@ internal class UpdatePolicyholderCommand(
         );
         
         await unitOfWork.Commit();
+        logger.PolicyholderUpdated(policyholder.Id);
     }
     private async Task<Domain.Entities.Policyholders> ValidateAndThrowOnFailures(Guid policyholderId, RequestPolicyholdersUpdateJson request)
     {

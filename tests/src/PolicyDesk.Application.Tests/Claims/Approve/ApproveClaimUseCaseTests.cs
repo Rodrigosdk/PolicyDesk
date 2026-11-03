@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
 using Moq;
@@ -57,6 +58,6 @@ public class ApproveClaimUseCaseTests
         if (claim is not null)
             repository.GetById(claim);
         var unitOfWork = UnitOfWorkBuilder.Build();
-        return (new ApproveClaimUseCase(repository.Build(), unitOfWork.Object), unitOfWork);
+        return (new ApproveClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<ApproveClaimUseCase>.Instance), unitOfWork);
     }
 }

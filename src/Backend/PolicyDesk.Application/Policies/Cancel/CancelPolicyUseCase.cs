@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+using PolicyDesk.Application.Logging;
 using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Policies;
 using PolicyDesk.Exception;
@@ -7,7 +9,8 @@ namespace PolicyDesk.Application.Policies.Cancel;
 
 internal class CancelPolicyUseCase(
     IPoliciesReadOnlyRepository policiesReadOnlyRepository,
-    IUnitOfWork unitOfWork) : ICancelPolicyUseCase
+    IUnitOfWork unitOfWork,
+    ILogger<CancelPolicyUseCase> logger) : ICancelPolicyUseCase
 {
     public async Task Execute(Guid policyId)
     {
@@ -16,5 +19,6 @@ internal class CancelPolicyUseCase(
 
         policy.Cancel();
         await unitOfWork.Commit();
+        logger.PolicyCancelled(policy.Id);
     }
 }

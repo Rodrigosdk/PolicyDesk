@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+using PolicyDesk.Application.Logging;
 using PolicyDesk.Communication.Requests;
 using PolicyDesk.Domain.Repositories.Policyholders;
 using PolicyDesk.Domain.Validations;
@@ -7,7 +9,8 @@ using PolicyDesk.Exception.Exception;
 namespace PolicyDesk.Application.Policyholders.Register;
 
 internal class RegisterPolicyholderUseCase(
-    IPolicyholdersWriteOnlyRepository policyholdersWriteOnlyRepository) : IRegisterPolicyholderUseCase
+    IPolicyholdersWriteOnlyRepository policyholdersWriteOnlyRepository,
+    ILogger<RegisterPolicyholderUseCase> logger) : IRegisterPolicyholderUseCase
 {
     
     public async Task Execute(RequestPolicyholdersJson request)
@@ -30,6 +33,7 @@ internal class RegisterPolicyholderUseCase(
             case PolicyholderRegistrationResult.ActiveEmailAlreadyExists:
                 throw new ErrorOnValidationException(ResourcesMessageException.POLICYHOLDER_ACTIVE_EMAIL_EXISTS);
             case PolicyholderRegistrationResult.RegisteredOrReactivated:
+                logger.PolicyholderRegisteredOrReactivated();
                 break;
             default:
                 throw new ArgumentOutOfRangeException();

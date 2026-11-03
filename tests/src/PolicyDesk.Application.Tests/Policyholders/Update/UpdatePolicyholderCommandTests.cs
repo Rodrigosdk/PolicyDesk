@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Requests;
@@ -163,6 +164,6 @@ public class UpdatePolicyholderCommandTests
 
         var unitOfWork = UnitOfWorkBuilder.Build();
 
-        return (new UpdatePolicyholderCommand(readBuilder.Build(), unitOfWork.Object), readBuilder, unitOfWork);
+        return (new UpdatePolicyholderCommand(readBuilder.Build(), unitOfWork.Object, NullLogger<UpdatePolicyholderCommand>.Instance), readBuilder, unitOfWork);
     }
 }

@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+using PolicyDesk.Application.Logging;
 using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Claims;
 using PolicyDesk.Exception;
@@ -7,7 +9,8 @@ namespace PolicyDesk.Application.Claims.Analysis;
 
 internal class AnalyzeClaimUseCase(
     IClaimsReadOnlyRepository claimsReadOnlyRepository,
-    IUnitOfWork unitOfWork) : IAnalyzeClaimUseCase
+    IUnitOfWork unitOfWork,
+    ILogger<AnalyzeClaimUseCase> logger) : IAnalyzeClaimUseCase
 {
     public async Task Execute(Guid claimId)
     {
@@ -16,5 +19,6 @@ internal class AnalyzeClaimUseCase(
 
         claim.StartAnalysis();
         await unitOfWork.Commit();
+        logger.ClaimAnalysisStarted(claim.Id);
     }
 }

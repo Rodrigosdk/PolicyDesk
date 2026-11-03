@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Requests;
@@ -84,7 +85,7 @@ public class RegisterClaimUseCaseTests
         var policiesRepository = new PoliciesReadOnlyRepositoryBuilder();
         var writeRepository = ClaimsWriteOnlyRepositoryBuilder.Build();
         var unitOfWork = UnitOfWorkBuilder.Build();
-        var useCase = new RegisterClaimUseCase(writeRepository.Object, policiesRepository.Build(), unitOfWork.Object);
+        var useCase = new RegisterClaimUseCase(writeRepository.Object, policiesRepository.Build(), unitOfWork.Object, NullLogger<RegisterClaimUseCase>.Instance);
         var request = RequestClaimJsonBuilder.Build(occurredOn: DateTime.UtcNow.Date.AddDays(1));
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(Guid.NewGuid(), request));
@@ -137,7 +138,7 @@ public class RegisterClaimUseCaseTests
         var policiesRepository = new PoliciesReadOnlyRepositoryBuilder();
         var writeRepository = ClaimsWriteOnlyRepositoryBuilder.Build();
         var unitOfWork = UnitOfWorkBuilder.Build();
-        var useCase = new RegisterClaimUseCase(writeRepository.Object, policiesRepository.Build(), unitOfWork.Object);
+        var useCase = new RegisterClaimUseCase(writeRepository.Object, policiesRepository.Build(), unitOfWork.Object, NullLogger<RegisterClaimUseCase>.Instance);
         var request = RequestClaimJsonBuilder.Build(description, amount, missingDate ? default(DateTime) : DateTime.UtcNow.Date);
 
         await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(Guid.NewGuid(), request));
@@ -164,7 +165,7 @@ public class RegisterClaimUseCaseTests
         var writeRepository = ClaimsWriteOnlyRepositoryBuilder.Build();
         var unitOfWork = UnitOfWorkBuilder.Build();
         return (
-            new RegisterClaimUseCase(writeRepository.Object, policiesRepository.Build(), unitOfWork.Object),
+            new RegisterClaimUseCase(writeRepository.Object, policiesRepository.Build(), unitOfWork.Object, NullLogger<RegisterClaimUseCase>.Instance),
             writeRepository,
             unitOfWork);
     }
