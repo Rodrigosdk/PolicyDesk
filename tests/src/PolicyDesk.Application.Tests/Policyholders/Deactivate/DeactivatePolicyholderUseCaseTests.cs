@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
 using Moq;
@@ -61,6 +62,6 @@ public class DeactivatePolicyholderUseCaseTests
 
         var unitOfWork = UnitOfWorkBuilder.Build();
 
-        return (new DeactivatePolicyholderUseCase(readBuilder.Build(), unitOfWork.Object), unitOfWork);
+        return (new DeactivatePolicyholderUseCase(readBuilder.Build(), unitOfWork.Object, NullLogger<DeactivatePolicyholderUseCase>.Instance), unitOfWork);
     }
 }

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Requests;
@@ -128,7 +129,7 @@ public class RegisterPolicyUseCaseTests
             policyholdersRepository.GetByIdIncludingInactive(policyholder);
         var unitOfWork = UnitOfWorkBuilder.Build();
         return (
-            new RegisterPolicyUseCase(writeRepository.Object, policyholdersRepository.Build(), unitOfWork.Object),
+            new RegisterPolicyUseCase(writeRepository.Object, policyholdersRepository.Build(), unitOfWork.Object, NullLogger<RegisterPolicyUseCase>.Instance),
             writeRepository,
             unitOfWork,
             policyholdersRepository.Mock);

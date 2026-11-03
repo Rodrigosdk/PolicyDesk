@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+using PolicyDesk.Application.Logging;
 using PolicyDesk.Communication.Requests;
 using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Claims;
@@ -8,7 +10,8 @@ namespace PolicyDesk.Application.Claims.Deny;
 
 internal class DenyClaimUseCase(
     IClaimsReadOnlyRepository claimsReadOnlyRepository,
-    IUnitOfWork unitOfWork) : IDenyClaimUseCase
+    IUnitOfWork unitOfWork,
+    ILogger<DenyClaimUseCase> logger) : IDenyClaimUseCase
 {
     public async Task Execute(Guid claimId, RequestDenyClaimJson request)
     {
@@ -20,5 +23,6 @@ internal class DenyClaimUseCase(
 
         claim.Deny(request.Motivo);
         await unitOfWork.Commit();
+        logger.ClaimDenied(claim.Id);
     }
 }

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
 using Moq;
@@ -36,7 +37,7 @@ public class DenyClaimUseCaseTests
     {
         var repository = new ClaimsReadOnlyRepositoryBuilder();
         var unitOfWork = UnitOfWorkBuilder.Build();
-        var useCase = new DenyClaimUseCase(repository.Build(), unitOfWork.Object);
+        var useCase = new DenyClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<DenyClaimUseCase>.Instance);
 
         await Should.ThrowAsync<ErrorOnValidationException>(
             () => useCase.Execute(Guid.NewGuid(), new RequestDenyClaimJson { Motivo = reason }));
@@ -78,6 +79,6 @@ public class DenyClaimUseCaseTests
         if (claim is not null)
             repository.GetById(claim);
         var unitOfWork = UnitOfWorkBuilder.Build();
-        return (new DenyClaimUseCase(repository.Build(), unitOfWork.Object), unitOfWork);
+        return (new DenyClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<DenyClaimUseCase>.Instance), unitOfWork);
     }
 }

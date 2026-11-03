@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
 using Moq;
@@ -60,6 +61,6 @@ public class PayClaimUseCaseTests
         if (claim is not null)
             repository.GetById(claim);
         var unitOfWork = UnitOfWorkBuilder.Build();
-        return (new PayClaimUseCase(repository.Build(), unitOfWork.Object), unitOfWork);
+        return (new PayClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<PayClaimUseCase>.Instance), unitOfWork);
     }
 }

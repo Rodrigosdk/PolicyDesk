@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
 using Moq;
@@ -57,6 +58,6 @@ public class CancelPolicyUseCaseTests
         if (policy is not null)
             repository.GetById(policy);
         var unitOfWork = UnitOfWorkBuilder.Build();
-        return (new CancelPolicyUseCase(repository.Build(), unitOfWork.Object), unitOfWork);
+        return (new CancelPolicyUseCase(repository.Build(), unitOfWork.Object, NullLogger<CancelPolicyUseCase>.Instance), unitOfWork);
     }
 }

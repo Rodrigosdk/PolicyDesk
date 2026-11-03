@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+using PolicyDesk.Application.Logging;
 using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Claims;
 using PolicyDesk.Exception;
@@ -7,7 +9,8 @@ namespace PolicyDesk.Application.Claims.Approve;
 
 internal class ApproveClaimUseCase(
     IClaimsReadOnlyRepository claimsReadOnlyRepository,
-    IUnitOfWork unitOfWork) : IApproveClaimUseCase
+    IUnitOfWork unitOfWork,
+    ILogger<ApproveClaimUseCase> logger) : IApproveClaimUseCase
 {
     public async Task Execute(Guid claimId)
     {
@@ -16,5 +19,6 @@ internal class ApproveClaimUseCase(
 
         claim.Approve();
         await unitOfWork.Commit();
+        logger.ClaimApproved(claim.Id);
     }
 }

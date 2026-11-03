@@ -266,5 +266,11 @@ namespace PolicyDesk.Exception {
                 return ResourceManager.GetString("POLICY_REQUIRED", resourceCulture);
             }
         }
+
+        public static string INVALID_REQUEST {
+            get {
+                return ResourceManager.GetString("INVALID_REQUEST", resourceCulture);
+            }
+        }
     }
 }
