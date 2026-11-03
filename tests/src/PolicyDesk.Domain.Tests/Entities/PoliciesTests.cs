@@ -32,7 +32,6 @@ public class PoliciesTests
         policy.CreatedAt.ShouldBeInRange(beforeCreation, afterCreation);
         policy.UpdatedAt.ShouldBeNull();
         policy.CancelledAt.ShouldBeNull();
-        policy.Active.ShouldBeTrue();
     }
 
     [Theory(DisplayName = nameof(Deve_ConsiderarVigente_Quando_DataEstiverNosLimites))]

@@ -2,7 +2,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY . .
-RUN dotnet publish src/PolicyDesk.Api/PolicyDesk.Api.csproj \
+RUN dotnet publish src/Backend/PolicyDesk.Api/PolicyDesk.Api.csproj \
     --configuration Release \
     --output /app/publish \
     /p:UseAppHost=false

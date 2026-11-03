@@ -1,5 +1,6 @@
 using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
+using Moq;
 using PolicyDesk.Application.Policyholders.Listing;
 using PolicyDesk.Exception.Exception;
 using Shouldly;
@@ -47,6 +48,20 @@ public class ListPolicyholdersUseCaseTests
         var useCase = CreateUseCase(new PolicyholdersReadOnlyRepositoryBuilder());
 
         await Should.ThrowAsync<NotFoundException>(() => useCase.GetById(Guid.NewGuid()));
+    }
+
+    [Fact(DisplayName = nameof(Deve_PropagarExcecaoOriginal_Quando_RepositorioFalhar))]
+    [Trait("Application", "Policyholders - Listing")]
+    public async Task Deve_PropagarExcecaoOriginal_Quando_RepositorioFalhar()
+    {
+        // Com ContinueWith a falha chegava embrulhada em AggregateException e virava um 500 genérico
+        var readBuilder = new PolicyholdersReadOnlyRepositoryBuilder();
+        readBuilder.Mock.Setup(r => r.GetAll()).ThrowsAsync(new TimeoutException("db timeout"));
+        var useCase = CreateUseCase(readBuilder);
+
+        var exception = await Should.ThrowAsync<TimeoutException>(() => useCase.Listing());
+
+        exception.Message.ShouldBe("db timeout");
     }
 
     private static ListPolicyholdersUseCase CreateUseCase(PolicyholdersReadOnlyRepositoryBuilder readBuilder) =>
