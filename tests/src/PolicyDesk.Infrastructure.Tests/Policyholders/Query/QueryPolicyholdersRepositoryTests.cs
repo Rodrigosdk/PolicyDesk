@@ -83,7 +83,7 @@ public class QueryPolicyholdersRepositoryTests(PostgreSqlInfrastructureFixture f
         await new UnitOfWork(dbContext).Commit();
 
         await using var verificationContext = Fixture.CreateDbContext();
-        (await verificationContext.Policyholders.AsNoTracking().SingleAsync(p => p.Id == policyholder.Id))
+        (await verificationContext.Policyholders.IgnoreQueryFilters().AsNoTracking().SingleAsync(p => p.Id == policyholder.Id))
             .UpdatedAt.ShouldNotBeNull();
     }
 
@@ -138,5 +138,28 @@ public class QueryPolicyholdersRepositoryTests(PostgreSqlInfrastructureFixture f
         await dbContext.SaveChangesAsync();
 
         (await repository.HasActiveOrFuturePolicy(policyholder.Id)).ShouldBeFalse();
+    }
+
+
+    [Fact(DisplayName = nameof(Deve_IgnorarInativos_Quando_ConsultarSeguradosEmQualquerConsultaLinq))]
+    [Trait("Infrastructure", "PolicyholdersRepository - Filtro global")]
+    public async Task Deve_IgnorarInativos_Quando_ConsultarSeguradosEmQualquerConsultaLinq()
+    {
+        await using var dbContext = await Fixture.CreateCleanDbContextAsync();
+        var repository = CreateRepository(dbContext);
+        var active = PolicyholderBuilder.Build();
+        var inactive = PolicyholderBuilder.Build();
+        await repository.RegisterOrReactivate(active);
+        await repository.RegisterOrReactivate(inactive);
+        await DeactivateAndCommit(dbContext, inactive);
+
+        await using var queryContext = Fixture.CreateDbContext();
+        var byCpf = await queryContext.Policyholders.SingleOrDefaultAsync(p => p.Cpf == inactive.Cpf);
+        var count = await queryContext.Policyholders.CountAsync();
+        var withoutFilter = await queryContext.Policyholders.IgnoreQueryFilters().CountAsync();
+
+        byCpf.ShouldBeNull();
+        count.ShouldBe(1);
+        withoutFilter.ShouldBe(2);
     }
 }

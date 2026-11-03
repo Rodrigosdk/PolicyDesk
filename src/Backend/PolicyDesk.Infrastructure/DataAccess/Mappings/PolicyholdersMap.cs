@@ -7,11 +7,15 @@ namespace PolicyDesk.Infrastructure.DataAccess.Mappings;
 
 internal class PolicyholdersMap : IEntityTypeConfiguration<Policyholders>
 {
+    public const string ActiveFilter = "ActivePolicyholders";
+
     public void Configure(EntityTypeBuilder<Policyholders> builder)
     {
         builder.ToTable("policyholders");
 
         builder.HasKey(policyholder => policyholder.Id);
+
+        builder.HasQueryFilter(ActiveFilter, policyholder => policyholder.Active);
 
         builder.Property(policyholder => policyholder.Id)
             .HasColumnName("id")

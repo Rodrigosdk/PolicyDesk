@@ -73,7 +73,7 @@ public class RegisterPolicyholderRepositoryTests(PostgreSqlInfrastructureFixture
 
         var result = await repository.RegisterOrReactivate(reactivation);
         await using var verificationContext = Fixture.CreateDbContext();
-        var saved = await verificationContext.Policyholders.SingleAsync(item => item.Id == original.Id);
+        var saved = await verificationContext.Policyholders.IgnoreQueryFilters().SingleAsync(item => item.Id == original.Id);
 
         result.ShouldBe(PolicyholderRegistrationResult.RegisteredOrReactivated);
         saved.Active.ShouldBeTrue();

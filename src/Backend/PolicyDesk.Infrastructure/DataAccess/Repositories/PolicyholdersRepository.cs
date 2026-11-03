@@ -3,6 +3,7 @@ using PolicyDesk.Domain.Enums;
 using PolicyDesk.Domain.Repositories.Policyholders;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using PolicyDesk.Infrastructure.DataAccess.Mappings;
 
 namespace PolicyDesk.Infrastructure.DataAccess.Repositories;
 
@@ -50,28 +51,27 @@ internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) :
     {
         return await dbContext.Policyholders
             .AsNoTracking()
-            .Where(policyholder => policyholder.Active)
             .ToListAsync();
     }
 
     public Task<Policyholders?> GetById(Guid id)
     {
-        return dbContext.Policyholders.FirstOrDefaultAsync(policyholder =>
-            policyholder.Id == id && policyholder.Active);
+        return dbContext.Policyholders.FirstOrDefaultAsync(policyholder => policyholder.Id == id);
     }
 
     // Consulta rastreada de propósito: o cadastro de apólice altera o segurado retornado
     // (RegisterPolicy), e é essa gravação que detecta a inativação concorrente
     public Task<Policyholders?> GetByIdIncludingInactive(Guid id)
     {
-        return dbContext.Policyholders.FirstOrDefaultAsync(policyholder => policyholder.Id == id);
+        return dbContext.Policyholders
+            .IgnoreQueryFilters([PolicyholdersMap.ActiveFilter])
+            .FirstOrDefaultAsync(policyholder => policyholder.Id == id);
     }
     
     public Task<bool> ExistActivePolicyholdersWithEmail(string email, Guid? exceptPolicyholderId = null)
     {
         return dbContext.Policyholders.AnyAsync(policyholder =>
             policyholder.Email == email &&
-            policyholder.Active &&
             (exceptPolicyholderId == null || policyholder.Id != exceptPolicyholderId));
     }
 

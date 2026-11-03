@@ -61,7 +61,7 @@ public class RegisterPolicyholderTests(PolicyDeskApplicationFactory factory) : P
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await response.Content.ReadAsStringAsync()).ShouldContain(ResourcesMessageException.POLICYHOLDER_NAME_REQUIRED);
-        (await DbContext.Policyholders.AnyAsync(p => p.Cpf == request.Cpf)).ShouldBeFalse();
+        (await DbContext.Policyholders.IgnoreQueryFilters().AnyAsync(p => p.Cpf == request.Cpf)).ShouldBeFalse();
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarBadRequest_Quando_CamposObrigatoriosForemOmitidos))]
@@ -77,7 +77,7 @@ public class RegisterPolicyholderTests(PolicyDeskApplicationFactory factory) : P
         body.ShouldContain(ResourcesMessageException.POLICYHOLDER_NAME_REQUIRED);
         body.ShouldContain(ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_REQUIRED);
         body.ShouldContain(ResourcesMessageException.POLICYHOLDER_PHONE_REQUIRED);
-        (await DbContext.Policyholders.AnyAsync(p => p.Cpf == cpf)).ShouldBeFalse();
+        (await DbContext.Policyholders.IgnoreQueryFilters().AnyAsync(p => p.Cpf == cpf)).ShouldBeFalse();
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarBadRequest_Quando_CpfJaEstiverAtivo))]
