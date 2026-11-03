@@ -1,6 +1,7 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Options;
+using PolicyDesk.Api.Errors;
 using PolicyDesk.Api.Filters;
 using PolicyDesk.Api.Observability;
 using PolicyDesk.Application;
@@ -11,8 +12,9 @@ using PolicyDesk.Infrastructure.DataAccess.Migrations;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddObservability();
+builder.Services.AddErrorHandling();
 
-builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new StringConverter()));
+builder.Services.AddControllers(options => options.Filters.Add<ExceptionFilter>()).AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new StringConverter()));
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen();
 
@@ -35,17 +37,16 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     options.RequestCultureProviders = [new AcceptLanguageHeaderRequestCultureProvider()];
 });
 
-builder.Services.AddMvc(options => options.Filters.Add<ExceptionFilter>());
-
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
 
 var app = builder.Build();
 
-// Ordem: o cabeçalho de correlação e o log de requisições vêm primeiro,
-// para que o status final apareça no log e o X-Trace-Id vá em toda resposta
+// Ordem: o cabeçalho de correlação e o log de requisições envolvem o tratamento de erros,
+// para que o status final (inclusive 500) apareça no log e o X-Trace-Id vá em toda resposta
 app.UseCorrelationIdHeader();
 app.UseHttpLogging();
+app.UseErrorHandling();
 
 var localizationOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>();  
 

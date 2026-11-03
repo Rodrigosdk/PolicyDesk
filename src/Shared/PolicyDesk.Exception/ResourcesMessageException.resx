@@ -129,4 +129,7 @@
     <data name="POLICY_REQUIRED" xml:space="preserve">
         <value>A apólice é obrigatória.</value>
     </data>
+    <data name="INVALID_REQUEST" xml:space="preserve">
+        <value>A requisição é inválida. Verifique o formato e os campos enviados.</value>
+    </data>
 </root>
