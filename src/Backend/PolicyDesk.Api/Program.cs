@@ -1,6 +1,5 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.Extensions.Options;
 using PolicyDesk.Api.Errors;
 using PolicyDesk.Api.Filters;
 using PolicyDesk.Api.Observability;
@@ -19,7 +18,6 @@ builder.Services.AddErrorHandling();
 
 builder.Services.AddControllers(options => options.Filters.Add<ExceptionFilter>()).AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new StringConverter()));
 builder.Services.AddOpenApi();
-builder.Services.AddSwaggerGen();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
@@ -42,7 +40,6 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
-
 var app = builder.Build();
 
 // Ordem: o cabeçalho de correlação e o log de requisições envolvem o tratamento de erros,
@@ -51,15 +48,12 @@ app.UseCorrelationIdHeader();
 app.UseHttpLogging();
 app.UseErrorHandling();
 
-var localizationOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>();  
-
-app.UseRequestLocalization(localizationOptions.Value);
+app.UseRequestLocalization();
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "PolicyDesk API"));
 }
 
 app.UseHttpsRedirection();
