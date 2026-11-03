@@ -62,7 +62,10 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-await ExecuteMigrationsAsync();
+if (!app.Environment.IsProduction())
+{
+    await ExecuteMigrationsAsync();
+}
 
 app.Run();
 
