@@ -1,3 +1,4 @@
+using PolicyDesk.Domain.Validations;
 using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Requests;
@@ -188,4 +189,21 @@ public class RegisterPolicyholderUseCaseTests
 
     private static RegisterPolicyholderUseCase CreateUseCase(Mock<IPolicyholdersWriteOnlyRepository> writeRepository) =>
         new(writeRepository.Object, NullLogger<RegisterPolicyholderUseCase>.Instance);
+
+
+    [Fact(DisplayName = nameof(Deve_LancarExcecaoSemChamarRepositorio_Quando_NomeOuTelefoneExcederemOLimite))]
+    [Trait("Application", "Policyholders - Register")]
+    public async Task Deve_LancarExcecaoSemChamarRepositorio_Quando_NomeOuTelefoneExcederemOLimite()
+    {
+        var writeRepository = PolicyholdersWriteOnlyRepositoryBuilder.Build();
+        var useCase = CreateUseCase(writeRepository);
+        var request = RequestPolicyholdersJsonBuilder.Build();
+        request.Name = new string('a', FieldLimits.PolicyholderName + 1);
+        request.PhoneNumber = "(83) 98647-1687 celular";
+
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(request));
+
+        exception.GetErrors().ShouldBe([FieldLimits.PolicyholderNameTooLong, ResourcesMessageException.INVALID_PHONE]);
+        writeRepository.Verify(r => r.RegisterOrReactivate(It.IsAny<Policyholder>()), Times.Never);
+    }
 }

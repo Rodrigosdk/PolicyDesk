@@ -1,3 +1,4 @@
+using PolicyDesk.Domain.Validations;
 using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
@@ -80,5 +81,22 @@ public class DenyClaimUseCaseTests
             repository.GetById(claim);
         var unitOfWork = UnitOfWorkBuilder.Build();
         return (new DenyClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<DenyClaimUseCase>.Instance), unitOfWork);
+    }
+
+
+    [Fact(DisplayName = nameof(Deve_LancarValidacaoAntesDaBusca_Quando_MotivoExcederOLimite))]
+    [Trait("Application", "Claims - Deny")]
+    public async Task Deve_LancarValidacaoAntesDaBusca_Quando_MotivoExcederOLimite()
+    {
+        var repository = new ClaimsReadOnlyRepositoryBuilder();
+        var unitOfWork = UnitOfWorkBuilder.Build();
+        var useCase = new DenyClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<DenyClaimUseCase>.Instance);
+        var request = new RequestDenyClaimJson { Motivo = new string('a', FieldLimits.DenialReason + 1) };
+
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(Guid.NewGuid(), request));
+
+        exception.GetErrors().ShouldBe([FieldLimits.DenialReasonTooLong]);
+        repository.Mock.Verify(item => item.GetById(It.IsAny<Guid>()), Times.Never);
+        unitOfWork.Verify(work => work.Commit(), Times.Never);
     }
 }

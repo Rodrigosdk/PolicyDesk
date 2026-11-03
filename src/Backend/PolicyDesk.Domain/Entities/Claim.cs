@@ -1,5 +1,6 @@
 using PolicyDesk.Domain.Enums;
 using PolicyDesk.Domain.SeedWorks;
+using PolicyDesk.Domain.Validations;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 
@@ -13,6 +14,8 @@ public class Claim : Entity
             throw new DomainRuleException(ResourcesMessageException.POLICY_REQUIRED);
         if (string.IsNullOrWhiteSpace(description))
             throw new DomainRuleException(ResourcesMessageException.DESCRIPTION_REQUIRED);
+        if (FieldLimits.Exceeds(description, FieldLimits.Description))
+            throw new DomainRuleException(FieldLimits.DescriptionTooLong);
         if (amount <= 0)
             throw new DomainRuleException(ResourcesMessageException.CLAIM_AMOUNT_MUST_BE_POSITIVE);
         if (occurredOn == default)
@@ -59,6 +62,8 @@ public class Claim : Entity
     {
         if (string.IsNullOrWhiteSpace(reason))
             throw new DomainRuleException(ResourcesMessageException.CLAIM_DENIAL_REASON_REQUIRED);
+        if (FieldLimits.Exceeds(reason, FieldLimits.DenialReason))
+            throw new DomainRuleException(FieldLimits.DenialReasonTooLong);
 
         EnsureStatus(ClaimStatus.InAnalysis, ResourcesMessageException.CLAIM_MUST_BE_IN_ANALYSIS_FOR_DENIAL);
 

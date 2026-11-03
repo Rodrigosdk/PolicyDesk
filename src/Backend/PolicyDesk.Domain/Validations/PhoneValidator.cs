@@ -16,7 +16,7 @@ public static class PhoneValidator
 
     public static bool IsValid(string? phone)
     {
-        if (string.IsNullOrWhiteSpace(phone))
+        if (string.IsNullOrWhiteSpace(phone) || phone.Length > FieldLimits.Phone)
             return false;
 
         var digits = new string(phone.Where(char.IsAsciiDigit).ToArray());

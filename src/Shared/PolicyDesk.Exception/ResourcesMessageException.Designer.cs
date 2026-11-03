@@ -272,5 +272,23 @@ namespace PolicyDesk.Exception {
                 return ResourceManager.GetString("INVALID_REQUEST", resourceCulture);
             }
         }
+
+        public static string POLICYHOLDER_NAME_TOO_LONG {
+            get {
+                return ResourceManager.GetString("POLICYHOLDER_NAME_TOO_LONG", resourceCulture);
+            }
+        }
+
+        public static string DESCRIPTION_TOO_LONG {
+            get {
+                return ResourceManager.GetString("DESCRIPTION_TOO_LONG", resourceCulture);
+            }
+        }
+
+        public static string CLAIM_DENIAL_REASON_TOO_LONG {
+            get {
+                return ResourceManager.GetString("CLAIM_DENIAL_REASON_TOO_LONG", resourceCulture);
+            }
+        }
     }
 }
