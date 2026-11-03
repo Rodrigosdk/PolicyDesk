@@ -59,8 +59,11 @@ public class Policyholders : Entity
 
     private static string NormalizeNameOrThrow(string? name)
     {
-        return string.IsNullOrWhiteSpace(name)
-            ? throw new DomainRuleException(ResourcesMessageException.POLICYHOLDER_NAME_REQUIRED)
+        if (string.IsNullOrWhiteSpace(name))
+            throw new DomainRuleException(ResourcesMessageException.POLICYHOLDER_NAME_REQUIRED);
+
+        return FieldLimits.Exceeds(name, FieldLimits.PolicyholderName)
+            ? throw new DomainRuleException(FieldLimits.PolicyholderNameTooLong)
             : name.Trim();
     }
 

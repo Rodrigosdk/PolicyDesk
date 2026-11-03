@@ -22,10 +22,10 @@ public abstract class PolicyholdersTestBase(PolicyDeskApplicationFactory factory
     }
 
     protected Task<Policyholder> FindByCpf(string cpf) =>
-        DbContext.Policyholders.AsNoTracking().SingleAsync(p => p.Cpf == cpf);
+        DbContext.Policyholders.IgnoreQueryFilters().AsNoTracking().SingleAsync(p => p.Cpf == cpf);
 
     protected Task<Policyholder> FindById(Guid id) =>
-        DbContext.Policyholders.AsNoTracking().SingleAsync(p => p.Id == id);
+        DbContext.Policyholders.IgnoreQueryFilters().AsNoTracking().SingleAsync(p => p.Id == id);
 
     protected async Task<HttpResponseMessage> RegisterPolicy(Guid policyholderId)
     {

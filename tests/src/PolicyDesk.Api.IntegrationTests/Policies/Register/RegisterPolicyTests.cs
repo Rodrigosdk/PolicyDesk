@@ -1,3 +1,4 @@
+using PolicyDesk.Domain.Validations;
 using System.Net;
 using System.Net.Http.Json;
 using CommonTestUtilities.Requests;
@@ -86,5 +87,21 @@ public class RegisterPolicyTests(PolicyDeskApplicationFactory factory) : Policie
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await response.Content.ReadAsStringAsync())
             .ShouldContain(ResourcesMessageException.POLICY_END_DATE_MUST_BE_AFTER_START_DATE);
+    }
+
+
+    [Fact(DisplayName = nameof(Deve_RetornarBadRequestSemGravar_Quando_DescricaoExcederOLimite))]
+    [Trait("Integration", "Policies - Cadastro")]
+    public async Task Deve_RetornarBadRequestSemGravar_Quando_DescricaoExcederOLimite()
+    {
+        var policyholder = await RegisterPolicyholder();
+
+        var response = await Post(
+            "/api/apolices",
+            RequestPolicyJsonBuilder.Build(policyholder.Id, description: new string('a', FieldLimits.Description + 1)));
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).ShouldContain(FieldLimits.DescriptionTooLong);
+        (await DbContext.Policies.AnyAsync(policy => policy.PolicyholderId == policyholder.Id)).ShouldBeFalse();
     }
 }

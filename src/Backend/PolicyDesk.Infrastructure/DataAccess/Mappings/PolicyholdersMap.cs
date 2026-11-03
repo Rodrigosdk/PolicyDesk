@@ -1,16 +1,21 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PolicyDesk.Domain.Entities;
+using PolicyDesk.Domain.Validations;
 
 namespace PolicyDesk.Infrastructure.DataAccess.Mappings;
 
 internal class PolicyholdersMap : IEntityTypeConfiguration<Policyholders>
 {
+    public const string ActiveFilter = "ActivePolicyholders";
+
     public void Configure(EntityTypeBuilder<Policyholders> builder)
     {
         builder.ToTable("policyholders");
 
         builder.HasKey(policyholder => policyholder.Id);
+
+        builder.HasQueryFilter(ActiveFilter, policyholder => policyholder.Active);
 
         builder.Property(policyholder => policyholder.Id)
             .HasColumnName("id")
@@ -18,11 +23,12 @@ internal class PolicyholdersMap : IEntityTypeConfiguration<Policyholders>
 
         builder.Property(policyholder => policyholder.Name)
             .HasColumnName("name")
+            .HasMaxLength(FieldLimits.PolicyholderName)
             .IsRequired();
 
         builder.Property(policyholder => policyholder.Cpf)
             .HasColumnName("cpf")
-            .HasMaxLength(11)
+            .HasMaxLength(FieldLimits.Cpf)
             .IsRequired();
 
         builder.HasIndex(policyholder => policyholder.Cpf)
@@ -35,7 +41,7 @@ internal class PolicyholdersMap : IEntityTypeConfiguration<Policyholders>
 
         builder.Property(policyholder => policyholder.Email)
             .HasColumnName("email")
-            .HasMaxLength(254)
+            .HasMaxLength(FieldLimits.Email)
             .IsRequired();
 
         builder.HasIndex(policyholder => policyholder.Email)
@@ -45,6 +51,7 @@ internal class PolicyholdersMap : IEntityTypeConfiguration<Policyholders>
 
         builder.Property(policyholder => policyholder.Phone)
             .HasColumnName("phone")
+            .HasMaxLength(FieldLimits.Phone)
             .IsRequired();
 
         builder.Property(policyholder => policyholder.CreatedAt)

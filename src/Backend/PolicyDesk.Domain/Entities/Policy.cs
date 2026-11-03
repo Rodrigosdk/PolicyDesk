@@ -1,5 +1,6 @@
 using PolicyDesk.Domain.Enums;
 using PolicyDesk.Domain.SeedWorks;
+using PolicyDesk.Domain.Validations;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 
@@ -19,6 +20,8 @@ public class Policy : Entity
             throw new DomainRuleException(ResourcesMessageException.POLICYHOLDER_REQUIRED);
         if (string.IsNullOrWhiteSpace(description))
             throw new DomainRuleException(ResourcesMessageException.DESCRIPTION_REQUIRED);
+        if (FieldLimits.Exceeds(description, FieldLimits.Description))
+            throw new DomainRuleException(FieldLimits.DescriptionTooLong);
         if (coverageAmount <= 0)
             throw new DomainRuleException(ResourcesMessageException.COVERAGE_AMOUNT_MUST_BE_POSITIVE);
         if (premiumAmount <= 0)

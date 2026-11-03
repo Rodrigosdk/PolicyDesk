@@ -25,7 +25,7 @@ public class UnitOfWorkTests(PostgreSqlInfrastructureFixture fixture) : Policyho
         await new UnitOfWork(dbContext).Commit();
 
         await using var verificationContext = Fixture.CreateDbContext();
-        var saved = await verificationContext.Policyholders.SingleAsync(item => item.Id == policyholder.Id);
+        var saved = await verificationContext.Policyholders.IgnoreQueryFilters().SingleAsync(item => item.Id == policyholder.Id);
         saved.Active.ShouldBeFalse();
     }
 
@@ -121,7 +121,7 @@ public class UnitOfWorkTests(PostgreSqlInfrastructureFixture fixture) : Policyho
 
         exception.GetErrors().ShouldBe([ResourcesMessageException.POLICYHOLDER_ACTIVE_EMAIL_EXISTS]);
         await using var verificationContext = Fixture.CreateDbContext();
-        var savedSecond = await verificationContext.Policyholders.AsNoTracking().SingleAsync(p => p.Id == second.Id);
+        var savedSecond = await verificationContext.Policyholders.IgnoreQueryFilters().AsNoTracking().SingleAsync(p => p.Id == second.Id);
         savedSecond.Email.ShouldBe(second.Email);
     }
 
@@ -148,7 +148,7 @@ public class UnitOfWorkTests(PostgreSqlInfrastructureFixture fixture) : Policyho
         await Should.ThrowAsync<ConflictException>(() => new UnitOfWork(deactivation).Commit());
 
         await using var verificationContext = Fixture.CreateDbContext();
-        (await verificationContext.Policyholders.AsNoTracking().SingleAsync(p => p.Id == policyholderId))
+        (await verificationContext.Policyholders.IgnoreQueryFilters().AsNoTracking().SingleAsync(p => p.Id == policyholderId))
             .Active.ShouldBeTrue();
         (await verificationContext.Policies.AnyAsync(policy => policy.PolicyholderId == policyholderId)).ShouldBeTrue();
     }
@@ -176,7 +176,7 @@ public class UnitOfWorkTests(PostgreSqlInfrastructureFixture fixture) : Policyho
         await Should.ThrowAsync<ConflictException>(() => new UnitOfWork(registration).Commit());
 
         await using var verificationContext = Fixture.CreateDbContext();
-        (await verificationContext.Policyholders.AsNoTracking().SingleAsync(p => p.Id == policyholderId))
+        (await verificationContext.Policyholders.IgnoreQueryFilters().AsNoTracking().SingleAsync(p => p.Id == policyholderId))
             .Active.ShouldBeFalse();
         (await verificationContext.Policies.AnyAsync(policy => policy.PolicyholderId == policyholderId)).ShouldBeFalse();
     }

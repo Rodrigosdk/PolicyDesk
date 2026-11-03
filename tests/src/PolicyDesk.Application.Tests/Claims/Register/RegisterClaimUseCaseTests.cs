@@ -1,3 +1,4 @@
+using PolicyDesk.Domain.Validations;
 using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
@@ -168,5 +169,20 @@ public class RegisterClaimUseCaseTests
             new RegisterClaimUseCase(writeRepository.Object, policiesRepository.Build(), unitOfWork.Object, NullLogger<RegisterClaimUseCase>.Instance),
             writeRepository,
             unitOfWork);
+    }
+
+
+    [Fact(DisplayName = nameof(Deve_LancarValidacaoSemSalvar_Quando_DescricaoExcederOLimite))]
+    [Trait("Application", "Claims - Register")]
+    public async Task Deve_LancarValidacaoSemSalvar_Quando_DescricaoExcederOLimite()
+    {
+        var policy = PolicyBuilder.Build();
+        var (useCase, writeRepository, unitOfWork) = CreateUseCase(policy);
+        var request = RequestClaimJsonBuilder.Build(description: new string('a', FieldLimits.Description + 1));
+
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(policy.Id, request));
+
+        exception.GetErrors().ShouldBe([FieldLimits.DescriptionTooLong]);
+        VerifyNothingSaved(writeRepository, unitOfWork);
     }
 }

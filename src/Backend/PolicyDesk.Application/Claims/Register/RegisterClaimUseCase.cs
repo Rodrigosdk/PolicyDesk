@@ -6,6 +6,7 @@ using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Claims;
 using PolicyDesk.Domain.Repositories.Policies;
+using PolicyDesk.Domain.Validations;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 
@@ -54,6 +55,8 @@ internal class RegisterClaimUseCase(
 
         if (string.IsNullOrWhiteSpace(request.Description))
             errors.Add(ResourcesMessageException.DESCRIPTION_REQUIRED);
+        else if (FieldLimits.Exceeds(request.Description, FieldLimits.Description))
+            errors.Add(FieldLimits.DescriptionTooLong);
 
         if (request.Amount <= 0)
             errors.Add(ResourcesMessageException.CLAIM_AMOUNT_MUST_BE_POSITIVE);

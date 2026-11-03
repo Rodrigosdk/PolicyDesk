@@ -106,4 +106,14 @@ public class PhoneValidatorTests
         // "٨٣٩٨٦٤٧١٦٨٧" são 11 dígitos arábico-índicos: char.IsDigit aceitaria, char.IsAsciiDigit não
         PhoneValidator.IsValid("٨٣٩٨٦٤٧١٦٨٧").ShouldBeFalse();
     }
+
+    [Theory(DisplayName = nameof(Deve_SerInvalido_Quando_TelefoneExcederOTamanhoMaximo))]
+    [Trait("Domain", "PhoneValidator - Tamanho")]
+    [InlineData("(83) 98647-1687 celular")]
+    [InlineData("83986471687                    ")]
+    public void Deve_SerInvalido_Quando_TelefoneExcederOTamanhoMaximo(string phone)
+    {
+        phone.Length.ShouldBeGreaterThan(FieldLimits.Phone);
+        PhoneValidator.IsValid(phone).ShouldBeFalse();
+    }
 }

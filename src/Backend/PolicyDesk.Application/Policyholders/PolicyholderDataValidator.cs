@@ -12,6 +12,8 @@ internal static class PolicyholderDataValidator
 
         if (string.IsNullOrWhiteSpace(name))
             errors.Add(ResourcesMessageException.POLICYHOLDER_NAME_REQUIRED);
+        else if (FieldLimits.Exceeds(name, FieldLimits.PolicyholderName))
+            errors.Add(FieldLimits.PolicyholderNameTooLong);
 
         if (birthDate == default)
             errors.Add(ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_REQUIRED);

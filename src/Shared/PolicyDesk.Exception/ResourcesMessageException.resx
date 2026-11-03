@@ -132,4 +132,13 @@
     <data name="INVALID_REQUEST" xml:space="preserve">
         <value>A requisição é inválida. Verifique o formato e os campos enviados.</value>
     </data>
+    <data name="POLICYHOLDER_NAME_TOO_LONG" xml:space="preserve">
+        <value>O nome deve ter no máximo {0} caracteres.</value>
+    </data>
+    <data name="DESCRIPTION_TOO_LONG" xml:space="preserve">
+        <value>A descrição deve ter no máximo {0} caracteres.</value>
+    </data>
+    <data name="CLAIM_DENIAL_REASON_TOO_LONG" xml:space="preserve">
+        <value>O motivo da negação deve ter no máximo {0} caracteres.</value>
+    </data>
 </root>

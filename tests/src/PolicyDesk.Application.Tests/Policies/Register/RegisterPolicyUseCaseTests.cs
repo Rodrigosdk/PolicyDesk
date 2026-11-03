@@ -1,3 +1,4 @@
+using PolicyDesk.Domain.Validations;
 using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
@@ -133,5 +134,21 @@ public class RegisterPolicyUseCaseTests
             writeRepository,
             unitOfWork,
             policyholdersRepository.Mock);
+    }
+
+
+    [Fact(DisplayName = nameof(Deve_LancarValidacaoAntesDaBusca_Quando_DescricaoExcederOLimite))]
+    [Trait("Application", "Policies - Register")]
+    public async Task Deve_LancarValidacaoAntesDaBusca_Quando_DescricaoExcederOLimite()
+    {
+        var (useCase, writeRepository, unitOfWork, policyholdersRepository) = CreateUseCase();
+        var request = RequestPolicyJsonBuilder.Build(description: new string('a', FieldLimits.Description + 1));
+
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(request));
+
+        exception.GetErrors().ShouldBe([FieldLimits.DescriptionTooLong]);
+        writeRepository.Verify(repository => repository.Add(It.IsAny<Policy>()), Times.Never);
+        unitOfWork.Verify(work => work.Commit(), Times.Never);
+        policyholdersRepository.Verify(repository => repository.GetByIdIncludingInactive(It.IsAny<Guid>()), Times.Never);
     }
 }

@@ -11,6 +11,9 @@ using PolicyDesk.Infrastructure.DataAccess.Migrations;
 
 var builder = WebApplication.CreateBuilder(args);
 
+const long maxRequestBodySizeInBytes = 64 * 1024;
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = maxRequestBodySizeInBytes);
+
 builder.AddObservability();
 builder.Services.AddErrorHandling();
 

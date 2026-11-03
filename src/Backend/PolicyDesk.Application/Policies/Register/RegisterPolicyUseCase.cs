@@ -6,6 +6,7 @@ using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Policies;
 using PolicyDesk.Domain.Repositories.Policyholders;
+using PolicyDesk.Domain.Validations;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 
@@ -55,6 +56,8 @@ internal class RegisterPolicyUseCase(
 
         if (string.IsNullOrWhiteSpace(request.Description))
             errors.Add(ResourcesMessageException.DESCRIPTION_REQUIRED);
+        else if (FieldLimits.Exceeds(request.Description, FieldLimits.Description))
+            errors.Add(FieldLimits.DescriptionTooLong);
 
         if (request.CoverageAmount <= 0)
             errors.Add(ResourcesMessageException.COVERAGE_AMOUNT_MUST_BE_POSITIVE);

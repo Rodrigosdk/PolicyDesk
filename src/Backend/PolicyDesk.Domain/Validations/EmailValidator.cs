@@ -6,8 +6,6 @@ namespace PolicyDesk.Domain.Validations;
 
 public static class EmailValidator
 {
-    private const int MaxLength = 254;
-
     public static string Normalize(string? email)
     {
         return string.IsNullOrWhiteSpace(email)
@@ -19,7 +17,7 @@ public static class EmailValidator
     {
         var normalized = Normalize(email);
 
-        if (normalized.Length is 0 or > MaxLength)
+        if (normalized.Length is 0 or > FieldLimits.Email)
             return false;
 
         if (!MailAddress.TryCreate(normalized, out var address) || address.Address != normalized)
