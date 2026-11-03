@@ -35,6 +35,8 @@ public static class DependencyInjectionExtension
                 config.UseNpgsql(serviceProvider.GetRequiredService<IOptions<DatabaseOptions>>().Value.DbConnection));
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+            services.AddHealthChecks().AddDbContextCheck<PolicyDeskDbContext>("database");
         }
     }
 }

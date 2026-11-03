@@ -61,6 +61,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 if (!app.Environment.IsProduction())
 {
