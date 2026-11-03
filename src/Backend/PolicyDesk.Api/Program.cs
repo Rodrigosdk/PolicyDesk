@@ -2,12 +2,15 @@ using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Options;
 using PolicyDesk.Api.Filters;
+using PolicyDesk.Api.Observability;
 using PolicyDesk.Application;
 using PolicyDesk.Infrastructure;
 using PolicyDesk.Api.Converters;
 using PolicyDesk.Infrastructure.DataAccess.Migrations;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddObservability();
 
 builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new StringConverter()));
 builder.Services.AddOpenApi();
@@ -38,6 +41,12 @@ builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
 
 var app = builder.Build();
+
+// Ordem: o cabeçalho de correlação e o log de requisições vêm primeiro,
+// para que o status final apareça no log e o X-Trace-Id vá em toda resposta
+app.UseCorrelationIdHeader();
+app.UseHttpLogging();
+
 var localizationOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>();  
 
 app.UseRequestLocalization(localizationOptions.Value);

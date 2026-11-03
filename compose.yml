@@ -22,11 +22,26 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DbConnection: Host=db;Port=5432;Database=PolicyDesk;Username=admin;Password=${POSTGRES_PASSWORD:-policy-desk-local}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://dashboard:18889
     ports:
       - "8080:8080"
     depends_on:
       db:
         condition: service_healthy
+      dashboard:
+        condition: service_started
+
+  # Aspire Dashboard: logs, traces e métricas da API via OpenTelemetry (OTLP).
+  # Interface em http://localhost:18888. Para a API rodando fora do Docker (dotnet run),
+  # o OTLP gRPC fica exposto em localhost:4317.
+  # Uso local apenas: o acesso anônimo deixa a interface e o OTLP sem autenticação.
+  dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:13.6
+    environment:
+      ASPIRE_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+    ports:
+      - "18888:18888"
+      - "4317:18889"
 
 volumes:
   policy-desk-data:
