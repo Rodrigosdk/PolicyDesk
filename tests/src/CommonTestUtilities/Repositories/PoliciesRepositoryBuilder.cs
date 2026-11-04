@@ -28,6 +28,21 @@ public class PoliciesReadOnlyRepositoryBuilder
     public IPoliciesReadOnlyRepository Build() => _repository.Object;
 }
 
+public class PoliciesUpdateOnlyRepositoryBuilder
+{
+    private readonly Mock<IPoliciesUpdateOnlyRepository> _repository = new();
+
+    public Mock<IPoliciesUpdateOnlyRepository> Mock => _repository;
+
+    public PoliciesUpdateOnlyRepositoryBuilder GetByIdForUpdate(Policy policy)
+    {
+        _repository.Setup(repository => repository.GetByIdForUpdate(policy.Id)).ReturnsAsync(policy);
+        return this;
+    }
+
+    public IPoliciesUpdateOnlyRepository Build() => _repository.Object;
+}
+
 public static class PoliciesWriteOnlyRepositoryBuilder
 {
     public static Mock<IPoliciesWriteOnlyRepository> Build()

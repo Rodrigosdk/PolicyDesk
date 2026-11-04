@@ -85,7 +85,7 @@ public class PoliciesRepositoryTests(PostgreSqlInfrastructureFixture fixture) : 
         await dbContext.SaveChangesAsync();
 
         var repository = CreateRepository(dbContext);
-        var trackedPolicy = await repository.GetById(policy.Id);
+        var trackedPolicy = await repository.GetByIdForUpdate(policy.Id);
         trackedPolicy.ShouldNotBeNull();
         trackedPolicy.Cancel();
         await new UnitOfWork(dbContext).Commit();
@@ -95,5 +95,26 @@ public class PoliciesRepositoryTests(PostgreSqlInfrastructureFixture fixture) : 
         saved.Status.ShouldBe(PolicyStatus.Cancelled);
         saved.CancelledAt.ShouldNotBeNull();
         saved.UpdatedAt.ShouldBe(saved.CancelledAt);
+    }
+
+
+    [Fact(DisplayName = nameof(Deve_RastrearSomente_Quando_BuscarApoliceParaAlteracao))]
+    [Trait("Infrastructure", "PoliciesRepository - Rastreamento")]
+    public async Task Deve_RastrearSomente_Quando_BuscarApoliceParaAlteracao()
+    {
+        await using var setupContext = Fixture.CreateDbContext();
+        var policyholder = PolicyholderBuilder.Build();
+        setupContext.Policyholders.Add(policyholder);
+        var policy = PolicyBuilder.Build(policyholder.Id);
+        setupContext.Policies.Add(policy);
+        await setupContext.SaveChangesAsync();
+
+        await using var readContext = Fixture.CreateDbContext();
+        (await CreateRepository(readContext).GetById(policy.Id)).ShouldNotBeNull();
+        readContext.ChangeTracker.Entries<Policy>().ShouldBeEmpty();
+
+        await using var updateContext = Fixture.CreateDbContext();
+        (await CreateRepository(updateContext).GetByIdForUpdate(policy.Id)).ShouldNotBeNull();
+        updateContext.ChangeTracker.Entries<Policy>().ShouldHaveSingleItem();
     }
 }

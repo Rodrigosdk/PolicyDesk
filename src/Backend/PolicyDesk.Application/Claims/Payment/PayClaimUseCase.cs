@@ -8,13 +8,13 @@ using PolicyDesk.Exception.Exception;
 namespace PolicyDesk.Application.Claims.Payment;
 
 internal class PayClaimUseCase(
-    IClaimsReadOnlyRepository claimsReadOnlyRepository,
+    IClaimsUpdateOnlyRepository claimsUpdateOnlyRepository,
     IUnitOfWork unitOfWork,
     ILogger<PayClaimUseCase> logger) : IPayClaimUseCase
 {
     public async Task Execute(Guid claimId)
     {
-        var claim = await claimsReadOnlyRepository.GetById(claimId)
+        var claim = await claimsUpdateOnlyRepository.GetByIdForUpdate(claimId)
                     ?? throw new NotFoundException(ResourcesMessageException.CLAIM_NOT_FOUND);
 
         claim.RegisterPayment();

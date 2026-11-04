@@ -57,9 +57,9 @@ public class PayClaimUseCaseTests
 
     private static (PayClaimUseCase UseCase, Mock<IUnitOfWork> UnitOfWork) CreateUseCase(Claim? claim = null)
     {
-        var repository = new ClaimsReadOnlyRepositoryBuilder();
+        var repository = new ClaimsUpdateOnlyRepositoryBuilder();
         if (claim is not null)
-            repository.GetById(claim);
+            repository.GetByIdForUpdate(claim);
         var unitOfWork = UnitOfWorkBuilder.Build();
         return (new PayClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<PayClaimUseCase>.Instance), unitOfWork);
     }

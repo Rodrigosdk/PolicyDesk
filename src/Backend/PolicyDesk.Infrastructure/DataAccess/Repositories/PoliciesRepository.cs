@@ -7,7 +7,8 @@ namespace PolicyDesk.Infrastructure.DataAccess.Repositories;
 
 internal sealed class PoliciesRepository(PolicyDeskDbContext dbContext) :
     IPoliciesWriteOnlyRepository,
-    IPoliciesReadOnlyRepository
+    IPoliciesReadOnlyRepository,
+    IPoliciesUpdateOnlyRepository
 {
     public Task Add(Policy policy)
     {
@@ -16,6 +17,11 @@ internal sealed class PoliciesRepository(PolicyDeskDbContext dbContext) :
     }
 
     public Task<Policy?> GetById(Guid id)
+    {
+        return dbContext.Policies.AsNoTracking().FirstOrDefaultAsync(policy => policy.Id == id);
+    }
+
+    public Task<Policy?> GetByIdForUpdate(Guid id)
     {
         return dbContext.Policies.FirstOrDefaultAsync(policy => policy.Id == id);
     }

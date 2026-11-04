@@ -6,7 +6,8 @@ namespace PolicyDesk.Infrastructure.DataAccess.Repositories;
 
 internal sealed class ClaimsRepository(PolicyDeskDbContext dbContext) :
     IClaimsWriteOnlyRepository,
-    IClaimsReadOnlyRepository
+    IClaimsReadOnlyRepository,
+    IClaimsUpdateOnlyRepository
 {
     public Task Add(Claim claim)
     {
@@ -15,6 +16,11 @@ internal sealed class ClaimsRepository(PolicyDeskDbContext dbContext) :
     }
 
     public Task<Claim?> GetById(Guid id)
+    {
+        return dbContext.Claims.AsNoTracking().FirstOrDefaultAsync(claim => claim.Id == id);
+    }
+
+    public Task<Claim?> GetByIdForUpdate(Guid id)
     {
         return dbContext.Claims.FirstOrDefaultAsync(claim => claim.Id == id);
     }

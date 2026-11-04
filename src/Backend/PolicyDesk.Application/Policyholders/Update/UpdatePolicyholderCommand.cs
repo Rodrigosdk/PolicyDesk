@@ -11,6 +11,7 @@ namespace PolicyDesk.Application.Policyholders.Update;
 
 internal class UpdatePolicyholderCommand(
     IPolicyholdersReadOnlyRepository policyholdersReadOnlyRepository,
+    IPolicyholdersUpdateOnlyRepository policyholdersUpdateOnlyRepository,
     IUnitOfWork unitOfWork,
     ILogger<UpdatePolicyholderCommand> logger)
     : IUpdatePolicyholderCommand
@@ -41,7 +42,7 @@ internal class UpdatePolicyholderCommand(
         {
             throw new ErrorOnValidationException(errors);
         }
-        var policyholder = await policyholdersReadOnlyRepository.GetById(policyholderId);
+        var policyholder = await policyholdersUpdateOnlyRepository.GetByIdForUpdate(policyholderId);
         
         if (policyholder == null)
         {

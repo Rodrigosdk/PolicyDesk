@@ -54,9 +54,9 @@ public class ApproveClaimUseCaseTests
 
     private static (ApproveClaimUseCase UseCase, Mock<IUnitOfWork> UnitOfWork) CreateUseCase(Claim? claim = null)
     {
-        var repository = new ClaimsReadOnlyRepositoryBuilder();
+        var repository = new ClaimsUpdateOnlyRepositoryBuilder();
         if (claim is not null)
-            repository.GetById(claim);
+            repository.GetByIdForUpdate(claim);
         var unitOfWork = UnitOfWorkBuilder.Build();
         return (new ApproveClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<ApproveClaimUseCase>.Instance), unitOfWork);
     }

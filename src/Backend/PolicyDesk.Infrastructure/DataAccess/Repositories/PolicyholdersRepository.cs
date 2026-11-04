@@ -9,7 +9,8 @@ namespace PolicyDesk.Infrastructure.DataAccess.Repositories;
 
 internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) : 
     IPolicyholdersWriteOnlyRepository,
-    IPolicyholdersReadOnlyRepository
+    IPolicyholdersReadOnlyRepository,
+    IPolicyholdersUpdateOnlyRepository
 {
     public async Task<PolicyholderRegistrationResult> RegisterOrReactivate(Policyholders policyholder)
     {
@@ -55,6 +56,11 @@ internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) :
     }
 
     public Task<Policyholders?> GetById(Guid id)
+    {
+        return dbContext.Policyholders.AsNoTracking().FirstOrDefaultAsync(policyholder => policyholder.Id == id);
+    }
+
+    public Task<Policyholders?> GetByIdForUpdate(Guid id)
     {
         return dbContext.Policyholders.FirstOrDefaultAsync(policyholder => policyholder.Id == id);
     }

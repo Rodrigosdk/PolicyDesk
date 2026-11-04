@@ -25,6 +25,21 @@ public class ClaimsReadOnlyRepositoryBuilder
     public IClaimsReadOnlyRepository Build() => _repository.Object;
 }
 
+public class ClaimsUpdateOnlyRepositoryBuilder
+{
+    private readonly Mock<IClaimsUpdateOnlyRepository> _repository = new();
+
+    public Mock<IClaimsUpdateOnlyRepository> Mock => _repository;
+
+    public ClaimsUpdateOnlyRepositoryBuilder GetByIdForUpdate(Claim claim)
+    {
+        _repository.Setup(repository => repository.GetByIdForUpdate(claim.Id)).ReturnsAsync(claim);
+        return this;
+    }
+
+    public IClaimsUpdateOnlyRepository Build() => _repository.Object;
+}
+
 public static class ClaimsWriteOnlyRepositoryBuilder
 {
     public static Mock<IClaimsWriteOnlyRepository> Build()

@@ -10,7 +10,7 @@ using PolicyDesk.Exception.Exception;
 namespace PolicyDesk.Application.Claims.Deny;
 
 internal class DenyClaimUseCase(
-    IClaimsReadOnlyRepository claimsReadOnlyRepository,
+    IClaimsUpdateOnlyRepository claimsUpdateOnlyRepository,
     IUnitOfWork unitOfWork,
     ILogger<DenyClaimUseCase> logger) : IDenyClaimUseCase
 {
@@ -21,7 +21,7 @@ internal class DenyClaimUseCase(
         if (FieldLimits.Exceeds(request.Motivo, FieldLimits.DenialReason))
             throw new ErrorOnValidationException(FieldLimits.DenialReasonTooLong);
 
-        var claim = await claimsReadOnlyRepository.GetById(claimId)
+        var claim = await claimsUpdateOnlyRepository.GetByIdForUpdate(claimId)
                     ?? throw new NotFoundException(ResourcesMessageException.CLAIM_NOT_FOUND);
 
         claim.Deny(request.Motivo);

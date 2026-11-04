@@ -54,9 +54,9 @@ public class CancelPolicyUseCaseTests
 
     private static (CancelPolicyUseCase UseCase, Mock<IUnitOfWork> UnitOfWork) CreateUseCase(Policy? policy = null)
     {
-        var repository = new PoliciesReadOnlyRepositoryBuilder();
+        var repository = new PoliciesUpdateOnlyRepositoryBuilder();
         if (policy is not null)
-            repository.GetById(policy);
+            repository.GetByIdForUpdate(policy);
         var unitOfWork = UnitOfWorkBuilder.Build();
         return (new CancelPolicyUseCase(repository.Build(), unitOfWork.Object, NullLogger<CancelPolicyUseCase>.Instance), unitOfWork);
     }

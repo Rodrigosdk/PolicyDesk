@@ -82,7 +82,7 @@ public class ClaimsRepositoryTests(PostgreSqlInfrastructureFixture fixture) : Cl
         dbContext.Claims.Add(claim);
         await dbContext.SaveChangesAsync();
 
-        var tracked = await CreateRepository(dbContext).GetById(claim.Id);
+        var tracked = await CreateRepository(dbContext).GetByIdForUpdate(claim.Id);
         tracked.ShouldNotBeNull();
         tracked.StartAnalysis();
         tracked.Approve();
@@ -123,5 +123,25 @@ public class ClaimsRepositoryTests(PostgreSqlInfrastructureFixture fixture) : Cl
         dbContext.Claims.Add(ClaimBuilder.Build());
 
         await Should.ThrowAsync<DbUpdateException>(() => dbContext.SaveChangesAsync());
+    }
+
+
+    [Fact(DisplayName = nameof(Deve_RastrearSomente_Quando_BuscarSinistroParaAlteracao))]
+    [Trait("Infrastructure", "ClaimsRepository - Rastreamento")]
+    public async Task Deve_RastrearSomente_Quando_BuscarSinistroParaAlteracao()
+    {
+        await using var setupContext = Fixture.CreateDbContext();
+        var policy = await SavePolicy(setupContext);
+        var claim = ClaimBuilder.Build(policy.Id);
+        setupContext.Claims.Add(claim);
+        await setupContext.SaveChangesAsync();
+
+        await using var readContext = Fixture.CreateDbContext();
+        (await CreateRepository(readContext).GetById(claim.Id)).ShouldNotBeNull();
+        readContext.ChangeTracker.Entries<Claim>().ShouldBeEmpty();
+
+        await using var updateContext = Fixture.CreateDbContext();
+        (await CreateRepository(updateContext).GetByIdForUpdate(claim.Id)).ShouldNotBeNull();
+        updateContext.ChangeTracker.Entries<Claim>().ShouldHaveSingleItem();
     }
 }

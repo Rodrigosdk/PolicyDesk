@@ -22,12 +22,6 @@ public class PolicyholdersReadOnlyRepositoryBuilder
         return this;
     }
 
-    public PolicyholdersReadOnlyRepositoryBuilder GetByIdIncludingInactive(Policyholder policyholder)
-    {
-        _repository.Setup(r => r.GetByIdIncludingInactive(policyholder.Id)).ReturnsAsync(policyholder);
-        return this;
-    }
-
     public PolicyholdersReadOnlyRepositoryBuilder ExistActiveWithEmail()
     {
         _repository
@@ -43,6 +37,27 @@ public class PolicyholdersReadOnlyRepositoryBuilder
     }
 
     public IPolicyholdersReadOnlyRepository Build() => _repository.Object;
+}
+
+public class PolicyholdersUpdateOnlyRepositoryBuilder
+{
+    private readonly Mock<IPolicyholdersUpdateOnlyRepository> _repository = new();
+
+    public Mock<IPolicyholdersUpdateOnlyRepository> Mock => _repository;
+
+    public PolicyholdersUpdateOnlyRepositoryBuilder GetByIdForUpdate(Policyholder policyholder)
+    {
+        _repository.Setup(r => r.GetByIdForUpdate(policyholder.Id)).ReturnsAsync(policyholder);
+        return this;
+    }
+
+    public PolicyholdersUpdateOnlyRepositoryBuilder GetByIdIncludingInactive(Policyholder policyholder)
+    {
+        _repository.Setup(r => r.GetByIdIncludingInactive(policyholder.Id)).ReturnsAsync(policyholder);
+        return this;
+    }
+
+    public IPolicyholdersUpdateOnlyRepository Build() => _repository.Object;
 }
 
 public static class PolicyholdersWriteOnlyRepositoryBuilder

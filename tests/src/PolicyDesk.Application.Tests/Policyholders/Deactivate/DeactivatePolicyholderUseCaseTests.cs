@@ -57,11 +57,15 @@ public class DeactivatePolicyholderUseCaseTests
         bool hasActivePolicy = false)
     {
         var readBuilder = new PolicyholdersReadOnlyRepositoryBuilder();
+        var updateBuilder = new PolicyholdersUpdateOnlyRepositoryBuilder();
         if (policyholder is not null)
-            readBuilder.GetById(policyholder).HasActiveOrFuturePolicy(policyholder.Id, hasActivePolicy);
+        {
+            readBuilder.HasActiveOrFuturePolicy(policyholder.Id, hasActivePolicy);
+            updateBuilder.GetByIdForUpdate(policyholder);
+        }
 
         var unitOfWork = UnitOfWorkBuilder.Build();
 
-        return (new DeactivatePolicyholderUseCase(readBuilder.Build(), unitOfWork.Object, NullLogger<DeactivatePolicyholderUseCase>.Instance), unitOfWork);
+        return (new DeactivatePolicyholderUseCase(readBuilder.Build(), updateBuilder.Build(), unitOfWork.Object, NullLogger<DeactivatePolicyholderUseCase>.Instance), unitOfWork);
     }
 }

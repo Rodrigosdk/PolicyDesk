@@ -9,12 +9,13 @@ namespace PolicyDesk.Application.Policyholders.Deactivate;
 
 internal class DeactivatePolicyholderUseCase(
     IPolicyholdersReadOnlyRepository policyholdersReadOnlyRepository,
+    IPolicyholdersUpdateOnlyRepository policyholdersUpdateOnlyRepository,
     IUnitOfWork unitOfWork,
     ILogger<DeactivatePolicyholderUseCase> logger) : IDeactivatePolicyholderUseCase
 {
     public async Task Execute(Guid policyholderId)
     {
-        var policyholder = await policyholdersReadOnlyRepository.GetById(policyholderId);
+        var policyholder = await policyholdersUpdateOnlyRepository.GetByIdForUpdate(policyholderId);
         if (policyholder == null)
         {
             throw new NotFoundException(ResourcesMessageException.POLICYHOLDER_NOT_FOUND);

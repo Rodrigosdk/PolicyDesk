@@ -20,10 +20,13 @@ public static class DependencyInjectionExtension
         {
             services.AddScoped<IPolicyholdersWriteOnlyRepository, PolicyholdersRepository>();
             services.AddScoped<IPolicyholdersReadOnlyRepository, PolicyholdersRepository>();
+            services.AddScoped<IPolicyholdersUpdateOnlyRepository, PolicyholdersRepository>();
             services.AddScoped<IPoliciesWriteOnlyRepository, PoliciesRepository>();
             services.AddScoped<IPoliciesReadOnlyRepository, PoliciesRepository>();
+            services.AddScoped<IPoliciesUpdateOnlyRepository, PoliciesRepository>();
             services.AddScoped<IClaimsWriteOnlyRepository, ClaimsRepository>();
             services.AddScoped<IClaimsReadOnlyRepository, ClaimsRepository>();
+            services.AddScoped<IClaimsUpdateOnlyRepository, ClaimsRepository>();
             
             services.AddOptions<DatabaseOptions>()
                 .Bind(configuration.GetSection(DatabaseOptions.SectionName))

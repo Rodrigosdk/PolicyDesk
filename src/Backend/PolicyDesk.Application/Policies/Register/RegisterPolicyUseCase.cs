@@ -14,7 +14,7 @@ namespace PolicyDesk.Application.Policies.Register;
 
 internal class RegisterPolicyUseCase(
     IPoliciesWriteOnlyRepository policiesWriteOnlyRepository,
-    IPolicyholdersReadOnlyRepository policyholdersReadOnlyRepository,
+    IPolicyholdersUpdateOnlyRepository policyholdersUpdateOnlyRepository,
     IUnitOfWork unitOfWork,
     ILogger<RegisterPolicyUseCase> logger) : IRegisterPolicyUseCase
 {
@@ -22,7 +22,7 @@ internal class RegisterPolicyUseCase(
     {
         Validate(request);
 
-        var policyholder = await policyholdersReadOnlyRepository.GetByIdIncludingInactive(request.PolicyholderId)
+        var policyholder = await policyholdersUpdateOnlyRepository.GetByIdIncludingInactive(request.PolicyholderId)
                            ?? throw new NotFoundException(ResourcesMessageException.POLICYHOLDER_NOT_FOUND);
 
         if (!policyholder.Active)
