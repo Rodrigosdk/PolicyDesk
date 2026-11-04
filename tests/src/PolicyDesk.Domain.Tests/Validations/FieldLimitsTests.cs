@@ -1,3 +1,4 @@
+using System.Globalization;
 using CommonTestUtilities.Entities;
 using PolicyDesk.Domain.Enums;
 using PolicyDesk.Domain.Validations;
@@ -27,7 +28,7 @@ public class FieldLimitsTests
             () => PolicyholderBuilder.Build(name: new string('a', FieldLimits.PolicyholderName + 1)));
 
         exception.Message.ShouldBe(FieldLimits.PolicyholderNameTooLong);
-        exception.Message.ShouldContain(FieldLimits.PolicyholderName.ToString());
+        exception.Message.ShouldContain(FieldLimits.PolicyholderName.ToString(CultureInfo.InvariantCulture));
     }
 
     [Fact(DisplayName = nameof(Deve_LancarExcecaoSemAlterar_Quando_NomeExcederOLimiteNaAtualizacao))]

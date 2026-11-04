@@ -54,10 +54,27 @@ public class ApproveClaimUseCaseTests
 
     private static (ApproveClaimUseCase UseCase, Mock<IUnitOfWork> UnitOfWork) CreateUseCase(Claim? claim = null)
     {
-        var repository = new ClaimsReadOnlyRepositoryBuilder();
+        var repository = new ClaimsUpdateOnlyRepositoryBuilder();
         if (claim is not null)
-            repository.GetById(claim);
+            repository.GetByIdForUpdate(claim);
         var unitOfWork = UnitOfWorkBuilder.Build();
         return (new ApproveClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<ApproveClaimUseCase>.Instance), unitOfWork);
+    }
+
+
+    [Fact(DisplayName = nameof(Deve_RepassarOTokenDeCancelamento_Quando_BuscarEConfirmar))]
+    [Trait("Application", "Claims - Approve")]
+    public async Task Deve_RepassarOTokenDeCancelamento_Quando_BuscarEConfirmar()
+    {
+        var claim = ClaimBuilder.BuildWithStatus(ClaimStatus.InAnalysis);
+        var repository = new ClaimsUpdateOnlyRepositoryBuilder().GetByIdForUpdate(claim);
+        var unitOfWork = UnitOfWorkBuilder.Build();
+        var useCase = new ApproveClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<ApproveClaimUseCase>.Instance);
+        using var cancellation = new CancellationTokenSource();
+
+        await useCase.Execute(claim.Id, cancellation.Token);
+
+        repository.Mock.Verify(item => item.GetByIdForUpdate(claim.Id, cancellation.Token), Times.Once);
+        unitOfWork.Verify(work => work.Commit(cancellation.Token), Times.Once);
     }
 }

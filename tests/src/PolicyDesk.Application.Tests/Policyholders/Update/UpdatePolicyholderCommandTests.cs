@@ -20,7 +20,7 @@ public class UpdatePolicyholderCommandTests
     public async Task Deve_AtualizarSeguradoEConfirmar_Quando_RequisicaoForValida()
     {
         var policyholder = PolicyholderBuilder.Build();
-        var (command, readBuilder, unitOfWork) = CreateCommand(policyholder);
+        var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand(policyholder);
         var request = RequestPolicyholdersUpdateJsonBuilder.Build(email: "Jane.Updated@Example.com");
 
         await command.Execute(policyholder.Id, request);
@@ -39,12 +39,12 @@ public class UpdatePolicyholderCommandTests
     [Trait("Application", "Policyholders - Update")]
     public async Task Deve_LancarExcecaoAntesDaBusca_Quando_EmailForInvalido()
     {
-        var (command, readBuilder, unitOfWork) = CreateCommand();
+        var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand();
 
         await Should.ThrowAsync<ErrorOnValidationException>(
             () => command.Execute(Guid.NewGuid(), RequestPolicyholdersUpdateJsonBuilder.Build(email: "invalid")));
 
-        readBuilder.Mock.Verify(r => r.GetById(It.IsAny<Guid>()), Times.Never);
+        updateBuilder.Mock.Verify(r => r.GetByIdForUpdate(It.IsAny<Guid>()), Times.Never);
         unitOfWork.Verify(u => u.Commit(), Times.Never);
     }
 
@@ -109,7 +109,7 @@ public class UpdatePolicyholderCommandTests
     [Trait("Application", "Policyholders - Update")]
     public async Task Deve_LancarNaoEncontradoSemConfirmar_Quando_SeguradoNaoExistir()
     {
-        var (command, readBuilder, unitOfWork) = CreateCommand();
+        var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand();
 
         await Should.ThrowAsync<NotFoundException>(
             () => command.Execute(Guid.NewGuid(), RequestPolicyholdersUpdateJsonBuilder.Build()));
@@ -126,7 +126,7 @@ public class UpdatePolicyholderCommandTests
     {
         var policyholder = PolicyholderBuilder.Build();
         var originalEmail = policyholder.Email;
-        var (command, readBuilder, unitOfWork) = CreateCommand(policyholder, emailAlreadyExists: true);
+        var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand(policyholder, emailAlreadyExists: true);
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
             () => command.Execute(
@@ -143,27 +143,29 @@ public class UpdatePolicyholderCommandTests
 
     private static async Task ShouldFailBeforeSearching(RequestPolicyholdersUpdateJson request, string expectedError)
     {
-        var (command, readBuilder, unitOfWork) = CreateCommand();
+        var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand();
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
             () => command.Execute(Guid.NewGuid(), request));
 
         exception.GetErrors().ShouldBe([expectedError]);
-        readBuilder.Mock.Verify(r => r.GetById(It.IsAny<Guid>()), Times.Never);
+        updateBuilder.Mock.Verify(r => r.GetByIdForUpdate(It.IsAny<Guid>()), Times.Never);
         unitOfWork.Verify(u => u.Commit(), Times.Never);
     }
 
-    private static (UpdatePolicyholderCommand Command, PolicyholdersReadOnlyRepositoryBuilder ReadBuilder, Mock<IUnitOfWork> UnitOfWork)
+    private static (UpdatePolicyholderCommand Command, PolicyholdersReadOnlyRepositoryBuilder ReadBuilder,
+        PolicyholdersUpdateOnlyRepositoryBuilder UpdateBuilder, Mock<IUnitOfWork> UnitOfWork)
         CreateCommand(Policyholder? policyholder = null, bool emailAlreadyExists = false)
     {
         var readBuilder = new PolicyholdersReadOnlyRepositoryBuilder();
+        var updateBuilder = new PolicyholdersUpdateOnlyRepositoryBuilder();
         if (policyholder is not null)
-            readBuilder.GetById(policyholder);
+            updateBuilder.GetByIdForUpdate(policyholder);
         if (emailAlreadyExists)
             readBuilder.ExistActiveWithEmail();
 
         var unitOfWork = UnitOfWorkBuilder.Build();
 
-        return (new UpdatePolicyholderCommand(readBuilder.Build(), unitOfWork.Object, NullLogger<UpdatePolicyholderCommand>.Instance), readBuilder, unitOfWork);
+        return (new UpdatePolicyholderCommand(readBuilder.Build(), updateBuilder.Build(), unitOfWork.Object, NullLogger<UpdatePolicyholderCommand>.Instance), readBuilder, updateBuilder, unitOfWork);
     }
 }

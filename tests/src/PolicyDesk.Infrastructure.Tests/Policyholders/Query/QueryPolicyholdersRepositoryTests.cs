@@ -2,6 +2,7 @@ using CommonTestUtilities.Entities;
 using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Infrastructure.DataAccess;
 using Shouldly;
+using Policyholder = PolicyDesk.Domain.Entities.Policyholders;
 
 namespace PolicyDesk.Infrastructure.Tests.Policyholders.Query;
 
@@ -161,5 +162,29 @@ public class QueryPolicyholdersRepositoryTests(PostgreSqlInfrastructureFixture f
         byCpf.ShouldBeNull();
         count.ShouldBe(1);
         withoutFilter.ShouldBe(2);
+    }
+
+
+    [Fact(DisplayName = nameof(Deve_RastrearSomenteAtivos_Quando_BuscarSeguradoParaAlteracao))]
+    [Trait("Infrastructure", "PolicyholdersRepository - Rastreamento")]
+    public async Task Deve_RastrearSomenteAtivos_Quando_BuscarSeguradoParaAlteracao()
+    {
+        await using var dbContext = await Fixture.CreateCleanDbContextAsync();
+        var repository = CreateRepository(dbContext);
+        var active = PolicyholderBuilder.Build();
+        var inactive = PolicyholderBuilder.Build();
+        await repository.RegisterOrReactivate(active);
+        await repository.RegisterOrReactivate(inactive);
+        await DeactivateAndCommit(dbContext, inactive);
+
+        await using var readContext = Fixture.CreateDbContext();
+        (await CreateRepository(readContext).GetById(active.Id)).ShouldNotBeNull();
+        readContext.ChangeTracker.Entries<Policyholder>().ShouldBeEmpty();
+
+        await using var updateContext = Fixture.CreateDbContext();
+        var updateRepository = CreateRepository(updateContext);
+        (await updateRepository.GetByIdForUpdate(active.Id)).ShouldNotBeNull();
+        (await updateRepository.GetByIdForUpdate(inactive.Id)).ShouldBeNull();
+        updateContext.ChangeTracker.Entries<Policyholder>().ShouldHaveSingleItem();
     }
 }

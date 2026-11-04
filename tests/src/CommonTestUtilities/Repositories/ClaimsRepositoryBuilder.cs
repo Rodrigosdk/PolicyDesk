@@ -12,17 +12,32 @@ public class ClaimsReadOnlyRepositoryBuilder
 
     public ClaimsReadOnlyRepositoryBuilder GetById(Claim claim)
     {
-        _repository.Setup(repository => repository.GetById(claim.Id)).ReturnsAsync(claim);
+        _repository.Setup(repository => repository.GetById(claim.Id, It.IsAny<CancellationToken>())).ReturnsAsync(claim);
         return this;
     }
 
     public ClaimsReadOnlyRepositoryBuilder GetByPolicyId(IEnumerable<Claim> claims)
     {
-        _repository.Setup(repository => repository.GetByPolicyId(It.IsAny<Guid>())).ReturnsAsync(claims);
+        _repository.Setup(repository => repository.GetByPolicyId(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(claims);
         return this;
     }
 
     public IClaimsReadOnlyRepository Build() => _repository.Object;
+}
+
+public class ClaimsUpdateOnlyRepositoryBuilder
+{
+    private readonly Mock<IClaimsUpdateOnlyRepository> _repository = new();
+
+    public Mock<IClaimsUpdateOnlyRepository> Mock => _repository;
+
+    public ClaimsUpdateOnlyRepositoryBuilder GetByIdForUpdate(Claim claim)
+    {
+        _repository.Setup(repository => repository.GetByIdForUpdate(claim.Id, It.IsAny<CancellationToken>())).ReturnsAsync(claim);
+        return this;
+    }
+
+    public IClaimsUpdateOnlyRepository Build() => _repository.Object;
 }
 
 public static class ClaimsWriteOnlyRepositoryBuilder

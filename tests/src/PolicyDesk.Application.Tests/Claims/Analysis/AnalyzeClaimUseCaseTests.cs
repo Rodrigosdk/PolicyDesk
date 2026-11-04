@@ -53,9 +53,9 @@ public class AnalyzeClaimUseCaseTests
 
     private static (AnalyzeClaimUseCase UseCase, Mock<IUnitOfWork> UnitOfWork) CreateUseCase(Claim? claim = null)
     {
-        var repository = new ClaimsReadOnlyRepositoryBuilder();
+        var repository = new ClaimsUpdateOnlyRepositoryBuilder();
         if (claim is not null)
-            repository.GetById(claim);
+            repository.GetByIdForUpdate(claim);
         var unitOfWork = UnitOfWorkBuilder.Build();
         return (new AnalyzeClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<AnalyzeClaimUseCase>.Instance), unitOfWork);
     }

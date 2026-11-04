@@ -36,14 +36,14 @@ public class DenyClaimUseCaseTests
     [InlineData("   ")]
     public async Task Deve_LancarValidacaoAntesDaBusca_Quando_MotivoForVazio(string reason)
     {
-        var repository = new ClaimsReadOnlyRepositoryBuilder();
+        var repository = new ClaimsUpdateOnlyRepositoryBuilder();
         var unitOfWork = UnitOfWorkBuilder.Build();
         var useCase = new DenyClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<DenyClaimUseCase>.Instance);
 
         await Should.ThrowAsync<ErrorOnValidationException>(
             () => useCase.Execute(Guid.NewGuid(), new RequestDenyClaimJson { Motivo = reason }));
 
-        repository.Mock.Verify(item => item.GetById(It.IsAny<Guid>()), Times.Never);
+        repository.Mock.Verify(item => item.GetByIdForUpdate(It.IsAny<Guid>()), Times.Never);
         unitOfWork.Verify(work => work.Commit(), Times.Never);
     }
 
@@ -76,9 +76,9 @@ public class DenyClaimUseCaseTests
 
     private static (DenyClaimUseCase UseCase, Mock<IUnitOfWork> UnitOfWork) CreateUseCase(Claim? claim = null)
     {
-        var repository = new ClaimsReadOnlyRepositoryBuilder();
+        var repository = new ClaimsUpdateOnlyRepositoryBuilder();
         if (claim is not null)
-            repository.GetById(claim);
+            repository.GetByIdForUpdate(claim);
         var unitOfWork = UnitOfWorkBuilder.Build();
         return (new DenyClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<DenyClaimUseCase>.Instance), unitOfWork);
     }
@@ -88,7 +88,7 @@ public class DenyClaimUseCaseTests
     [Trait("Application", "Claims - Deny")]
     public async Task Deve_LancarValidacaoAntesDaBusca_Quando_MotivoExcederOLimite()
     {
-        var repository = new ClaimsReadOnlyRepositoryBuilder();
+        var repository = new ClaimsUpdateOnlyRepositoryBuilder();
         var unitOfWork = UnitOfWorkBuilder.Build();
         var useCase = new DenyClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<DenyClaimUseCase>.Instance);
         var request = new RequestDenyClaimJson { Motivo = new string('a', FieldLimits.DenialReason + 1) };
@@ -96,7 +96,7 @@ public class DenyClaimUseCaseTests
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(Guid.NewGuid(), request));
 
         exception.GetErrors().ShouldBe([FieldLimits.DenialReasonTooLong]);
-        repository.Mock.Verify(item => item.GetById(It.IsAny<Guid>()), Times.Never);
+        repository.Mock.Verify(item => item.GetByIdForUpdate(It.IsAny<Guid>()), Times.Never);
         unitOfWork.Verify(work => work.Commit(), Times.Never);
     }
 }

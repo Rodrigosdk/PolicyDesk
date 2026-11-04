@@ -10,6 +10,8 @@ namespace PolicyDesk.Api.Filters;
 
 public class ExceptionFilter(ProblemDetailsFactory problemDetailsFactory, ILogger<ExceptionFilter> logger) : IExceptionFilter
 {
+    public const int StatusClientClosedRequest = 499;
+
     public void OnException(ExceptionContext context)
     {
         switch (context.Exception)
@@ -29,9 +31,13 @@ public class ExceptionFilter(ProblemDetailsFactory problemDetailsFactory, ILogge
             case BadHttpRequestException badHttpRequestException:
                 SetErrorResult(context, badHttpRequestException.StatusCode, [ResourcesMessageException.INVALID_REQUEST]);
                 break;
+            case OperationCanceledException when context.HttpContext.RequestAborted.IsCancellationRequested:
+                logger.RequestCancelled(context.HttpContext.Request.Method, context.HttpContext.Request.Path.Value);
+                context.Result = new StatusCodeResult(StatusClientClosedRequest);
+                break;
             default:
                 // Detalhes de erros inesperados ficam só no log, nunca na resposta
-                logger.UnhandledException(context.Exception, context.HttpContext.Request.Method, context.HttpContext.Request.Path);
+                logger.UnhandledException(context.Exception, context.HttpContext.Request.Method, context.HttpContext.Request.Path.Value);
                 SetErrorResult(context, StatusCodes.Status500InternalServerError, [ResourcesMessageException.UNKNOWN_ERROR]);
                 break;
         }

@@ -19,9 +19,10 @@ public class ClaimsController : ControllerBase
     public async Task<IActionResult> Register(
         [FromRoute] Guid id,
         [FromBody] RequestClaimJson request,
-        [FromServices] IRegisterClaimUseCase useCase)
+        [FromServices] IRegisterClaimUseCase useCase,
+        CancellationToken cancellationToken)
     {
-        var result = await useCase.Execute(id, request);
+        var result = await useCase.Execute(id, request, cancellationToken);
 
         return StatusCode(StatusCodes.Status201Created, result);
     }
@@ -30,27 +31,30 @@ public class ClaimsController : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<ResponseClaimJson>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<ResponseClaimJson>>> GetByPolicy(
         [FromRoute] Guid id,
-        [FromServices] IListClaimsUseCase useCase)
+        [FromServices] IListClaimsUseCase useCase,
+        CancellationToken cancellationToken)
     {
-        return Ok(await useCase.ListByPolicy(id));
+        return Ok(await useCase.ListByPolicy(id, cancellationToken));
     }
 
     [HttpGet("sinistros/{id:guid}")]
     [ProducesResponseType(typeof(ResponseClaimJson), StatusCodes.Status200OK)]
     public async Task<ActionResult<ResponseClaimJson>> GetById(
         [FromRoute] Guid id,
-        [FromServices] IListClaimsUseCase useCase)
+        [FromServices] IListClaimsUseCase useCase,
+        CancellationToken cancellationToken)
     {
-        return Ok(await useCase.GetById(id));
+        return Ok(await useCase.GetById(id, cancellationToken));
     }
 
     [HttpPost("sinistros/{id:guid}/analise")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> StartAnalysis(
         [FromRoute] Guid id,
-        [FromServices] IAnalyzeClaimUseCase useCase)
+        [FromServices] IAnalyzeClaimUseCase useCase,
+        CancellationToken cancellationToken)
     {
-        await useCase.Execute(id);
+        await useCase.Execute(id, cancellationToken);
         return NoContent();
     }
 
@@ -58,9 +62,10 @@ public class ClaimsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Approve(
         [FromRoute] Guid id,
-        [FromServices] IApproveClaimUseCase useCase)
+        [FromServices] IApproveClaimUseCase useCase,
+        CancellationToken cancellationToken)
     {
-        await useCase.Execute(id);
+        await useCase.Execute(id, cancellationToken);
 
         return NoContent();
     }
@@ -70,9 +75,10 @@ public class ClaimsController : ControllerBase
     public async Task<IActionResult> Deny(
         [FromRoute] Guid id,
         [FromBody] RequestDenyClaimJson request,
-        [FromServices] IDenyClaimUseCase useCase)
+        [FromServices] IDenyClaimUseCase useCase,
+        CancellationToken cancellationToken)
     {
-        await useCase.Execute(id, request);
+        await useCase.Execute(id, request, cancellationToken);
         return NoContent();
     }
 
@@ -80,9 +86,10 @@ public class ClaimsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> RegisterPayment(
         [FromRoute] Guid id,
-        [FromServices] IPayClaimUseCase useCase)
+        [FromServices] IPayClaimUseCase useCase,
+        CancellationToken cancellationToken)
     {
-        await useCase.Execute(id);
+        await useCase.Execute(id, cancellationToken);
         return NoContent();
     }
 }

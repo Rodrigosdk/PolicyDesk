@@ -17,7 +17,7 @@ public class ClaimConcurrencyTests(PolicyDeskApplicationFactory factory) : Claim
     public async Task Deve_RetornarConflict_Quando_OcorrerConflitoDeConcorrencia()
     {
         // Substitui o caso de uso por um que simula o conflito detectado no Commit
-        var client = factory
+        var client = Factory
             .WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
                 services.AddScoped<IApproveClaimUseCase, ConflictingApproveClaimUseCase>()))
             .CreateClient();
@@ -72,7 +72,7 @@ public class ClaimConcurrencyTests(PolicyDeskApplicationFactory factory) : Claim
 
     private sealed class ConflictingApproveClaimUseCase : IApproveClaimUseCase
     {
-        public Task Execute(Guid claimId) =>
+        public Task Execute(Guid claimId, CancellationToken cancellationToken = default) =>
             throw new ConflictException(ResourcesMessageException.CONCURRENCY_CONFLICT);
     }
 }

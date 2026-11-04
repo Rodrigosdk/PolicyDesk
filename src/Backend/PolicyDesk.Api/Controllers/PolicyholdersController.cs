@@ -15,9 +15,10 @@ public class PolicyholdersController : ControllerBase
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ResponsePolicyholdersListingJson>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<ResponsePolicyholdersListingJson>>> GetAll(
-        [FromServices] IListPolicyholdersUseCase useCase)
+        [FromServices] IListPolicyholdersUseCase useCase,
+        CancellationToken cancellationToken)
     {
-        var result = await useCase.Listing();
+        var result = await useCase.Listing(cancellationToken);
 
         return Ok(result);
     }
@@ -26,9 +27,10 @@ public class PolicyholdersController : ControllerBase
     [ProducesResponseType(typeof(ResponsePolicyholdersListingJson), StatusCodes.Status200OK)]
     public async Task<ActionResult<ResponsePolicyholdersListingJson>> GetById(
         [FromRoute] Guid id,
-        [FromServices] IListPolicyholdersUseCase useCase)
+        [FromServices] IListPolicyholdersUseCase useCase,
+        CancellationToken cancellationToken)
     {
-        var result = await useCase.GetById(id);
+        var result = await useCase.GetById(id, cancellationToken);
 
         return Ok(result);
     }
@@ -37,9 +39,10 @@ public class PolicyholdersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> Register(
         [FromBody] RequestPolicyholdersJson request,
-        [FromServices] IRegisterPolicyholderUseCase useCase)
+        [FromServices] IRegisterPolicyholderUseCase useCase,
+        CancellationToken cancellationToken)
     {
-        await useCase.Execute(request);
+        await useCase.Execute(request, cancellationToken);
 
         return StatusCode(StatusCodes.Status201Created);
     }
@@ -49,9 +52,10 @@ public class PolicyholdersController : ControllerBase
     public async Task<IActionResult> Update(
         [FromRoute] Guid id,
         [FromBody] RequestPolicyholdersUpdateJson request,
-        [FromServices] IUpdatePolicyholderCommand useCase)
+        [FromServices] IUpdatePolicyholderCommand useCase,
+        CancellationToken cancellationToken)
     {
-        await useCase.Execute(id, request);
+        await useCase.Execute(id, request, cancellationToken);
 
         return NoContent();
     }
@@ -60,9 +64,10 @@ public class PolicyholdersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Remove(
         [FromRoute] Guid id,
-        [FromServices] IDeactivatePolicyholderUseCase useCase)
+        [FromServices] IDeactivatePolicyholderUseCase useCase,
+        CancellationToken cancellationToken)
     {
-        await useCase.Execute(id);
+        await useCase.Execute(id, cancellationToken);
 
         return NoContent();
     }

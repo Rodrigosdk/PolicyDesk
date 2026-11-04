@@ -8,17 +8,17 @@ using PolicyDesk.Exception.Exception;
 namespace PolicyDesk.Application.Policies.Cancel;
 
 internal class CancelPolicyUseCase(
-    IPoliciesReadOnlyRepository policiesReadOnlyRepository,
+    IPoliciesUpdateOnlyRepository policiesUpdateOnlyRepository,
     IUnitOfWork unitOfWork,
     ILogger<CancelPolicyUseCase> logger) : ICancelPolicyUseCase
 {
-    public async Task Execute(Guid policyId)
+    public async Task Execute(Guid policyId, CancellationToken cancellationToken = default)
     {
-        var policy = await policiesReadOnlyRepository.GetById(policyId)
+        var policy = await policiesUpdateOnlyRepository.GetByIdForUpdate(policyId, cancellationToken)
                      ?? throw new NotFoundException(ResourcesMessageException.POLICY_NOT_FOUND);
 
         policy.Cancel();
-        await unitOfWork.Commit();
+        await unitOfWork.Commit(cancellationToken);
         logger.PolicyCancelled(policy.Id);
     }
 }

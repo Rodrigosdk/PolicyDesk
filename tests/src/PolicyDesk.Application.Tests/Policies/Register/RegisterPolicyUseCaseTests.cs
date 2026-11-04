@@ -121,11 +121,11 @@ public class RegisterPolicyUseCaseTests
         RegisterPolicyUseCase UseCase,
         Mock<IPoliciesWriteOnlyRepository> WriteRepository,
         Mock<IUnitOfWork> UnitOfWork,
-        Mock<IPolicyholdersReadOnlyRepository> PolicyholdersRepository)
+        Mock<IPolicyholdersUpdateOnlyRepository> PolicyholdersRepository)
         CreateUseCase(Policyholder? policyholder = null)
     {
         var writeRepository = PoliciesWriteOnlyRepositoryBuilder.Build();
-        var policyholdersRepository = new PolicyholdersReadOnlyRepositoryBuilder();
+        var policyholdersRepository = new PolicyholdersUpdateOnlyRepositoryBuilder();
         if (policyholder is not null)
             policyholdersRepository.GetByIdIncludingInactive(policyholder);
         var unitOfWork = UnitOfWorkBuilder.Build();

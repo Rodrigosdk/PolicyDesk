@@ -8,11 +8,14 @@ public abstract class BaseIntegrationTest : IClassFixture<PolicyDeskApplicationF
 {
     internal readonly PolicyDeskDbContext DbContext;
 
+    protected PolicyDeskApplicationFactory Factory { get; }
+
     private readonly HttpClient _httpClient;
     private readonly IServiceScope _scope;
 
     protected BaseIntegrationTest(PolicyDeskApplicationFactory factory)
     {
+        Factory = factory;
         _httpClient = factory.CreateClient();
         _scope = factory.Services.CreateScope();
         DbContext = _scope.ServiceProvider.GetRequiredService<PolicyDeskDbContext>();

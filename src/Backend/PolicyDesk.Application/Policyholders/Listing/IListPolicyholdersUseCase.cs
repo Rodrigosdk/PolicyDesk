@@ -4,6 +4,6 @@ namespace PolicyDesk.Application.Policyholders.Listing;
 
 public interface IListPolicyholdersUseCase
 {
-    Task<IEnumerable<ResponsePolicyholdersListingJson>> Listing();
-    Task<ResponsePolicyholdersListingJson> GetById(Guid policyholderId);
+    Task<IEnumerable<ResponsePolicyholdersListingJson>> Listing(CancellationToken cancellationToken = default);
+    Task<ResponsePolicyholdersListingJson> GetById(Guid policyholderId, CancellationToken cancellationToken = default);
 }

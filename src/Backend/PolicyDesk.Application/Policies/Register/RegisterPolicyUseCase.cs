@@ -14,15 +14,15 @@ namespace PolicyDesk.Application.Policies.Register;
 
 internal class RegisterPolicyUseCase(
     IPoliciesWriteOnlyRepository policiesWriteOnlyRepository,
-    IPolicyholdersReadOnlyRepository policyholdersReadOnlyRepository,
+    IPolicyholdersUpdateOnlyRepository policyholdersUpdateOnlyRepository,
     IUnitOfWork unitOfWork,
     ILogger<RegisterPolicyUseCase> logger) : IRegisterPolicyUseCase
 {
-    public async Task<ResponseCreatedJson> Execute(RequestPolicyJson request)
+    public async Task<ResponseCreatedJson> Execute(RequestPolicyJson request, CancellationToken cancellationToken = default)
     {
         Validate(request);
 
-        var policyholder = await policyholdersReadOnlyRepository.GetByIdIncludingInactive(request.PolicyholderId)
+        var policyholder = await policyholdersUpdateOnlyRepository.GetByIdIncludingInactive(request.PolicyholderId, cancellationToken)
                            ?? throw new NotFoundException(ResourcesMessageException.POLICYHOLDER_NOT_FOUND);
 
         if (!policyholder.Active)
@@ -41,7 +41,7 @@ internal class RegisterPolicyUseCase(
         policyholder.RegisterPolicy();
 
         await policiesWriteOnlyRepository.Add(policy);
-        await unitOfWork.Commit();
+        await unitOfWork.Commit(cancellationToken);
         logger.PolicyRegistered(policy.Id, policyholder.Id);
 
         return new ResponseCreatedJson { Id = policy.Id };

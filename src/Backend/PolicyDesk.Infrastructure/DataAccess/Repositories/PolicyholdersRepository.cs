@@ -9,9 +9,10 @@ namespace PolicyDesk.Infrastructure.DataAccess.Repositories;
 
 internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) : 
     IPolicyholdersWriteOnlyRepository,
-    IPolicyholdersReadOnlyRepository
+    IPolicyholdersReadOnlyRepository,
+    IPolicyholdersUpdateOnlyRepository
 {
-    public async Task<PolicyholderRegistrationResult> RegisterOrReactivate(Policyholders policyholder)
+    public async Task<PolicyholderRegistrationResult> RegisterOrReactivate(Policyholders policyholder, CancellationToken cancellationToken = default)
     {
         int affectedRows;
         try
@@ -31,7 +32,7 @@ internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) :
                     active = TRUE,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE policyholders.active = FALSE
-                """);
+                """, cancellationToken);
         }
         catch (PostgresException exception) when (
             exception is { 
@@ -47,40 +48,45 @@ internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) :
             : PolicyholderRegistrationResult.RegisteredOrReactivated;
     }
 
-    public async Task<IEnumerable<Policyholders>> GetAll()
+    public async Task<IEnumerable<Policyholders>> GetAll(CancellationToken cancellationToken = default)
     {
         return await dbContext.Policyholders
             .AsNoTracking()
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
-    public Task<Policyholders?> GetById(Guid id)
+    public Task<Policyholders?> GetById(Guid id, CancellationToken cancellationToken = default)
     {
-        return dbContext.Policyholders.FirstOrDefaultAsync(policyholder => policyholder.Id == id);
+        return dbContext.Policyholders.AsNoTracking().FirstOrDefaultAsync(policyholder => policyholder.Id == id, cancellationToken);
+    }
+
+    public Task<Policyholders?> GetByIdForUpdate(Guid id, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Policyholders.FirstOrDefaultAsync(policyholder => policyholder.Id == id, cancellationToken);
     }
 
     // Consulta rastreada de propósito: o cadastro de apólice altera o segurado retornado
     // (RegisterPolicy), e é essa gravação que detecta a inativação concorrente
-    public Task<Policyholders?> GetByIdIncludingInactive(Guid id)
+    public Task<Policyholders?> GetByIdIncludingInactive(Guid id, CancellationToken cancellationToken = default)
     {
         return dbContext.Policyholders
             .IgnoreQueryFilters([PolicyholdersMap.ActiveFilter])
-            .FirstOrDefaultAsync(policyholder => policyholder.Id == id);
+            .FirstOrDefaultAsync(policyholder => policyholder.Id == id, cancellationToken);
     }
     
-    public Task<bool> ExistActivePolicyholdersWithEmail(string email, Guid? exceptPolicyholderId = null)
+    public Task<bool> ExistActivePolicyholdersWithEmail(string email, Guid? exceptPolicyholderId = null, CancellationToken cancellationToken = default)
     {
         return dbContext.Policyholders.AnyAsync(policyholder =>
             policyholder.Email == email &&
-            (exceptPolicyholderId == null || policyholder.Id != exceptPolicyholderId));
+            (exceptPolicyholderId == null || policyholder.Id != exceptPolicyholderId), cancellationToken);
     }
 
-    public Task<bool> HasActiveOrFuturePolicy(Guid policyholderId)
+    public Task<bool> HasActiveOrFuturePolicy(Guid policyholderId, CancellationToken cancellationToken = default)
     {
         var today = DateTime.UtcNow.Date;
         return dbContext.Policies.AnyAsync(policy =>
             policy.PolicyholderId == policyholderId &&
             policy.Status == PolicyStatus.Active &&
-            policy.EndDate >= today);
+            policy.EndDate >= today, cancellationToken);
     }
 }

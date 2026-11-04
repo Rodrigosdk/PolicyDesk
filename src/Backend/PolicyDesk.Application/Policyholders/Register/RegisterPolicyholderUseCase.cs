@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using PolicyDesk.Application.Logging;
 using PolicyDesk.Communication.Requests;
@@ -13,7 +14,7 @@ internal class RegisterPolicyholderUseCase(
     ILogger<RegisterPolicyholderUseCase> logger) : IRegisterPolicyholderUseCase
 {
     
-    public async Task Execute(RequestPolicyholdersJson request)
+    public async Task Execute(RequestPolicyholdersJson request, CancellationToken cancellationToken = default)
     {
         ValidateAndThrowOnFailures(request);
 
@@ -25,7 +26,7 @@ internal class RegisterPolicyholderUseCase(
             request.PhoneNumber
         );
 
-        var result = await policyholdersWriteOnlyRepository.RegisterOrReactivate(policyholder);
+        var result = await policyholdersWriteOnlyRepository.RegisterOrReactivate(policyholder, cancellationToken);
         switch (result)
         {
             case PolicyholderRegistrationResult.ActiveCpfAlreadyExists:
@@ -36,7 +37,7 @@ internal class RegisterPolicyholderUseCase(
                 logger.PolicyholderRegisteredOrReactivated();
                 break;
             default:
-                throw new ArgumentOutOfRangeException();
+                throw new UnreachableException($"Resultado de cadastro inesperado: {result}");
         }
     }
     

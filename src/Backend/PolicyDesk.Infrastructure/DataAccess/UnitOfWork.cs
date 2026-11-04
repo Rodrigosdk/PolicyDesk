@@ -10,11 +10,11 @@ internal class UnitOfWork(PolicyDeskDbContext dbContext) : IUnitOfWork
 {
     private const string ActiveEmailIndex = "IX_policyholders_email_active";
 
-    public async Task Commit()
+    public async Task Commit(CancellationToken cancellationToken = default)
     {
         try
         {
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateConcurrencyException)
         {

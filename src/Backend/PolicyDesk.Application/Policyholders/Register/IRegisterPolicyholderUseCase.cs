@@ -4,5 +4,5 @@ namespace PolicyDesk.Application.Policyholders.Register;
 
 public interface IRegisterPolicyholderUseCase
 {
-    public Task Execute(RequestPolicyholdersJson request);
+    public Task Execute(RequestPolicyholdersJson request, CancellationToken cancellationToken = default);
 }
