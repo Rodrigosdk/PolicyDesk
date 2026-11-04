@@ -2,5 +2,5 @@ namespace PolicyDesk.Domain.Repositories.Policyholders;
 
 public interface IPolicyholdersWriteOnlyRepository
 {
-    Task<PolicyholderRegistrationResult> RegisterOrReactivate(Entities.Policyholders policyholder);
+    Task<PolicyholderRegistrationResult> RegisterOrReactivate(Entities.Policyholders policyholder, CancellationToken cancellationToken = default);
 }

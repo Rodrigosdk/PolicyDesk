@@ -12,13 +12,13 @@ internal class ApproveClaimUseCase(
     IUnitOfWork unitOfWork,
     ILogger<ApproveClaimUseCase> logger) : IApproveClaimUseCase
 {
-    public async Task Execute(Guid claimId)
+    public async Task Execute(Guid claimId, CancellationToken cancellationToken = default)
     {
-        var claim = await claimsUpdateOnlyRepository.GetByIdForUpdate(claimId)
+        var claim = await claimsUpdateOnlyRepository.GetByIdForUpdate(claimId, cancellationToken)
                     ?? throw new NotFoundException(ResourcesMessageException.CLAIM_NOT_FOUND);
 
         claim.Approve();
-        await unitOfWork.Commit();
+        await unitOfWork.Commit(cancellationToken);
         logger.ClaimApproved(claim.Id);
     }
 }

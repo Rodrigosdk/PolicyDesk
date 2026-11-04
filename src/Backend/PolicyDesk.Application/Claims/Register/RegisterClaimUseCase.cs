@@ -18,11 +18,11 @@ internal class RegisterClaimUseCase(
     IUnitOfWork unitOfWork,
     ILogger<RegisterClaimUseCase> logger) : IRegisterClaimUseCase
 {
-    public async Task<ResponseCreatedJson> Execute(Guid policyId, RequestClaimJson request)
+    public async Task<ResponseCreatedJson> Execute(Guid policyId, RequestClaimJson request, CancellationToken cancellationToken = default)
     {
         Validate(request);
 
-        var policy = await policiesReadOnlyRepository.GetById(policyId)
+        var policy = await policiesReadOnlyRepository.GetById(policyId, cancellationToken)
                      ?? throw new NotFoundException(ResourcesMessageException.POLICY_NOT_FOUND);
 
         if (policy.IsCancelled)
@@ -43,7 +43,7 @@ internal class RegisterClaimUseCase(
         var claim = new Claim(policy.Id, request.Description, request.Amount, request.OccurredOn);
 
         await claimsWriteOnlyRepository.Add(claim);
-        await unitOfWork.Commit();
+        await unitOfWork.Commit(cancellationToken);
         logger.ClaimRegistered(claim.Id, policy.Id, claim.Amount);
 
         return new ResponseCreatedJson { Id = claim.Id };

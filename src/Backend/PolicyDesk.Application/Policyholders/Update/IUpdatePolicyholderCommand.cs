@@ -4,5 +4,5 @@ namespace PolicyDesk.Application.Policyholders.Update;
 
 public interface IUpdatePolicyholderCommand
 {
-    Task Execute(Guid policyholderId, RequestPolicyholdersUpdateJson request);
+    Task Execute(Guid policyholderId, RequestPolicyholdersUpdateJson request, CancellationToken cancellationToken = default);
 }

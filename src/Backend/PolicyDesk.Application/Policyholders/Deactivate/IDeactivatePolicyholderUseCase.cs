@@ -2,5 +2,5 @@ namespace PolicyDesk.Application.Policyholders.Deactivate;
 
 public interface IDeactivatePolicyholderUseCase
 {
-    Task Execute(Guid policyholderId);
+    Task Execute(Guid policyholderId, CancellationToken cancellationToken = default);
 }

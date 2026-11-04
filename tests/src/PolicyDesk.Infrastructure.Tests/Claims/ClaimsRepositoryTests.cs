@@ -144,4 +144,15 @@ public class ClaimsRepositoryTests(PostgreSqlInfrastructureFixture fixture) : Cl
         (await CreateRepository(updateContext).GetByIdForUpdate(claim.Id)).ShouldNotBeNull();
         updateContext.ChangeTracker.Entries<Claim>().ShouldHaveSingleItem();
     }
+
+
+    [Fact(DisplayName = nameof(Deve_InterromperAConsulta_Quando_TokenEstiverCancelado))]
+    [Trait("Infrastructure", "ClaimsRepository - Cancelamento")]
+    public async Task Deve_InterromperAConsulta_Quando_TokenEstiverCancelado()
+    {
+        await using var dbContext = Fixture.CreateDbContext();
+
+        await Should.ThrowAsync<OperationCanceledException>(
+            () => CreateRepository(dbContext).GetById(Guid.NewGuid(), new CancellationToken(canceled: true)));
+    }
 }

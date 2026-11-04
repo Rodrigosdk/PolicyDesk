@@ -15,22 +15,22 @@ internal sealed class ClaimsRepository(PolicyDeskDbContext dbContext) :
         return Task.CompletedTask;
     }
 
-    public Task<Claim?> GetById(Guid id)
+    public Task<Claim?> GetById(Guid id, CancellationToken cancellationToken = default)
     {
-        return dbContext.Claims.AsNoTracking().FirstOrDefaultAsync(claim => claim.Id == id);
+        return dbContext.Claims.AsNoTracking().FirstOrDefaultAsync(claim => claim.Id == id, cancellationToken);
     }
 
-    public Task<Claim?> GetByIdForUpdate(Guid id)
+    public Task<Claim?> GetByIdForUpdate(Guid id, CancellationToken cancellationToken = default)
     {
-        return dbContext.Claims.FirstOrDefaultAsync(claim => claim.Id == id);
+        return dbContext.Claims.FirstOrDefaultAsync(claim => claim.Id == id, cancellationToken);
     }
 
-    public async Task<IEnumerable<Claim>> GetByPolicyId(Guid policyId)
+    public async Task<IEnumerable<Claim>> GetByPolicyId(Guid policyId, CancellationToken cancellationToken = default)
     {
         return await dbContext.Claims
             .AsNoTracking()
             .Where(claim => claim.PolicyId == policyId)
             .OrderBy(claim => claim.CreatedAt)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 }

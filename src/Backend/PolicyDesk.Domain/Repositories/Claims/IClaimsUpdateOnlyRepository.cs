@@ -4,5 +4,5 @@ namespace PolicyDesk.Domain.Repositories.Claims;
 
 public interface IClaimsUpdateOnlyRepository
 {
-    Task<Claim?> GetByIdForUpdate(Guid id);
+    Task<Claim?> GetByIdForUpdate(Guid id, CancellationToken cancellationToken = default);
 }

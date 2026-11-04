@@ -72,7 +72,7 @@ public class ClaimConcurrencyTests(PolicyDeskApplicationFactory factory) : Claim
 
     private sealed class ConflictingApproveClaimUseCase : IApproveClaimUseCase
     {
-        public Task Execute(Guid claimId) =>
+        public Task Execute(Guid claimId, CancellationToken cancellationToken = default) =>
             throw new ConflictException(ResourcesMessageException.CONCURRENCY_CONFLICT);
     }
 }

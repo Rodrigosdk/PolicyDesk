@@ -16,9 +16,9 @@ internal class UpdatePolicyholderCommand(
     ILogger<UpdatePolicyholderCommand> logger)
     : IUpdatePolicyholderCommand
 {
-    public async Task Execute(Guid policyholderId, RequestPolicyholdersUpdateJson request)
+    public async Task Execute(Guid policyholderId, RequestPolicyholdersUpdateJson request, CancellationToken cancellationToken = default)
     {
-        var policyholder = await ValidateAndThrowOnFailures(policyholderId, request);
+        var policyholder = await ValidateAndThrowOnFailures(policyholderId, request, cancellationToken);
         
         policyholder.Update(
             request.Name,
@@ -27,10 +27,11 @@ internal class UpdatePolicyholderCommand(
             request.PhoneNumber
         );
         
-        await unitOfWork.Commit();
+        await unitOfWork.Commit(cancellationToken);
         logger.PolicyholderUpdated(policyholder.Id);
     }
-    private async Task<Domain.Entities.Policyholders> ValidateAndThrowOnFailures(Guid policyholderId, RequestPolicyholdersUpdateJson request)
+    private async Task<Domain.Entities.Policyholders> ValidateAndThrowOnFailures(
+        Guid policyholderId, RequestPolicyholdersUpdateJson request, CancellationToken cancellationToken)
     {
         var errors = PolicyholderDataValidator.Validate(
             request.Name,
@@ -42,7 +43,7 @@ internal class UpdatePolicyholderCommand(
         {
             throw new ErrorOnValidationException(errors);
         }
-        var policyholder = await policyholdersUpdateOnlyRepository.GetByIdForUpdate(policyholderId);
+        var policyholder = await policyholdersUpdateOnlyRepository.GetByIdForUpdate(policyholderId, cancellationToken);
         
         if (policyholder == null)
         {
@@ -50,7 +51,7 @@ internal class UpdatePolicyholderCommand(
         }
         
         var normalizedEmail = EmailValidator.Normalize(request.Email);
-        var existActivePolicyholdersWithEmail = await policyholdersReadOnlyRepository.ExistActivePolicyholdersWithEmail(normalizedEmail, policyholderId);
+        var existActivePolicyholdersWithEmail = await policyholdersReadOnlyRepository.ExistActivePolicyholdersWithEmail(normalizedEmail, policyholderId, cancellationToken);
         
         return existActivePolicyholdersWithEmail
             ? throw new ErrorOnValidationException(ResourcesMessageException.POLICYHOLDER_ACTIVE_EMAIL_EXISTS)

@@ -139,6 +139,6 @@ public class ErrorResponseTests(PolicyDeskApplicationFactory factory) : IClassFi
 
     private sealed class ThrowingUseCase(System.Exception exception) : IApproveClaimUseCase
     {
-        public Task Execute(Guid claimId) => throw exception;
+        public Task Execute(Guid claimId, CancellationToken cancellationToken = default) => throw exception;
     }
 }

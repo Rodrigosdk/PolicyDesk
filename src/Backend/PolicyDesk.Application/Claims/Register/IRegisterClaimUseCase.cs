@@ -5,5 +5,5 @@ namespace PolicyDesk.Application.Claims.Register;
 
 public interface IRegisterClaimUseCase
 {
-    Task<ResponseCreatedJson> Execute(Guid policyId, RequestClaimJson request);
+    Task<ResponseCreatedJson> Execute(Guid policyId, RequestClaimJson request, CancellationToken cancellationToken = default);
 }
