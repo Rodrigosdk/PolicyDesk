@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+    <PropertyGroup>
+        <NeutralLanguage>pt-BR</NeutralLanguage>
+    </PropertyGroup>
+
     <ItemGroup>
       <EmbeddedResource Update="ResourcesMessageException.resx">
         <Generator>PublicResXFileCodeGenerator</Generator>

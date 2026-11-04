@@ -1,3 +1,4 @@
+using System.Globalization;
 using PolicyDesk.Exception;
 
 namespace PolicyDesk.Domain.Validations;
@@ -15,11 +16,11 @@ public static class FieldLimits
         value is not null && value.Trim().Length > maxLength;
 
     public static string PolicyholderNameTooLong =>
-        string.Format(ResourcesMessageException.POLICYHOLDER_NAME_TOO_LONG, PolicyholderName);
+        string.Format(CultureInfo.CurrentCulture, ResourcesMessageException.POLICYHOLDER_NAME_TOO_LONG, PolicyholderName);
 
     public static string DescriptionTooLong =>
-        string.Format(ResourcesMessageException.DESCRIPTION_TOO_LONG, Description);
+        string.Format(CultureInfo.CurrentCulture, ResourcesMessageException.DESCRIPTION_TOO_LONG, Description);
 
     public static string DenialReasonTooLong =>
-        string.Format(ResourcesMessageException.CLAIM_DENIAL_REASON_TOO_LONG, DenialReason);
+        string.Format(CultureInfo.CurrentCulture, ResourcesMessageException.CLAIM_DENIAL_REASON_TOO_LONG, DenialReason);
 }

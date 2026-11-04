@@ -123,6 +123,6 @@ public class PoliciesTests
         var exception = Should.Throw<DomainRuleException>(
             () => new Policy(policyholderId, description, coverage, premium, startDate, endDate));
 
-        exception.Message.ShouldBe(ResourcesMessageException.ResourceManager.GetString(expectedMessageKey));
+        exception.Message.ShouldBe(ResourcesMessageException.ResourceManager.GetString(expectedMessageKey, ResourcesMessageException.Culture));
     }
 }

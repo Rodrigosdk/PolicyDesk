@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using PolicyDesk.Application.Logging;
 using PolicyDesk.Communication.Requests;
@@ -36,7 +37,7 @@ internal class RegisterPolicyholderUseCase(
                 logger.PolicyholderRegisteredOrReactivated();
                 break;
             default:
-                throw new ArgumentOutOfRangeException();
+                throw new UnreachableException($"Resultado de cadastro inesperado: {result}");
         }
     }
     
