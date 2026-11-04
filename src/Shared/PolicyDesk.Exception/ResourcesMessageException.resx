@@ -94,15 +94,12 @@
         <value>Já existe um segurado ativo com este CPF.</value>
     </data>
     <data name="POLICYHOLDER_ACTIVE_EMAIL_EXISTS" xml:space="preserve">
-        <value>Já existe um segurado ativo com este Email.</value>
+        <value>Já existe um segurado ativo com este e-mail.</value>
     </data>
     <data name="INVALID_CPF" xml:space="preserve">
         <value>CPF inválido.</value>
     </data>
     <data name="INVALID_EMAIL" xml:space="preserve">
-        <value>Email inválido.</value>
-    </data>
-    <data name="INVALID_EMAIL_ARGUMENT" xml:space="preserve">
         <value>E-mail inválido.</value>
     </data>
     <data name="POLICYHOLDER_NAME_REQUIRED" xml:space="preserve">

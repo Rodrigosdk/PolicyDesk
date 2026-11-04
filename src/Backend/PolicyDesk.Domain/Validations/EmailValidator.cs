@@ -33,7 +33,7 @@ public static class EmailValidator
         var normalized = Normalize(email);
 
         return !IsValid(normalized) 
-            ? throw new DomainRuleException(ResourcesMessageException.INVALID_EMAIL_ARGUMENT)
+            ? throw new DomainRuleException(ResourcesMessageException.INVALID_EMAIL)
             : normalized;
     }
 }
