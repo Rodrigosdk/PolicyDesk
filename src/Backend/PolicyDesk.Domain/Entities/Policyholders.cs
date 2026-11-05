@@ -82,8 +82,6 @@ public class Policyholders : Entity
         if (string.IsNullOrWhiteSpace(phone))
             throw new DomainRuleException(ResourcesMessageException.POLICYHOLDER_PHONE_REQUIRED);
 
-        return PhoneValidator.IsValid(phone)
-            ? phone
-            : throw new DomainRuleException(ResourcesMessageException.INVALID_PHONE);
+        return PhoneValidator.NormalizeOrThrow(phone);
     }
 }

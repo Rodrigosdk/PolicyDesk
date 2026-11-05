@@ -1,91 +1,85 @@
 using PolicyDesk.Domain.Validations;
+using PolicyDesk.Exception;
+using PolicyDesk.Exception.Exception;
 using Shouldly;
 
 namespace PolicyDesk.Domain.Tests.Validations;
 
 public class PhoneValidatorTests
 {
-    // ---------- Número local brasileiro (sem "+") ----------
-
-    [Theory(DisplayName = nameof(Deve_SerValido_Quando_NumeroLocalTiverDezOuOnzeDigitos))]
+    [Theory(DisplayName = nameof(Deve_SerValido_Quando_NumeroLocalBrasileiroForValido))]
     [Trait("Domain", "PhoneValidator - Local")]
-    [InlineData("8333334444")]          // fixo: 10 dígitos (limite inferior)
-    [InlineData("83986471687")]         // celular: 11 dígitos (limite superior)
-    [InlineData("(83) 3333-4444")]      // máscara é ignorada na contagem
+    [InlineData("8333334444")]
+    [InlineData("83986471687")]
+    [InlineData("(83) 3333-4444")]
     [InlineData("(83) 9 8647-1687")]
     [InlineData(" 83 98647 1687 ")]
-    [InlineData("(55) 9 9999-9999")]    // DDD 55 (RS): sem "+" é número local, não código do país
-    public void Deve_SerValido_Quando_NumeroLocalTiverDezOuOnzeDigitos(string phone)
+    [InlineData("(55) 9 9999-9999")]
+    public void Deve_SerValido_Quando_NumeroLocalBrasileiroForValido(string phone)
     {
         PhoneValidator.IsValid(phone).ShouldBeTrue();
     }
 
-    [Theory(DisplayName = nameof(Deve_SerInvalido_Quando_NumeroLocalTiverQuantidadeDeDigitosForaDoLimite))]
+    [Theory(DisplayName = nameof(Deve_SerInvalido_Quando_NumeroLocalBrasileiroForInvalido))]
     [Trait("Domain", "PhoneValidator - Local")]
-    [InlineData("833333444")]           // 9 dígitos: um abaixo do mínimo
-    [InlineData("839864716870")]        // 12 dígitos: um acima do máximo
-    [InlineData("(83) 9 8647-16871")]   // 12 dígitos com máscara
+    [InlineData("833333444")]
+    [InlineData("839864716870")]
+    [InlineData("(83) 9 8647-16871")]
     [InlineData("123")]
-    [InlineData("5583986471687")]       // código do país sem "+": ambíguo, por isso o "+" é exigido
-    public void Deve_SerInvalido_Quando_NumeroLocalTiverQuantidadeDeDigitosForaDoLimite(string phone)
+    [InlineData("(20) 9 8647-1687")]
+    [InlineData("(83) 1 8647-1687")]
+    public void Deve_SerInvalido_Quando_NumeroLocalBrasileiroForInvalido(string phone)
     {
         PhoneValidator.IsValid(phone).ShouldBeFalse();
     }
 
-    // ---------- Brasil com código do país (+55) ----------
-
     [Theory(DisplayName = nameof(Deve_SerValido_Quando_TelefoneTiverCodigoDoBrasil))]
     [Trait("Domain", "PhoneValidator - Brasil")]
-    [InlineData("+55 (83) 98647-1687")]  // celular: 55 + 11 dígitos
-    [InlineData("+55 83 3333-4444")]     // fixo: 55 + 10 dígitos
+    [InlineData("+55 (83) 98647-1687")]
+    [InlineData("+55 83 3333-4444")]
     [InlineData("+5583986471687")]
-    [InlineData(" +55 83 98647-1687")]   // espaço antes do "+"
-    [InlineData("+55 (55) 9 9999-9999")] // código do país seguido do DDD 55
+    [InlineData(" +55 83 98647-1687")]
+    [InlineData("+55 (55) 9 9999-9999")]
     public void Deve_SerValido_Quando_TelefoneTiverCodigoDoBrasil(string phone)
     {
         PhoneValidator.IsValid(phone).ShouldBeTrue();
     }
 
-    [Theory(DisplayName = nameof(Deve_SerInvalido_Quando_NumeroBrasileiroComCodigoTiverTamanhoErrado))]
+    [Theory(DisplayName = nameof(Deve_SerInvalido_Quando_NumeroBrasileiroComCodigoForInvalido))]
     [Trait("Domain", "PhoneValidator - Brasil")]
-    [InlineData("+55 83 98647-16871")]   // 55 + 12 dígitos: um acima do máximo
-    [InlineData("+55 83 3333-444")]      // 55 + 9 dígitos: um abaixo do mínimo
+    [InlineData("+55 83 98647-16871")]
+    [InlineData("+55 83 3333-444")]
     [InlineData("+55")]
-    public void Deve_SerInvalido_Quando_NumeroBrasileiroComCodigoTiverTamanhoErrado(string phone)
+    [InlineData("+55 20 98647-1687")]
+    public void Deve_SerInvalido_Quando_NumeroBrasileiroComCodigoForInvalido(string phone)
     {
-        // Para o Brasil a regra é estrita, mesmo cabendo nos limites gerais do E.164
         PhoneValidator.IsValid(phone).ShouldBeFalse();
     }
 
-    // ---------- Outros países (+código, padrão E.164) ----------
-
-    [Theory(DisplayName = nameof(Deve_SerValido_Quando_TelefoneInternacionalEstiverNoPadraoE164))]
+    [Theory(DisplayName = nameof(Deve_SerValido_Quando_TelefoneInternacionalForValidoNoPais))]
     [Trait("Domain", "PhoneValidator - Internacional")]
-    [InlineData("+1 (212) 555-0123")]     // Estados Unidos
-    [InlineData("+44 20 7946 0958")]      // Reino Unido
-    [InlineData("+351 912 345 678")]      // Portugal
-    [InlineData("+54 9 11 1234-5678")]    // Argentina
-    [InlineData("+86 138 0013 8000")]     // China
-    [InlineData("+683 4002")]             // Niue: 7 dígitos (limite inferior do E.164)
-    [InlineData("+123 456 789 012 345")]  // 15 dígitos (limite superior do E.164)
-    public void Deve_SerValido_Quando_TelefoneInternacionalEstiverNoPadraoE164(string phone)
+    [InlineData("+1 (212) 555-0123")]
+    [InlineData("+44 20 7946 0958")]
+    [InlineData("+351 912 345 678")]
+    [InlineData("+54 9 11 1234-5678")]
+    [InlineData("+86 138 0013 8000")]
+    public void Deve_SerValido_Quando_TelefoneInternacionalForValidoNoPais(string phone)
     {
         PhoneValidator.IsValid(phone).ShouldBeTrue();
     }
 
-    [Theory(DisplayName = nameof(Deve_SerInvalido_Quando_TelefoneInternacionalEstiverForaDoPadraoE164))]
+    [Theory(DisplayName = nameof(Deve_SerInvalido_Quando_TelefoneInternacionalForInvalidoNoPais))]
     [Trait("Domain", "PhoneValidator - Internacional")]
-    [InlineData("+683 400")]              // 6 dígitos: um abaixo do mínimo
-    [InlineData("+123 456 789 012 3456")] // 16 dígitos: um acima do máximo
-    [InlineData("+0 21 2555 0123")]       // nenhum código de país começa com 0
+    [InlineData("+44 20 7946")]
+    [InlineData("+1 212 555 01234 5")]
+    [InlineData("+999 1234 5678")]
+    [InlineData("+0 21 2555 0123")]
     [InlineData("+")]
     [InlineData("+ (--) ----")]
-    public void Deve_SerInvalido_Quando_TelefoneInternacionalEstiverForaDoPadraoE164(string phone)
+    public void Deve_SerInvalido_Quando_TelefoneInternacionalForInvalidoNoPais(string phone)
     {
         PhoneValidator.IsValid(phone).ShouldBeFalse();
     }
-
-    // ---------- Entradas sem conteúdo ----------
 
     [Theory(DisplayName = nameof(Deve_SerInvalido_Quando_TelefoneForNuloVazioOuSemDigitos))]
     [Trait("Domain", "PhoneValidator - Local")]
@@ -99,12 +93,20 @@ public class PhoneValidatorTests
         PhoneValidator.IsValid(phone).ShouldBeFalse();
     }
 
-    [Fact(DisplayName = nameof(Deve_ContarSomenteDigitosAscii_Quando_TelefoneTiverDigitosDeOutrosAlfabetos))]
+    [Fact(DisplayName = nameof(Deve_SerInvalido_Quando_TelefoneTiverDigitosDeOutrosAlfabetos))]
     [Trait("Domain", "PhoneValidator - Local")]
-    public void Deve_ContarSomenteDigitosAscii_Quando_TelefoneTiverDigitosDeOutrosAlfabetos()
+    public void Deve_SerInvalido_Quando_TelefoneTiverDigitosDeOutrosAlfabetos()
     {
-        // "٨٣٩٨٦٤٧١٦٨٧" são 11 dígitos arábico-índicos: char.IsDigit aceitaria, char.IsAsciiDigit não
         PhoneValidator.IsValid("٨٣٩٨٦٤٧١٦٨٧").ShouldBeFalse();
+    }
+
+    [Theory(DisplayName = nameof(Deve_SerInvalido_Quando_TelefoneTiverRamal))]
+    [Trait("Domain", "PhoneValidator - Local")]
+    [InlineData("8333334444 ext. 12")]
+    [InlineData("+44 20 7946 0958 x1")]
+    public void Deve_SerInvalido_Quando_TelefoneTiverRamal(string phone)
+    {
+        PhoneValidator.IsValid(phone).ShouldBeFalse();
     }
 
     [Theory(DisplayName = nameof(Deve_SerInvalido_Quando_TelefoneExcederOTamanhoMaximo))]
@@ -115,5 +117,30 @@ public class PhoneValidatorTests
     {
         phone.Length.ShouldBeGreaterThan(FieldLimits.Phone);
         PhoneValidator.IsValid(phone).ShouldBeFalse();
+    }
+
+    [Theory(DisplayName = nameof(Deve_NormalizarParaE164_Quando_TelefoneForValido))]
+    [Trait("Domain", "PhoneValidator - Normalização")]
+    [InlineData("(83) 9 8647-1687", "+5583986471687")]
+    [InlineData("83 3333-4444", "+558333334444")]
+    [InlineData("+55 (83) 98647-1687", "+5583986471687")]
+    [InlineData(" +55 83 98647-1687 ", "+5583986471687")]
+    [InlineData("+44 20 7946 0958", "+442079460958")]
+    [InlineData("+1 (212) 555-0123", "+12125550123")]
+    public void Deve_NormalizarParaE164_Quando_TelefoneForValido(string phone, string expected)
+    {
+        PhoneValidator.NormalizeOrThrow(phone).ShouldBe(expected);
+    }
+
+    [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_NormalizarTelefoneInvalido))]
+    [Trait("Domain", "PhoneValidator - Normalização")]
+    [InlineData(null)]
+    [InlineData("(20) 9 8647-1687")]
+    [InlineData("+999 1234 5678")]
+    public void Deve_LancarExcecao_Quando_NormalizarTelefoneInvalido(string? phone)
+    {
+        var exception = Should.Throw<DomainRuleException>(() => PhoneValidator.NormalizeOrThrow(phone));
+
+        exception.Message.ShouldBe(ResourcesMessageException.INVALID_PHONE);
     }
 }

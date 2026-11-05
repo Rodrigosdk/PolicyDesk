@@ -13,6 +13,7 @@ public class PolicyholdersTests
     private const string ValidCpfDigits = "12345678909";
     private const string ValidEmail = "john.doe@example.com";
     private const string ValidPhone = "(83) 9 8647-1687";
+    private const string ValidPhoneE164 = "+5583986471687";
     private static readonly DateTime ValidBirthDate = new(1990, 1, 1);
 
     private static Policyholders CreatePolicyholder(
@@ -36,7 +37,7 @@ public class PolicyholdersTests
         policyholder.Cpf.ShouldBe(ValidCpfDigits);
         policyholder.BirthDate.ShouldBe(ValidBirthDate);
         policyholder.Email.ShouldBe(ValidEmail);
-        policyholder.Phone.ShouldBe(ValidPhone);
+        policyholder.Phone.ShouldBe(ValidPhoneE164);
         policyholder.CreatedAt.ShouldBeInRange(beforeCreation, afterCreation);
         policyholder.UpdatedAt.ShouldBeNull();
         policyholder.Active.ShouldBeTrue();
@@ -116,7 +117,7 @@ public class PolicyholdersTests
         policyholder.Name.ShouldBe("Jane Doe");
         policyholder.BirthDate.ShouldBe(newBirthDate);
         policyholder.Email.ShouldBe("jane.doe@example.com");
-        policyholder.Phone.ShouldBe("(83) 9 1234-5678");
+        policyholder.Phone.ShouldBe("+5583912345678");
         policyholder.UpdatedAt.ShouldNotBeNull();
         policyholder.UpdatedAt.Value.ShouldBeInRange(beforeUpdate, afterUpdate);
     }
@@ -156,7 +157,7 @@ public class PolicyholdersTests
         policyholder.Name.ShouldBe(ValidName);
         policyholder.BirthDate.ShouldBe(ValidBirthDate);
         policyholder.Email.ShouldBe(ValidEmail);
-        policyholder.Phone.ShouldBe(ValidPhone);
+        policyholder.Phone.ShouldBe(ValidPhoneE164);
         policyholder.UpdatedAt.ShouldBeNull();
     }
 
@@ -175,7 +176,7 @@ public class PolicyholdersTests
         policyholder.Name.ShouldBe(ValidName);
         policyholder.BirthDate.ShouldBe(ValidBirthDate);
         policyholder.Email.ShouldBe(ValidEmail);
-        policyholder.Phone.ShouldBe(ValidPhone);
+        policyholder.Phone.ShouldBe(ValidPhoneE164);
         policyholder.UpdatedAt.ShouldBeNull();
     }
 
@@ -240,7 +241,7 @@ public class PolicyholdersTests
         policyholder.Name.ShouldBe(ValidName);
         policyholder.BirthDate.ShouldBe(ValidBirthDate);
         policyholder.Email.ShouldBe(ValidEmail);
-        policyholder.Phone.ShouldBe(ValidPhone);
+        policyholder.Phone.ShouldBe(ValidPhoneE164);
         policyholder.UpdatedAt.ShouldBeNull();
     }
 

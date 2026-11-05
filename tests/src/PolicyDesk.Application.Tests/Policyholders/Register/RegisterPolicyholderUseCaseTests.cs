@@ -140,10 +140,10 @@ public class RegisterPolicyholderUseCaseTests
 
     [Theory(DisplayName = nameof(Deve_Registrar_Quando_TelefoneTiverDezOuOnzeDigitos))]
     [Trait("Application", "Policyholders - Register")]
-    [InlineData("(83) 3333-4444")]
-    [InlineData("(83) 9 8647-1687")]
-    [InlineData("83986471687")]
-    public async Task Deve_Registrar_Quando_TelefoneTiverDezOuOnzeDigitos(string phone)
+    [InlineData("(83) 3333-4444", "+558333334444")]
+    [InlineData("(83) 9 8647-1687", "+5583986471687")]
+    [InlineData("83986471687", "+5583986471687")]
+    public async Task Deve_Registrar_Quando_TelefoneTiverDezOuOnzeDigitos(string phone, string expectedPhone)
     {
         var writeRepository = PolicyholdersWriteOnlyRepositoryBuilder.Build();
         var useCase = CreateUseCase(writeRepository);
@@ -152,7 +152,7 @@ public class RegisterPolicyholderUseCaseTests
 
         await useCase.Execute(request);
 
-        writeRepository.Verify(r => r.RegisterOrReactivate(It.Is<Policyholder>(p => p.Phone == phone)), Times.Once);
+        writeRepository.Verify(r => r.RegisterOrReactivate(It.Is<Policyholder>(p => p.Phone == expectedPhone)), Times.Once);
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarTodosOsErros_Quando_VariosCamposForemInvalidos))]

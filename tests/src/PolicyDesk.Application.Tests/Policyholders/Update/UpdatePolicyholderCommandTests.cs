@@ -22,13 +22,14 @@ public class UpdatePolicyholderCommandTests
         var policyholder = PolicyholderBuilder.Build();
         var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand(policyholder);
         var request = RequestPolicyholdersUpdateJsonBuilder.Build(email: "Jane.Updated@Example.com");
+        request.PhoneNumber = "(83) 9 1234-5678";
 
         await command.Execute(policyholder.Id, request);
 
         policyholder.Name.ShouldBe(request.Name.Trim());
         policyholder.Email.ShouldBe("jane.updated@example.com");
         policyholder.BirthDate.ShouldBe(request.BirthDate);
-        policyholder.Phone.ShouldBe(request.PhoneNumber);
+        policyholder.Phone.ShouldBe("+5583912345678");
         unitOfWork.Verify(u => u.Commit(), Times.Once);
         readBuilder.Mock.Verify(
             r => r.ExistActivePolicyholdersWithEmail("jane.updated@example.com", policyholder.Id),

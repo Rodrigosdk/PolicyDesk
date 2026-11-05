@@ -19,7 +19,7 @@ public static class PolicyholderBuilder
             cpf ?? CpfGenerator.Generate(),
             birthDate ?? BirthDateGenerator.Generate(faker),
             email ?? faker.Internet.Email(),
-            phone ?? faker.Phone.PhoneNumber("(##) 9 ####-####"));
+            phone ?? PhoneGenerator.Generate(faker));
     }
 
     public static IList<Policyholder> Collection(int count = 2) =>

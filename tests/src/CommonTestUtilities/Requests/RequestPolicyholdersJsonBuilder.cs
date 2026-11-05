@@ -11,7 +11,7 @@ public static class RequestPolicyholdersJsonBuilder
             .RuleFor(r => r.Cpf, _ => cpf ?? CpfGenerator.Generate())
             .RuleFor(r => r.BirthDate, f => BirthDateGenerator.Generate(f))
             .RuleFor(r => r.Email, f => email ?? f.Internet.Email())
-            .RuleFor(r => r.PhoneNumber, f => f.Phone.PhoneNumber("(##) 9 ####-####"))
+            .RuleFor(r => r.PhoneNumber, f => PhoneGenerator.Generate(f))
             .Generate();
 }
 
@@ -22,6 +22,6 @@ public static class RequestPolicyholdersUpdateJsonBuilder
             .RuleFor(r => r.Name, f => f.Name.FullName())
             .RuleFor(r => r.BirthDate, f => BirthDateGenerator.Generate(f))
             .RuleFor(r => r.Email, f => email ?? f.Internet.Email())
-            .RuleFor(r => r.PhoneNumber, f => f.Phone.PhoneNumber("(##) 9 ####-####"))
+            .RuleFor(r => r.PhoneNumber, f => PhoneGenerator.Generate(f))
             .Generate();
 }
