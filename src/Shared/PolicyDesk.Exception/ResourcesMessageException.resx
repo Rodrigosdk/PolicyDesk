@@ -55,7 +55,7 @@
         <value>A data do sinistro está fora da vigência da apólice.</value>
     </data>
     <data name="CLAIM_AMOUNT_EXCEEDS_COVERAGE" xml:space="preserve">
-        <value>O valor do sinistro excede a cobertura da apólice.</value>
+        <value>O valor do sinistro excede o saldo disponível da cobertura da apólice.</value>
     </data>
     <data name="DESCRIPTION_REQUIRED" xml:space="preserve">
         <value>A descrição é obrigatória.</value>

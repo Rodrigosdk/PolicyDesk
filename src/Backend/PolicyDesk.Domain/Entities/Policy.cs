@@ -57,6 +57,14 @@ public class Policy : Entity
 
     public bool IsInForce(DateTime date) => !IsCancelled && date.Date >= StartDate && date.Date <= EndDate;
 
+    public void RegisterClaim(decimal amount, decimal committedAmount)
+    {
+        if (committedAmount + amount > CoverageAmount)
+            throw new DomainRuleException(ResourcesMessageException.CLAIM_AMOUNT_EXCEEDS_COVERAGE);
+
+        UpdatedAt = DateTime.UtcNow;
+    }
+
     public void Cancel()
     {
         if (IsCancelled)

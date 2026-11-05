@@ -22,6 +22,14 @@ public class ClaimsReadOnlyRepositoryBuilder
         return this;
     }
 
+    public ClaimsReadOnlyRepositoryBuilder SumCommittedAmount(decimal amount)
+    {
+        _repository
+            .Setup(repository => repository.SumCommittedAmount(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(amount);
+        return this;
+    }
+
     public IClaimsReadOnlyRepository Build() => _repository.Object;
 }
 

@@ -55,7 +55,7 @@
         <value>The claim date is outside the policy period.</value>
     </data>
     <data name="CLAIM_AMOUNT_EXCEEDS_COVERAGE" xml:space="preserve">
-        <value>The claim amount exceeds the policy coverage.</value>
+        <value>The claim amount exceeds the available coverage balance of the policy.</value>
     </data>
     <data name="DESCRIPTION_REQUIRED" xml:space="preserve">
         <value>The description is required.</value>

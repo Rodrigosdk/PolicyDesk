@@ -125,4 +125,35 @@ public class PoliciesTests
 
         exception.Message.ShouldBe(ResourcesMessageException.ResourceManager.GetString(expectedMessageKey, ResourcesMessageException.Culture));
     }
+
+    [Theory(DisplayName = nameof(Deve_AceitarSinistroEAtualizarApolice_Quando_ValorCouberNoSaldo))]
+    [Trait("Domain", "Policies - Sinistro")]
+    [InlineData(0, 500)]
+    [InlineData(8000, 2000)]
+    [InlineData(0, 10000)]
+    public void Deve_AceitarSinistroEAtualizarApolice_Quando_ValorCouberNoSaldo(decimal committedAmount, decimal amount)
+    {
+        var policy = PolicyBuilder.Build(coverageAmount: 10000);
+        var beforeRegistration = DateTime.UtcNow;
+
+        policy.RegisterClaim(amount, committedAmount);
+
+        policy.UpdatedAt.ShouldNotBeNull();
+        policy.UpdatedAt.Value.ShouldBeGreaterThanOrEqualTo(beforeRegistration);
+    }
+
+    [Theory(DisplayName = nameof(Deve_LancarExcecaoSemAtualizar_Quando_ValorExcederSaldo))]
+    [Trait("Domain", "Policies - Sinistro")]
+    [InlineData(0, 10000.01)]
+    [InlineData(8000, 8000)]
+    [InlineData(10000, 0.01)]
+    public void Deve_LancarExcecaoSemAtualizar_Quando_ValorExcederSaldo(decimal committedAmount, decimal amount)
+    {
+        var policy = PolicyBuilder.Build(coverageAmount: 10000);
+
+        var exception = Should.Throw<DomainRuleException>(() => policy.RegisterClaim(amount, committedAmount));
+
+        exception.Message.ShouldBe(ResourcesMessageException.CLAIM_AMOUNT_EXCEEDS_COVERAGE);
+        policy.UpdatedAt.ShouldBeNull();
+    }
 }
