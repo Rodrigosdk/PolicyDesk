@@ -1,0 +1,39 @@
+using System.Net.Mail;
+using PolicyDesk.Exception;
+using PolicyDesk.Exception.Exception;
+
+namespace PolicyDesk.Domain.Validations;
+
+public static class EmailValidator
+{
+    public static string Normalize(string? email)
+    {
+        return string.IsNullOrWhiteSpace(email)
+            ? string.Empty
+            : email.Trim().ToLowerInvariant();
+    }
+
+    public static bool IsValid(string? email)
+    {
+        var normalized = Normalize(email);
+
+        if (normalized.Length is 0 or > FieldLimits.Email)
+            return false;
+
+        if (!MailAddress.TryCreate(normalized, out var address) || address.Address != normalized)
+            return false;
+
+        // Exige domínio com ponto (ex.: user@dominio.com)
+        var domain = address.Host;
+        return domain.Contains('.') && !domain.StartsWith('.') && !domain.EndsWith('.');
+    }
+
+    public static string NormalizeOrThrow(string? email)
+    {
+        var normalized = Normalize(email);
+
+        return !IsValid(normalized) 
+            ? throw new DomainRuleException(ResourcesMessageException.INVALID_EMAIL)
+            : normalized;
+    }
+}

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Bogus" />
+        <PackageReference Include="Moq" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\src\Backend\PolicyDesk.Domain\PolicyDesk.Domain.csproj" />
+        <ProjectReference Include="..\..\..\src\Shared\PolicyDesk.Communication\PolicyDesk.Communication.csproj" />
+    </ItemGroup>
+
+</Project>

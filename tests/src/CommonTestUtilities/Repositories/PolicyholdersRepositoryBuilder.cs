@@ -1,0 +1,72 @@
+using Moq;
+using PolicyDesk.Domain.Repositories.Policyholders;
+using Policyholder = PolicyDesk.Domain.Entities.Policyholders;
+
+namespace CommonTestUtilities.Repositories;
+
+public class PolicyholdersReadOnlyRepositoryBuilder
+{
+    private readonly Mock<IPolicyholdersReadOnlyRepository> _repository = new();
+
+    public Mock<IPolicyholdersReadOnlyRepository> Mock => _repository;
+
+    public PolicyholdersReadOnlyRepositoryBuilder GetAll(IEnumerable<Policyholder> policyholders)
+    {
+        _repository.Setup(r => r.GetAll(It.IsAny<CancellationToken>())).ReturnsAsync(policyholders);
+        return this;
+    }
+
+    public PolicyholdersReadOnlyRepositoryBuilder GetById(Policyholder policyholder)
+    {
+        _repository.Setup(r => r.GetById(policyholder.Id, It.IsAny<CancellationToken>())).ReturnsAsync(policyholder);
+        return this;
+    }
+
+    public PolicyholdersReadOnlyRepositoryBuilder ExistActiveWithEmail()
+    {
+        _repository
+            .Setup(r => r.ExistActivePolicyholdersWithEmail(It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        return this;
+    }
+
+    public PolicyholdersReadOnlyRepositoryBuilder HasActiveOrFuturePolicy(Guid policyholderId, bool value = true)
+    {
+        _repository.Setup(r => r.HasActiveOrFuturePolicy(policyholderId, It.IsAny<CancellationToken>())).ReturnsAsync(value);
+        return this;
+    }
+
+    public IPolicyholdersReadOnlyRepository Build() => _repository.Object;
+}
+
+public class PolicyholdersUpdateOnlyRepositoryBuilder
+{
+    private readonly Mock<IPolicyholdersUpdateOnlyRepository> _repository = new();
+
+    public Mock<IPolicyholdersUpdateOnlyRepository> Mock => _repository;
+
+    public PolicyholdersUpdateOnlyRepositoryBuilder GetByIdForUpdate(Policyholder policyholder)
+    {
+        _repository.Setup(r => r.GetByIdForUpdate(policyholder.Id, It.IsAny<CancellationToken>())).ReturnsAsync(policyholder);
+        return this;
+    }
+
+    public PolicyholdersUpdateOnlyRepositoryBuilder GetByIdIncludingInactive(Policyholder policyholder)
+    {
+        _repository.Setup(r => r.GetByIdIncludingInactive(policyholder.Id, It.IsAny<CancellationToken>())).ReturnsAsync(policyholder);
+        return this;
+    }
+
+    public IPolicyholdersUpdateOnlyRepository Build() => _repository.Object;
+}
+
+public static class PolicyholdersWriteOnlyRepositoryBuilder
+{
+    public static Mock<IPolicyholdersWriteOnlyRepository> Build(
+        PolicyholderRegistrationResult result = PolicyholderRegistrationResult.RegisteredOrReactivated)
+    {
+        var mock = new Mock<IPolicyholdersWriteOnlyRepository>();
+        mock.Setup(r => r.RegisterOrReactivate(It.IsAny<Policyholder>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
+        return mock;
+    }
+}
