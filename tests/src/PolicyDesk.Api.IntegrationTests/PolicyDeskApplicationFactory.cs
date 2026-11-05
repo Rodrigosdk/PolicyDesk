@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -7,6 +8,12 @@ namespace PolicyDesk.Api.IntegrationTests;
 
 public class PolicyDeskApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    static PolicyDeskApplicationFactory()
+    {
+        CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("pt-BR");
+        CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("pt-BR");
+    }
+
     private readonly PostgreSqlContainer _database = new PostgreSqlBuilder("postgres:16-alpine")
         .WithDatabase("policydesk_integration_tests")
         .WithUsername("policydesk")

@@ -1,41 +1,47 @@
+using System.Diagnostics.CodeAnalysis;
+using PhoneNumbers;
+using PolicyDesk.Exception;
+using PolicyDesk.Exception.Exception;
+
 namespace PolicyDesk.Domain.Validations;
 
 public static class PhoneValidator
 {
-    // Sem "+": número brasileiro local, DDD + número, com 10 dígitos (fixo) ou 11 (celular)
-    private const int MinLocalDigits = 10;
-    private const int MaxLocalDigits = 11;
+    private const string DefaultRegion = "BR";
 
-    // Com "+": formato internacional E.164, código do país + número, de 7 a 15 dígitos no total
-    private const int MinInternationalDigits = 7;
-    private const int MaxInternationalDigits = 15;
+    private static readonly PhoneNumberUtil PhoneUtil = PhoneNumberUtil.GetInstance();
 
-    // Para o Brasil a validação continua estrita: após o 55 vem um número local de 10 ou 11 dígitos.
-    // Códigos de país não são prefixo uns dos outros, então nenhum outro país começa com 55.
-    private const string BrazilCountryCode = "55";
+    public static bool IsValid(string? phone) => TryParse(phone, out _);
 
-    public static bool IsValid(string? phone)
+    public static string NormalizeOrThrow(string? phone)
     {
+        return TryParse(phone, out var number)
+            ? PhoneUtil.Format(number, PhoneNumberFormat.E164)
+            : throw new DomainRuleException(ResourcesMessageException.INVALID_PHONE);
+    }
+
+    private static bool TryParse(string? phone, [NotNullWhen(true)] out PhoneNumber? number)
+    {
+        number = null;
+
         if (string.IsNullOrWhiteSpace(phone) || phone.Length > FieldLimits.Phone)
             return false;
 
-        var digits = new string(phone.Where(char.IsAsciiDigit).ToArray());
+        if (phone.Any(character => char.IsDigit(character) && !char.IsAsciiDigit(character)))
+            return false;
 
-        return phone.TrimStart().StartsWith('+')
-            ? IsInternationalNumber(digits)
-            : IsLocalNumber(digits);
+        try
+        {
+            var parsed = PhoneUtil.Parse(phone, DefaultRegion);
+            if (parsed.HasExtension || !PhoneUtil.IsValidNumber(parsed))
+                return false;
+
+            number = parsed;
+            return true;
+        }
+        catch (NumberParseException)
+        {
+            return false;
+        }
     }
-
-    private static bool IsInternationalNumber(string digits)
-    {
-        if (digits.StartsWith(BrazilCountryCode, StringComparison.Ordinal))
-            return IsLocalNumber(digits[BrazilCountryCode.Length..]);
-
-        // Nenhum código de país começa com 0
-        return digits.Length is >= MinInternationalDigits and <= MaxInternationalDigits
-               && digits[0] != '0';
-    }
-
-    private static bool IsLocalNumber(string digits) =>
-        digits.Length is >= MinLocalDigits and <= MaxLocalDigits;
 }

@@ -83,16 +83,16 @@ public class RegisterClaimUseCaseTests
     [Trait("Application", "Claims - Register")]
     public async Task Deve_LancarValidacaoAntesDaBusca_Quando_DataDeOcorrenciaForFutura()
     {
-        var policiesRepository = new PoliciesReadOnlyRepositoryBuilder();
+        var policiesRepository = new PoliciesUpdateOnlyRepositoryBuilder();
         var writeRepository = ClaimsWriteOnlyRepositoryBuilder.Build();
         var unitOfWork = UnitOfWorkBuilder.Build();
-        var useCase = new RegisterClaimUseCase(writeRepository.Object, policiesRepository.Build(), unitOfWork.Object, NullLogger<RegisterClaimUseCase>.Instance);
+        var useCase = new RegisterClaimUseCase(writeRepository.Object, new ClaimsReadOnlyRepositoryBuilder().Build(), policiesRepository.Build(), unitOfWork.Object, NullLogger<RegisterClaimUseCase>.Instance);
         var request = RequestClaimJsonBuilder.Build(occurredOn: DateTime.UtcNow.Date.AddDays(1));
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(Guid.NewGuid(), request));
 
         exception.GetErrors().ShouldBe([ResourcesMessageException.CLAIM_OCCURRENCE_DATE_IN_FUTURE]);
-        policiesRepository.Mock.Verify(repository => repository.GetById(It.IsAny<Guid>()), Times.Never);
+        policiesRepository.Mock.Verify(repository => repository.GetByIdForUpdate(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         VerifyNothingSaved(writeRepository, unitOfWork);
     }
 
@@ -111,17 +111,46 @@ public class RegisterClaimUseCaseTests
         unitOfWork.Verify(work => work.Commit(), Times.Once);
     }
 
-    [Fact(DisplayName = nameof(Deve_LancarValidacaoSemSalvar_Quando_ValorExcederCobertura))]
+    [Fact(DisplayName = nameof(Deve_LancarRegraSemSalvar_Quando_ValorExcederCobertura))]
     [Trait("Application", "Claims - Register")]
-    public async Task Deve_LancarValidacaoSemSalvar_Quando_ValorExcederCobertura()
+    public async Task Deve_LancarRegraSemSalvar_Quando_ValorExcederCobertura()
     {
         var policy = PolicyBuilder.Build(coverageAmount: 1000);
         var (useCase, writeRepository, unitOfWork) = CreateUseCase(policy);
 
-        await Should.ThrowAsync<ErrorOnValidationException>(
+        var exception = await Should.ThrowAsync<DomainRuleException>(
             () => useCase.Execute(policy.Id, RequestClaimJsonBuilder.Build(amount: 1000.01m)));
 
+        exception.Message.ShouldBe(ResourcesMessageException.CLAIM_AMOUNT_EXCEEDS_COVERAGE);
         VerifyNothingSaved(writeRepository, unitOfWork);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarRegraSemSalvar_Quando_SomaDosSinistrosExcederCobertura))]
+    [Trait("Application", "Claims - Register")]
+    public async Task Deve_LancarRegraSemSalvar_Quando_SomaDosSinistrosExcederCobertura()
+    {
+        var policy = PolicyBuilder.Build(coverageAmount: 10000);
+        var (useCase, writeRepository, unitOfWork) = CreateUseCase(policy, committedAmount: 8000);
+
+        var exception = await Should.ThrowAsync<DomainRuleException>(
+            () => useCase.Execute(policy.Id, RequestClaimJsonBuilder.Build(amount: 2000.01m)));
+
+        exception.Message.ShouldBe(ResourcesMessageException.CLAIM_AMOUNT_EXCEEDS_COVERAGE);
+        VerifyNothingSaved(writeRepository, unitOfWork);
+    }
+
+    [Fact(DisplayName = nameof(Deve_RegistrarSinistroEAtualizarApolice_Quando_ValorCompletarOSaldo))]
+    [Trait("Application", "Claims - Register")]
+    public async Task Deve_RegistrarSinistroEAtualizarApolice_Quando_ValorCompletarOSaldo()
+    {
+        var policy = PolicyBuilder.Build(coverageAmount: 10000);
+        var (useCase, writeRepository, unitOfWork) = CreateUseCase(policy, committedAmount: 8000);
+
+        await useCase.Execute(policy.Id, RequestClaimJsonBuilder.Build(amount: 2000));
+
+        writeRepository.Verify(repository => repository.Add(It.Is<Claim>(claim => claim.Amount == 2000)), Times.Once);
+        unitOfWork.Verify(work => work.Commit(), Times.Once);
+        policy.UpdatedAt.ShouldNotBeNull();
     }
 
     [Theory(DisplayName = nameof(Deve_LancarValidacaoAntesDaBusca_Quando_DadosObrigatoriosForemInvalidos))]
@@ -136,15 +165,15 @@ public class RegisterClaimUseCaseTests
         decimal amount,
         bool missingDate)
     {
-        var policiesRepository = new PoliciesReadOnlyRepositoryBuilder();
+        var policiesRepository = new PoliciesUpdateOnlyRepositoryBuilder();
         var writeRepository = ClaimsWriteOnlyRepositoryBuilder.Build();
         var unitOfWork = UnitOfWorkBuilder.Build();
-        var useCase = new RegisterClaimUseCase(writeRepository.Object, policiesRepository.Build(), unitOfWork.Object, NullLogger<RegisterClaimUseCase>.Instance);
+        var useCase = new RegisterClaimUseCase(writeRepository.Object, new ClaimsReadOnlyRepositoryBuilder().Build(), policiesRepository.Build(), unitOfWork.Object, NullLogger<RegisterClaimUseCase>.Instance);
         var request = RequestClaimJsonBuilder.Build(description, amount, missingDate ? default(DateTime) : DateTime.UtcNow.Date);
 
         await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(Guid.NewGuid(), request));
 
-        policiesRepository.Mock.Verify(repository => repository.GetById(It.IsAny<Guid>()), Times.Never);
+        policiesRepository.Mock.Verify(repository => repository.GetByIdForUpdate(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         VerifyNothingSaved(writeRepository, unitOfWork);
     }
 
@@ -158,15 +187,16 @@ public class RegisterClaimUseCaseTests
         RegisterClaimUseCase UseCase,
         Mock<IClaimsWriteOnlyRepository> WriteRepository,
         Mock<IUnitOfWork> UnitOfWork)
-        CreateUseCase(Policy? policy = null)
+        CreateUseCase(Policy? policy = null, decimal committedAmount = 0)
     {
-        var policiesRepository = new PoliciesReadOnlyRepositoryBuilder();
+        var policiesRepository = new PoliciesUpdateOnlyRepositoryBuilder();
         if (policy is not null)
-            policiesRepository.GetById(policy);
+            policiesRepository.GetByIdForUpdate(policy);
+        var claimsRepository = new ClaimsReadOnlyRepositoryBuilder().SumCommittedAmount(committedAmount);
         var writeRepository = ClaimsWriteOnlyRepositoryBuilder.Build();
         var unitOfWork = UnitOfWorkBuilder.Build();
         return (
-            new RegisterClaimUseCase(writeRepository.Object, policiesRepository.Build(), unitOfWork.Object, NullLogger<RegisterClaimUseCase>.Instance),
+            new RegisterClaimUseCase(writeRepository.Object, claimsRepository.Build(), policiesRepository.Build(), unitOfWork.Object, NullLogger<RegisterClaimUseCase>.Instance),
             writeRepository,
             unitOfWork);
     }

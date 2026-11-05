@@ -26,11 +26,11 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
     var supportedCultures = new List<CultureInfo>
     {
-        new CultureInfo("en"),
-        new CultureInfo("pt-BR")
+        new("pt-BR"),
+        new("en")
     };
-    
-    options.DefaultRequestCulture = new RequestCulture("en");
+
+    options.DefaultRequestCulture = new RequestCulture("pt-BR");
     
     options.SupportedCultures = supportedCultures;
     options.SupportedUICultures = supportedCultures;

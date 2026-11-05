@@ -155,4 +155,40 @@ public class ClaimsRepositoryTests(PostgreSqlInfrastructureFixture fixture) : Cl
         await Should.ThrowAsync<OperationCanceledException>(
             () => CreateRepository(dbContext).GetById(Guid.NewGuid(), new CancellationToken(canceled: true)));
     }
+
+    [Fact(DisplayName = nameof(Deve_SomarApenasSinistrosNaoNegadosDaApolice_Quando_CalcularValorComprometido))]
+    [Trait("Infrastructure", "ClaimsRepository - Consulta")]
+    public async Task Deve_SomarApenasSinistrosNaoNegadosDaApolice_Quando_CalcularValorComprometido()
+    {
+        await using var dbContext = Fixture.CreateDbContext();
+        var policy = await SavePolicy(dbContext);
+        var otherPolicy = await SavePolicy(dbContext);
+        var pending = ClaimBuilder.Build(policy.Id, amount: 100);
+        var inAnalysis = ClaimBuilder.Build(policy.Id, amount: 200);
+        inAnalysis.StartAnalysis();
+        var paid = ClaimBuilder.Build(policy.Id, amount: 300);
+        paid.StartAnalysis();
+        paid.Approve();
+        paid.RegisterPayment();
+        var denied = ClaimBuilder.Build(policy.Id, amount: 5000);
+        denied.StartAnalysis();
+        denied.Deny("Not covered");
+        var fromOtherPolicy = ClaimBuilder.Build(otherPolicy.Id, amount: 7000);
+        dbContext.Claims.AddRange(pending, inAnalysis, paid, denied, fromOtherPolicy);
+        await dbContext.SaveChangesAsync();
+
+        var committed = await CreateRepository(dbContext).SumCommittedAmount(policy.Id);
+
+        committed.ShouldBe(600);
+    }
+
+    [Fact(DisplayName = nameof(Deve_RetornarZero_Quando_ApoliceNaoTiverSinistros))]
+    [Trait("Infrastructure", "ClaimsRepository - Consulta")]
+    public async Task Deve_RetornarZero_Quando_ApoliceNaoTiverSinistros()
+    {
+        await using var dbContext = Fixture.CreateDbContext();
+        var policy = await SavePolicy(dbContext);
+
+        (await CreateRepository(dbContext).SumCommittedAmount(policy.Id)).ShouldBe(0);
+    }
 }

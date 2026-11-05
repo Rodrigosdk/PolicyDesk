@@ -14,7 +14,8 @@ namespace PolicyDesk.Application.Claims.Register;
 
 internal class RegisterClaimUseCase(
     IClaimsWriteOnlyRepository claimsWriteOnlyRepository,
-    IPoliciesReadOnlyRepository policiesReadOnlyRepository,
+    IClaimsReadOnlyRepository claimsReadOnlyRepository,
+    IPoliciesUpdateOnlyRepository policiesUpdateOnlyRepository,
     IUnitOfWork unitOfWork,
     ILogger<RegisterClaimUseCase> logger) : IRegisterClaimUseCase
 {
@@ -22,7 +23,7 @@ internal class RegisterClaimUseCase(
     {
         Validate(request);
 
-        var policy = await policiesReadOnlyRepository.GetById(policyId, cancellationToken)
+        var policy = await policiesUpdateOnlyRepository.GetByIdForUpdate(policyId, cancellationToken)
                      ?? throw new NotFoundException(ResourcesMessageException.POLICY_NOT_FOUND);
 
         if (policy.IsCancelled)
@@ -35,10 +36,8 @@ internal class RegisterClaimUseCase(
             throw new ErrorOnValidationException(ResourcesMessageException.CLAIM_DATE_OUTSIDE_POLICY_PERIOD);
         }
 
-        if (request.Amount > policy.CoverageAmount)
-        {
-            throw new ErrorOnValidationException(ResourcesMessageException.CLAIM_AMOUNT_EXCEEDS_COVERAGE);
-        }
+        var committedAmount = await claimsReadOnlyRepository.SumCommittedAmount(policy.Id, cancellationToken);
+        policy.RegisterClaim(request.Amount, committedAmount);
 
         var claim = new Claim(policy.Id, request.Description, request.Amount, request.OccurredOn);
 

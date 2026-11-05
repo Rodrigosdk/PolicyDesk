@@ -213,12 +213,6 @@ namespace PolicyDesk.Exception {
             }
         }
 
-        public static string INVALID_EMAIL_ARGUMENT {
-            get {
-                return ResourceManager.GetString("INVALID_EMAIL_ARGUMENT", resourceCulture);
-            }
-        }
-
         public static string POLICYHOLDER_NAME_REQUIRED {
             get {
                 return ResourceManager.GetString("POLICYHOLDER_NAME_REQUIRED", resourceCulture);

@@ -25,9 +25,9 @@ public class RegisterPolicyholderTests(PolicyDeskApplicationFactory factory) : P
 
     [Theory(DisplayName = nameof(Deve_Cadastrar_Quando_TelefoneTiverCodigoDePais))]
     [Trait("Integration", "Policyholders - Cadastro")]
-    [InlineData("+55 (83) 98647-1687")]
-    [InlineData("+44 20 7946 0958")]
-    public async Task Deve_Cadastrar_Quando_TelefoneTiverCodigoDePais(string phone)
+    [InlineData("+55 (83) 98647-1687", "+5583986471687")]
+    [InlineData("+44 20 7946 0958", "+442079460958")]
+    public async Task Deve_Cadastrar_Quando_TelefoneTiverCodigoDePais(string phone, string expectedPhone)
     {
         var request = RequestPolicyholdersJsonBuilder.Build();
         request.PhoneNumber = phone;
@@ -35,7 +35,7 @@ public class RegisterPolicyholderTests(PolicyDeskApplicationFactory factory) : P
         var response = await Post(RequestUri, request);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
-        (await FindByCpf(request.Cpf)).Phone.ShouldBe(phone);
+        (await FindByCpf(request.Cpf)).Phone.ShouldBe(expectedPhone);
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarBadRequest_Quando_CpfForInvalido))]
