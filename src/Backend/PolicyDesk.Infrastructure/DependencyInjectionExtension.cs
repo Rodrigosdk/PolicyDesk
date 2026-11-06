@@ -14,32 +14,29 @@ namespace PolicyDesk.Infrastructure;
 
 public static class DependencyInjectionExtension
 {
-    extension(IServiceCollection services)
+    public static void AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        public void AddInfrastructure(IConfiguration configuration)
-        {
-            services.AddScoped<IPolicyholdersWriteOnlyRepository, PolicyholdersRepository>();
-            services.AddScoped<IPolicyholdersReadOnlyRepository, PolicyholdersRepository>();
-            services.AddScoped<IPolicyholdersUpdateOnlyRepository, PolicyholdersRepository>();
-            services.AddScoped<IPoliciesWriteOnlyRepository, PoliciesRepository>();
-            services.AddScoped<IPoliciesReadOnlyRepository, PoliciesRepository>();
-            services.AddScoped<IPoliciesUpdateOnlyRepository, PoliciesRepository>();
-            services.AddScoped<IClaimsWriteOnlyRepository, ClaimsRepository>();
-            services.AddScoped<IClaimsReadOnlyRepository, ClaimsRepository>();
-            services.AddScoped<IClaimsUpdateOnlyRepository, ClaimsRepository>();
-            
-            services.AddOptions<DatabaseOptions>()
-                .Bind(configuration.GetSection(DatabaseOptions.SectionName))
-                .Validate(options => !string.IsNullOrWhiteSpace(options.DbConnection),
-                    DatabaseOptions.MissingConnectionStringMessage)
-                .ValidateOnStart();
+        services.AddScoped<IPolicyholdersWriteOnlyRepository, PolicyholdersRepository>();
+        services.AddScoped<IPolicyholdersReadOnlyRepository, PolicyholdersRepository>();
+        services.AddScoped<IPolicyholdersUpdateOnlyRepository, PolicyholdersRepository>();
+        services.AddScoped<IPoliciesWriteOnlyRepository, PoliciesRepository>();
+        services.AddScoped<IPoliciesReadOnlyRepository, PoliciesRepository>();
+        services.AddScoped<IPoliciesUpdateOnlyRepository, PoliciesRepository>();
+        services.AddScoped<IClaimsWriteOnlyRepository, ClaimsRepository>();
+        services.AddScoped<IClaimsReadOnlyRepository, ClaimsRepository>();
+        services.AddScoped<IClaimsUpdateOnlyRepository, ClaimsRepository>();
+        
+        services.AddOptions<DatabaseOptions>()
+            .Bind(configuration.GetSection(DatabaseOptions.SectionName))
+            .Validate(options => !string.IsNullOrWhiteSpace(options.DbConnection),
+                DatabaseOptions.MissingConnectionStringMessage)
+            .ValidateOnStart();
 
-            services.AddDbContext<PolicyDeskDbContext>((serviceProvider, config) =>
-                config.UseNpgsql(serviceProvider.GetRequiredService<IOptions<DatabaseOptions>>().Value.DbConnection));
+        services.AddDbContext<PolicyDeskDbContext>((serviceProvider, config) =>
+            config.UseNpgsql(serviceProvider.GetRequiredService<IOptions<DatabaseOptions>>().Value.DbConnection));
 
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-            services.AddHealthChecks().AddDbContextCheck<PolicyDeskDbContext>("database");
-        }
+        services.AddHealthChecks().AddDbContextCheck<PolicyDeskDbContext>("database");
     }
 }
