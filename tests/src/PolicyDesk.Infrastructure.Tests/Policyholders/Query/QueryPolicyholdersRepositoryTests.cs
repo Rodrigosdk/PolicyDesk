@@ -2,7 +2,7 @@ using CommonTestUtilities.Entities;
 using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Infrastructure.DataAccess;
 using Shouldly;
-using Policyholder = PolicyDesk.Domain.Entities.Policyholders;
+using PolicyDesk.Domain.Entities;
 
 namespace PolicyDesk.Infrastructure.Tests.Policyholders.Query;
 

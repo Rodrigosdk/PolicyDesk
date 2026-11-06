@@ -9,7 +9,7 @@ using PolicyDesk.Domain.Repositories.Policyholders;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 using Shouldly;
-using Policyholder = PolicyDesk.Domain.Entities.Policyholders;
+using PolicyDesk.Domain.Entities;
 
 namespace PolicyDesk.Application.Tests.Policyholders.Register;
 

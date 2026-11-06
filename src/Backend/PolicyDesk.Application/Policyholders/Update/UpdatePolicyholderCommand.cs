@@ -30,7 +30,7 @@ internal class UpdatePolicyholderCommand(
         await unitOfWork.Commit(cancellationToken);
         logger.PolicyholderUpdated(policyholder.Id);
     }
-    private async Task<Domain.Entities.Policyholders> ValidateAndThrowOnFailures(
+    private async Task<Domain.Entities.Policyholder> ValidateAndThrowOnFailures(
         Guid policyholderId, RequestPolicyholdersUpdateJson request, CancellationToken cancellationToken)
     {
         var errors = PolicyholderDataValidator.Validate(

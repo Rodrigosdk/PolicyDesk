@@ -1,6 +1,6 @@
 using Moq;
 using PolicyDesk.Domain.Repositories.Policyholders;
-using Policyholder = PolicyDesk.Domain.Entities.Policyholders;
+using PolicyDesk.Domain.Entities;
 
 namespace CommonTestUtilities.Repositories;
 

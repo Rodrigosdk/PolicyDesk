@@ -12,7 +12,7 @@ internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) :
     IPolicyholdersReadOnlyRepository,
     IPolicyholdersUpdateOnlyRepository
 {
-    public async Task<PolicyholderRegistrationResult> RegisterOrReactivate(Policyholders policyholder, CancellationToken cancellationToken = default)
+    public async Task<PolicyholderRegistrationResult> RegisterOrReactivate(Policyholder policyholder, CancellationToken cancellationToken = default)
     {
         int affectedRows;
         try
@@ -48,29 +48,29 @@ internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) :
             : PolicyholderRegistrationResult.RegisteredOrReactivated;
     }
 
-    public async Task<IEnumerable<Policyholders>> GetAll(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Policyholder>> GetAll(CancellationToken cancellationToken = default)
     {
         return await dbContext.Policyholders
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
 
-    public Task<Policyholders?> GetById(Guid id, CancellationToken cancellationToken = default)
+    public Task<Policyholder?> GetById(Guid id, CancellationToken cancellationToken = default)
     {
         return dbContext.Policyholders.AsNoTracking().FirstOrDefaultAsync(policyholder => policyholder.Id == id, cancellationToken);
     }
 
-    public Task<Policyholders?> GetByIdForUpdate(Guid id, CancellationToken cancellationToken = default)
+    public Task<Policyholder?> GetByIdForUpdate(Guid id, CancellationToken cancellationToken = default)
     {
         return dbContext.Policyholders.FirstOrDefaultAsync(policyholder => policyholder.Id == id, cancellationToken);
     }
 
     // Consulta rastreada de propósito: o cadastro de apólice altera o segurado retornado
     // (RegisterPolicy), e é essa gravação que detecta a inativação concorrente
-    public Task<Policyholders?> GetByIdIncludingInactive(Guid id, CancellationToken cancellationToken = default)
+    public Task<Policyholder?> GetByIdIncludingInactive(Guid id, CancellationToken cancellationToken = default)
     {
         return dbContext.Policyholders
-            .IgnoreQueryFilters([PolicyholdersMap.ActiveFilter])
+            .IgnoreQueryFilters([PolicyholderMap.ActiveFilter])
             .FirstOrDefaultAsync(policyholder => policyholder.Id == id, cancellationToken);
     }
     

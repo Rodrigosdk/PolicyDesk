@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Infrastructure.DataAccess;
 using PolicyDesk.Infrastructure.DataAccess.Repositories;
-using Policyholder = PolicyDesk.Domain.Entities.Policyholders;
+using PolicyDesk.Domain.Entities;
 
 namespace PolicyDesk.Infrastructure.Tests.Policyholders;
 

@@ -18,7 +18,7 @@ internal class RegisterPolicyholderUseCase(
     {
         ValidateAndThrowOnFailures(request);
 
-        var policyholder = new Domain.Entities.Policyholders(
+        var policyholder = new Domain.Entities.Policyholder(
             request.Name,
             request.Cpf,
             request.BirthDate,

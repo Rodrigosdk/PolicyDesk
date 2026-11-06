@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using CommonTestUtilities.Requests;
 using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Communication.Requests;
-using Policyholder = PolicyDesk.Domain.Entities.Policyholders;
+using PolicyDesk.Domain.Entities;
 
 namespace PolicyDesk.Api.IntegrationTests.Policyholders;
 

@@ -21,7 +21,7 @@ internal class ListPolicyholdersUseCase(
         return MapToResponse(policyholder);
     }
 
-    private static ResponsePolicyholdersListingJson MapToResponse(Domain.Entities.Policyholders policyholder) => new()
+    private static ResponsePolicyholdersListingJson MapToResponse(Domain.Entities.Policyholder policyholder) => new()
     {
         Id = policyholder.Id,
         Name = policyholder.Name,

@@ -145,7 +145,7 @@ namespace PolicyDesk.Infrastructure.DataAccess.Migrations
                     b.ToTable("policies", (string)null);
                 });
 
-            modelBuilder.Entity("PolicyDesk.Domain.Entities.Policyholders", b =>
+            modelBuilder.Entity("PolicyDesk.Domain.Entities.Policyholder", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -221,7 +221,7 @@ namespace PolicyDesk.Infrastructure.DataAccess.Migrations
 
             modelBuilder.Entity("PolicyDesk.Domain.Entities.Policy", b =>
                 {
-                    b.HasOne("PolicyDesk.Domain.Entities.Policyholders", null)
+                    b.HasOne("PolicyDesk.Domain.Entities.Policyholder", null)
                         .WithMany()
                         .HasForeignKey("PolicyholderId")
                         .OnDelete(DeleteBehavior.Restrict)

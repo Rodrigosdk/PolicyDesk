@@ -6,7 +6,7 @@ using PolicyDesk.Api.IntegrationTests.Policyholders;
 using PolicyDesk.Communication.Requests;
 using PolicyDesk.Communication.Responses;
 using Policy = PolicyDesk.Domain.Entities.Policy;
-using Policyholder = PolicyDesk.Domain.Entities.Policyholders;
+using PolicyDesk.Domain.Entities;
 
 namespace PolicyDesk.Api.IntegrationTests.Policies;
 

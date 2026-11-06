@@ -15,7 +15,6 @@ using Shouldly;
 
 namespace PolicyDesk.Application.Tests.Policies.Register;
 
-using Policyholder = PolicyDesk.Domain.Entities.Policyholders;
 
 public class RegisterPolicyUseCaseTests
 {

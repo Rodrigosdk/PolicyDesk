@@ -52,7 +52,7 @@ internal class PolicyMap : IEntityTypeConfiguration<Policy>
         // que o PostgreSQL altera a cada UPDATE. Gravar com um xmin desatualizado falha.
         builder.Property<uint>("Version").IsRowVersion();
 
-        builder.HasOne<Policyholders>()
+        builder.HasOne<Policyholder>()
             .WithMany()
             .HasForeignKey(policy => policy.PolicyholderId)
             .OnDelete(DeleteBehavior.Restrict);
