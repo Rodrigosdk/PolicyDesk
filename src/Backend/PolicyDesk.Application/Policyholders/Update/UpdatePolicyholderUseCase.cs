@@ -9,12 +9,12 @@ using PolicyDesk.Exception.Exception;
 
 namespace PolicyDesk.Application.Policyholders.Update;
 
-internal class UpdatePolicyholderCommand(
+internal class UpdatePolicyholderUseCase(
     IPolicyholdersReadOnlyRepository policyholdersReadOnlyRepository,
     IPolicyholdersUpdateOnlyRepository policyholdersUpdateOnlyRepository,
     IUnitOfWork unitOfWork,
-    ILogger<UpdatePolicyholderCommand> logger)
-    : IUpdatePolicyholderCommand
+    ILogger<UpdatePolicyholderUseCase> logger)
+    : IUpdatePolicyholderUseCase
 {
     public async Task Execute(Guid policyholderId, RequestPolicyholdersUpdateJson request, CancellationToken cancellationToken = default)
     {

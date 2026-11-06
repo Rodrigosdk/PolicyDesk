@@ -13,7 +13,7 @@ using PolicyDesk.Domain.Entities;
 
 namespace PolicyDesk.Application.Tests.Policyholders.Update;
 
-public class UpdatePolicyholderCommandTests
+public class UpdatePolicyholderUseCaseTests
 {
     [Fact(DisplayName = nameof(Deve_AtualizarSeguradoEConfirmar_Quando_RequisicaoForValida))]
     [Trait("Application", "Policyholders - Update")]
@@ -154,7 +154,7 @@ public class UpdatePolicyholderCommandTests
         unitOfWork.Verify(u => u.Commit(), Times.Never);
     }
 
-    private static (UpdatePolicyholderCommand Command, PolicyholdersReadOnlyRepositoryBuilder ReadBuilder,
+    private static (UpdatePolicyholderUseCase Command, PolicyholdersReadOnlyRepositoryBuilder ReadBuilder,
         PolicyholdersUpdateOnlyRepositoryBuilder UpdateBuilder, Mock<IUnitOfWork> UnitOfWork)
         CreateCommand(Policyholder? policyholder = null, bool emailAlreadyExists = false)
     {
@@ -167,6 +167,6 @@ public class UpdatePolicyholderCommandTests
 
         var unitOfWork = UnitOfWorkBuilder.Build();
 
-        return (new UpdatePolicyholderCommand(readBuilder.Build(), updateBuilder.Build(), unitOfWork.Object, NullLogger<UpdatePolicyholderCommand>.Instance), readBuilder, updateBuilder, unitOfWork);
+        return (new UpdatePolicyholderUseCase(readBuilder.Build(), updateBuilder.Build(), unitOfWork.Object, NullLogger<UpdatePolicyholderUseCase>.Instance), readBuilder, updateBuilder, unitOfWork);
     }
 }

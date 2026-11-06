@@ -52,7 +52,7 @@ public class PolicyholdersController : ControllerBase
     public async Task<IActionResult> Update(
         [FromRoute] Guid id,
         [FromBody] RequestPolicyholdersUpdateJson request,
-        [FromServices] IUpdatePolicyholderCommand useCase,
+        [FromServices] IUpdatePolicyholderUseCase useCase,
         CancellationToken cancellationToken)
     {
         await useCase.Execute(id, request, cancellationToken);
