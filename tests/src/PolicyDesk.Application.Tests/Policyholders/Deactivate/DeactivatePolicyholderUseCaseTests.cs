@@ -20,10 +20,10 @@ public class DeactivatePolicyholderUseCaseTests
         var policyholder = PolicyholderBuilder.Build();
         var (useCase, unitOfWork) = CreateUseCase(policyholder);
 
-        await useCase.Execute(policyholder.Id);
+        await useCase.ExecuteAsync(policyholder.Id);
 
         policyholder.Active.ShouldBeFalse();
-        unitOfWork.Verify(u => u.Commit(), Times.Once);
+        unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarNaoEncontradoSemConfirmar_Quando_SeguradoNaoExistir))]
@@ -32,9 +32,9 @@ public class DeactivatePolicyholderUseCaseTests
     {
         var (useCase, unitOfWork) = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.Execute(Guid.NewGuid()));
+        await Should.ThrowAsync<NotFoundException>(() => useCase.ExecuteAsync(Guid.NewGuid()));
 
-        unitOfWork.Verify(u => u.Commit(), Times.Never);
+        unitOfWork.Verify(u => u.CommitAsync(), Times.Never);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarExcecaoSemInativarNemConfirmar_Quando_HouverApoliceAtiva))]
@@ -45,11 +45,11 @@ public class DeactivatePolicyholderUseCaseTests
         var (useCase, unitOfWork) = CreateUseCase(policyholder, hasActivePolicy: true);
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.Execute(policyholder.Id));
+            () => useCase.ExecuteAsync(policyholder.Id));
 
         policyholder.Active.ShouldBeTrue();
         exception.GetErrors().ShouldContain(ResourcesMessageException.POLICYHOLDER_HAS_ACTIVE_POLICY);
-        unitOfWork.Verify(u => u.Commit(), Times.Never);
+        unitOfWork.Verify(u => u.CommitAsync(), Times.Never);
     }
 
     private static (DeactivatePolicyholderUseCase UseCase, Mock<IUnitOfWork> UnitOfWork) CreateUseCase(

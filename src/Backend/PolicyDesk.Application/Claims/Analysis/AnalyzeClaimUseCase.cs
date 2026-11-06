@@ -12,13 +12,13 @@ internal class AnalyzeClaimUseCase(
     IUnitOfWork unitOfWork,
     ILogger<AnalyzeClaimUseCase> logger) : IAnalyzeClaimUseCase
 {
-    public async Task Execute(Guid claimId, CancellationToken cancellationToken = default)
+    public async Task ExecuteAsync(Guid claimId, CancellationToken cancellationToken = default)
     {
-        var claim = await claimsUpdateOnlyRepository.GetByIdForUpdate(claimId, cancellationToken)
+        var claim = await claimsUpdateOnlyRepository.GetByIdForUpdateAsync(claimId, cancellationToken)
                     ?? throw new NotFoundException(ResourcesMessageException.CLAIM_NOT_FOUND);
 
         claim.StartAnalysis();
-        await unitOfWork.Commit(cancellationToken);
+        await unitOfWork.CommitAsync(cancellationToken);
         logger.ClaimAnalysisStarted(claim.Id);
     }
 }

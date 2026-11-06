@@ -17,12 +17,12 @@ public class QueryPolicyholdersRepositoryTests(PostgreSqlInfrastructureFixture f
         var repository = CreateRepository(dbContext);
         var active = PolicyholderBuilder.Build();
         var inactive = PolicyholderBuilder.Build();
-        await repository.RegisterOrReactivate(active);
-        await repository.RegisterOrReactivate(inactive);
+        await repository.RegisterOrReactivateAsync(active);
+        await repository.RegisterOrReactivateAsync(inactive);
         await DeactivateAndCommit(dbContext, inactive);
 
-        var listed = await repository.GetAll();
-        var inactiveById = await repository.GetById(inactive.Id);
+        var listed = await repository.GetAllAsync();
+        var inactiveById = await repository.GetByIdAsync(inactive.Id);
 
         listed.Select(item => item.Id).ShouldBe([active.Id]);
         inactiveById.ShouldBeNull();
@@ -41,8 +41,8 @@ public class QueryPolicyholdersRepositoryTests(PostgreSqlInfrastructureFixture f
             VALUES ({id}, '', '00000000000', '0001-01-01', 'legacy', '123', {DateTime.UtcNow}, NULL, TRUE)
             """);
 
-        var listed = await CreateRepository(dbContext).GetAll();
-        var byId = await CreateRepository(dbContext).GetById(id);
+        var listed = await CreateRepository(dbContext).GetAllAsync();
+        var byId = await CreateRepository(dbContext).GetByIdAsync(id);
 
         listed.Select(item => item.Id).ShouldBe([id]);
         byId.ShouldNotBeNull();
@@ -56,11 +56,11 @@ public class QueryPolicyholdersRepositoryTests(PostgreSqlInfrastructureFixture f
         await using var dbContext = await Fixture.CreateCleanDbContextAsync();
         var repository = CreateRepository(dbContext);
         var inactive = PolicyholderBuilder.Build();
-        await repository.RegisterOrReactivate(inactive);
+        await repository.RegisterOrReactivateAsync(inactive);
         await DeactivateAndCommit(dbContext, inactive);
 
-        var found = await repository.GetByIdIncludingInactive(inactive.Id);
-        var missing = await repository.GetByIdIncludingInactive(Guid.NewGuid());
+        var found = await repository.GetByIdIncludingInactiveAsync(inactive.Id);
+        var missing = await repository.GetByIdIncludingInactiveAsync(Guid.NewGuid());
 
         found.ShouldNotBeNull();
         found.Active.ShouldBeFalse();
@@ -76,12 +76,12 @@ public class QueryPolicyholdersRepositoryTests(PostgreSqlInfrastructureFixture f
         await using var dbContext = await Fixture.CreateCleanDbContextAsync();
         var repository = CreateRepository(dbContext);
         var policyholder = PolicyholderBuilder.Build();
-        await repository.RegisterOrReactivate(policyholder);
+        await repository.RegisterOrReactivateAsync(policyholder);
 
-        var found = await repository.GetByIdIncludingInactive(policyholder.Id);
+        var found = await repository.GetByIdIncludingInactiveAsync(policyholder.Id);
         found.ShouldNotBeNull();
         found.RegisterPolicy();
-        await new UnitOfWork(dbContext).Commit();
+        await new UnitOfWork(dbContext).CommitAsync();
 
         await using var verificationContext = Fixture.CreateDbContext();
         (await verificationContext.Policyholders.IgnoreQueryFilters().AsNoTracking().SingleAsync(p => p.Id == policyholder.Id))
@@ -95,10 +95,10 @@ public class QueryPolicyholdersRepositoryTests(PostgreSqlInfrastructureFixture f
         await using var dbContext = await Fixture.CreateCleanDbContextAsync();
         var repository = CreateRepository(dbContext);
         var policyholder = PolicyholderBuilder.Build();
-        await repository.RegisterOrReactivate(policyholder);
+        await repository.RegisterOrReactivateAsync(policyholder);
 
-        var exists = await repository.ExistActivePolicyholdersWithEmail(policyholder.Email);
-        var existsExceptSelf = await repository.ExistActivePolicyholdersWithEmail(policyholder.Email, policyholder.Id);
+        var exists = await repository.ExistActivePolicyholdersWithEmailAsync(policyholder.Email);
+        var existsExceptSelf = await repository.ExistActivePolicyholdersWithEmailAsync(policyholder.Email, policyholder.Id);
 
         exists.ShouldBeTrue();
         existsExceptSelf.ShouldBeFalse();
@@ -115,13 +115,13 @@ public class QueryPolicyholdersRepositoryTests(PostgreSqlInfrastructureFixture f
         await using var dbContext = await Fixture.CreateCleanDbContextAsync();
         var repository = CreateRepository(dbContext);
         var policyholder = PolicyholderBuilder.Build();
-        await repository.RegisterOrReactivate(policyholder);
+        await repository.RegisterOrReactivateAsync(policyholder);
         var today = DateTime.UtcNow.Date;
         dbContext.Policies.Add(PolicyBuilder.Build(
             policyholder.Id, startDate: today.AddDays(startOffset), endDate: today.AddDays(endOffset)));
         await dbContext.SaveChangesAsync();
 
-        (await repository.HasActiveOrFuturePolicy(policyholder.Id)).ShouldBe(expected);
+        (await repository.HasActiveOrFuturePolicyAsync(policyholder.Id)).ShouldBe(expected);
     }
 
     [Fact(DisplayName = nameof(Deve_IgnorarApoliceCancelada_Quando_VerificarApoliceAtivaOuFutura))]
@@ -131,14 +131,14 @@ public class QueryPolicyholdersRepositoryTests(PostgreSqlInfrastructureFixture f
         await using var dbContext = await Fixture.CreateCleanDbContextAsync();
         var repository = CreateRepository(dbContext);
         var policyholder = PolicyholderBuilder.Build();
-        await repository.RegisterOrReactivate(policyholder);
+        await repository.RegisterOrReactivateAsync(policyholder);
         var today = DateTime.UtcNow.Date;
         var futurePolicy = PolicyBuilder.Build(policyholder.Id, startDate: today.AddDays(10), endDate: today.AddDays(40));
         futurePolicy.Cancel();
         dbContext.Policies.Add(futurePolicy);
         await dbContext.SaveChangesAsync();
 
-        (await repository.HasActiveOrFuturePolicy(policyholder.Id)).ShouldBeFalse();
+        (await repository.HasActiveOrFuturePolicyAsync(policyholder.Id)).ShouldBeFalse();
     }
 
 
@@ -150,8 +150,8 @@ public class QueryPolicyholdersRepositoryTests(PostgreSqlInfrastructureFixture f
         var repository = CreateRepository(dbContext);
         var active = PolicyholderBuilder.Build();
         var inactive = PolicyholderBuilder.Build();
-        await repository.RegisterOrReactivate(active);
-        await repository.RegisterOrReactivate(inactive);
+        await repository.RegisterOrReactivateAsync(active);
+        await repository.RegisterOrReactivateAsync(inactive);
         await DeactivateAndCommit(dbContext, inactive);
 
         await using var queryContext = Fixture.CreateDbContext();
@@ -173,18 +173,18 @@ public class QueryPolicyholdersRepositoryTests(PostgreSqlInfrastructureFixture f
         var repository = CreateRepository(dbContext);
         var active = PolicyholderBuilder.Build();
         var inactive = PolicyholderBuilder.Build();
-        await repository.RegisterOrReactivate(active);
-        await repository.RegisterOrReactivate(inactive);
+        await repository.RegisterOrReactivateAsync(active);
+        await repository.RegisterOrReactivateAsync(inactive);
         await DeactivateAndCommit(dbContext, inactive);
 
         await using var readContext = Fixture.CreateDbContext();
-        (await CreateRepository(readContext).GetById(active.Id)).ShouldNotBeNull();
+        (await CreateRepository(readContext).GetByIdAsync(active.Id)).ShouldNotBeNull();
         readContext.ChangeTracker.Entries<Policyholder>().ShouldBeEmpty();
 
         await using var updateContext = Fixture.CreateDbContext();
         var updateRepository = CreateRepository(updateContext);
-        (await updateRepository.GetByIdForUpdate(active.Id)).ShouldNotBeNull();
-        (await updateRepository.GetByIdForUpdate(inactive.Id)).ShouldBeNull();
+        (await updateRepository.GetByIdForUpdateAsync(active.Id)).ShouldNotBeNull();
+        (await updateRepository.GetByIdForUpdateAsync(inactive.Id)).ShouldBeNull();
         updateContext.ChangeTracker.Entries<Policyholder>().ShouldHaveSingleItem();
     }
 }

@@ -14,7 +14,7 @@ internal class RegisterPolicyholderUseCase(
     ILogger<RegisterPolicyholderUseCase> logger) : IRegisterPolicyholderUseCase
 {
     
-    public async Task Execute(RequestPolicyholdersJson request, CancellationToken cancellationToken = default)
+    public async Task ExecuteAsync(RequestPolicyholdersJson request, CancellationToken cancellationToken = default)
     {
         ValidateAndThrowOnFailures(request);
 
@@ -26,7 +26,7 @@ internal class RegisterPolicyholderUseCase(
             request.PhoneNumber
         );
 
-        var result = await policyholdersWriteOnlyRepository.RegisterOrReactivate(policyholder, cancellationToken);
+        var result = await policyholdersWriteOnlyRepository.RegisterOrReactivateAsync(policyholder, cancellationToken);
         switch (result)
         {
             case PolicyholderRegistrationResult.ActiveCpfAlreadyExists:

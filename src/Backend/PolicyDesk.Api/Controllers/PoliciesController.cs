@@ -19,7 +19,7 @@ public class PoliciesController : ControllerBase
         [FromServices] IRegisterPolicyUseCase useCase,
         CancellationToken cancellationToken)
     {
-        var result = await useCase.Execute(request, cancellationToken);
+        var result = await useCase.ExecuteAsync(request, cancellationToken);
 
         return StatusCode(StatusCodes.Status201Created, result);
     }
@@ -32,7 +32,7 @@ public class PoliciesController : ControllerBase
         [FromServices] IListPoliciesUseCase useCase,
         CancellationToken cancellationToken)
     {
-        return Ok(await useCase.List(seguradoId, status, cancellationToken));
+        return Ok(await useCase.ListAsync(seguradoId, status, cancellationToken));
     }
 
     [HttpGet("{id:guid}")]
@@ -42,7 +42,7 @@ public class PoliciesController : ControllerBase
         [FromServices] IListPoliciesUseCase useCase,
         CancellationToken cancellationToken)
     {
-        return Ok(await useCase.GetById(id, cancellationToken));
+        return Ok(await useCase.GetByIdAsync(id, cancellationToken));
     }
 
     [HttpPost("{id:guid}/cancelamento")]
@@ -52,7 +52,7 @@ public class PoliciesController : ControllerBase
         [FromServices] ICancelPolicyUseCase useCase,
         CancellationToken cancellationToken)
     {
-        await useCase.Execute(id, cancellationToken);
+        await useCase.ExecuteAsync(id, cancellationToken);
 
         return NoContent();
     }

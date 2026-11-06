@@ -10,23 +10,23 @@ internal sealed class PoliciesRepository(PolicyDeskDbContext dbContext) :
     IPoliciesReadOnlyRepository,
     IPoliciesUpdateOnlyRepository
 {
-    public Task Add(Policy policy)
+    public Task AddAsync(Policy policy)
     {
         dbContext.Policies.Add(policy);
         return Task.CompletedTask;
     }
 
-    public Task<Policy?> GetById(Guid id, CancellationToken cancellationToken = default)
+    public Task<Policy?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return dbContext.Policies.AsNoTracking().FirstOrDefaultAsync(policy => policy.Id == id, cancellationToken);
     }
 
-    public Task<Policy?> GetByIdForUpdate(Guid id, CancellationToken cancellationToken = default)
+    public Task<Policy?> GetByIdForUpdateAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return dbContext.Policies.FirstOrDefaultAsync(policy => policy.Id == id, cancellationToken);
     }
 
-    public async Task<IEnumerable<Policy>> GetAll(Guid? policyholderId, PolicyStatus? status, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Policy>> GetAllAsync(Guid? policyholderId, PolicyStatus? status, CancellationToken cancellationToken = default)
     {
         var query = dbContext.Policies.AsNoTracking();
         if (policyholderId.HasValue)

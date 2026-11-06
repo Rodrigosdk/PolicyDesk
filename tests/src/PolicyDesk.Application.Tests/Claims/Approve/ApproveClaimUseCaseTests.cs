@@ -21,11 +21,11 @@ public class ApproveClaimUseCaseTests
         claim.StartAnalysis();
         var (useCase, unitOfWork) = CreateUseCase(claim);
 
-        await useCase.Execute(claim.Id);
+        await useCase.ExecuteAsync(claim.Id);
 
         claim.Status.ShouldBe(ClaimStatus.Approved);
         claim.ApprovedAt.ShouldNotBeNull();
-        unitOfWork.Verify(work => work.Commit(), Times.Once);
+        unitOfWork.Verify(work => work.CommitAsync(), Times.Once);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarNaoEncontradoSemConfirmar_Quando_SinistroNaoExistir))]
@@ -34,9 +34,9 @@ public class ApproveClaimUseCaseTests
     {
         var (useCase, unitOfWork) = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.Execute(Guid.NewGuid()));
+        await Should.ThrowAsync<NotFoundException>(() => useCase.ExecuteAsync(Guid.NewGuid()));
 
-        unitOfWork.Verify(work => work.Commit(), Times.Never);
+        unitOfWork.Verify(work => work.CommitAsync(), Times.Never);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarValidacaoSemConfirmar_Quando_SinistroNaoEstiverEmAnalise))]
@@ -46,10 +46,10 @@ public class ApproveClaimUseCaseTests
         var claim = ClaimBuilder.Build();
         var (useCase, unitOfWork) = CreateUseCase(claim);
 
-        await Should.ThrowAsync<DomainRuleException>(() => useCase.Execute(claim.Id));
+        await Should.ThrowAsync<DomainRuleException>(() => useCase.ExecuteAsync(claim.Id));
 
         claim.Status.ShouldBe(ClaimStatus.Pending);
-        unitOfWork.Verify(work => work.Commit(), Times.Never);
+        unitOfWork.Verify(work => work.CommitAsync(), Times.Never);
     }
 
     private static (ApproveClaimUseCase UseCase, Mock<IUnitOfWork> UnitOfWork) CreateUseCase(Claim? claim = null)
@@ -72,9 +72,9 @@ public class ApproveClaimUseCaseTests
         var useCase = new ApproveClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<ApproveClaimUseCase>.Instance);
         using var cancellation = new CancellationTokenSource();
 
-        await useCase.Execute(claim.Id, cancellation.Token);
+        await useCase.ExecuteAsync(claim.Id, cancellation.Token);
 
-        repository.Mock.Verify(item => item.GetByIdForUpdate(claim.Id, cancellation.Token), Times.Once);
-        unitOfWork.Verify(work => work.Commit(cancellation.Token), Times.Once);
+        repository.Mock.Verify(item => item.GetByIdForUpdateAsync(claim.Id, cancellation.Token), Times.Once);
+        unitOfWork.Verify(work => work.CommitAsync(cancellation.Token), Times.Once);
     }
 }

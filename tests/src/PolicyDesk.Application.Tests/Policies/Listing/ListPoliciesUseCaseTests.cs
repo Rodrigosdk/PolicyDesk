@@ -18,7 +18,7 @@ public class ListPoliciesUseCaseTests
         var policy = PolicyBuilder.Build();
         var useCase = CreateUseCase([policy]);
 
-        var result = (await useCase.List(null, null)).ShouldHaveSingleItem();
+        var result = (await useCase.ListAsync(null, null)).ShouldHaveSingleItem();
 
         result.Id.ShouldBe(policy.Id);
         result.SeguradoId.ShouldBe(policy.PolicyholderId);
@@ -40,10 +40,10 @@ public class ListPoliciesUseCaseTests
         var builder = new PoliciesReadOnlyRepositoryBuilder();
         var useCase = new ListPoliciesUseCase(builder.Build());
 
-        await useCase.List(policyholderId, PolicyStatus.Cancelled);
+        await useCase.ListAsync(policyholderId, PolicyStatus.Cancelled);
 
         builder.Mock.Verify(
-            repository => repository.GetAll(policyholderId, PolicyStatus.Cancelled),
+            repository => repository.GetAllAsync(policyholderId, PolicyStatus.Cancelled),
             Times.Once);
     }
 
@@ -55,10 +55,10 @@ public class ListPoliciesUseCaseTests
         var useCase = new ListPoliciesUseCase(builder.Build());
 
         await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.List(null, (PolicyStatus)999));
+            () => useCase.ListAsync(null, (PolicyStatus)999));
 
         builder.Mock.Verify(
-            repository => repository.GetAll(It.IsAny<Guid?>(), It.IsAny<PolicyStatus?>()),
+            repository => repository.GetAllAsync(It.IsAny<Guid?>(), It.IsAny<PolicyStatus?>()),
             Times.Never);
     }
 
@@ -69,7 +69,7 @@ public class ListPoliciesUseCaseTests
         var policy = PolicyBuilder.Build();
         var useCase = CreateUseCase(policy: policy);
 
-        var result = await useCase.GetById(policy.Id);
+        var result = await useCase.GetByIdAsync(policy.Id);
 
         result.Id.ShouldBe(policy.Id);
         result.Descricao.ShouldBe(policy.Description);
@@ -82,7 +82,7 @@ public class ListPoliciesUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.GetById(Guid.NewGuid()));
+        await Should.ThrowAsync<NotFoundException>(() => useCase.GetByIdAsync(Guid.NewGuid()));
     }
 
     private static ListPoliciesUseCase CreateUseCase(IEnumerable<Policy>? policies = null, Policy? policy = null)

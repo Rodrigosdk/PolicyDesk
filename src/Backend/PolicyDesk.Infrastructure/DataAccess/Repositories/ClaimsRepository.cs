@@ -10,23 +10,23 @@ internal sealed class ClaimsRepository(PolicyDeskDbContext dbContext) :
     IClaimsReadOnlyRepository,
     IClaimsUpdateOnlyRepository
 {
-    public Task Add(Claim claim)
+    public Task AddAsync(Claim claim)
     {
         dbContext.Claims.Add(claim);
         return Task.CompletedTask;
     }
 
-    public Task<Claim?> GetById(Guid id, CancellationToken cancellationToken = default)
+    public Task<Claim?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return dbContext.Claims.AsNoTracking().FirstOrDefaultAsync(claim => claim.Id == id, cancellationToken);
     }
 
-    public Task<Claim?> GetByIdForUpdate(Guid id, CancellationToken cancellationToken = default)
+    public Task<Claim?> GetByIdForUpdateAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return dbContext.Claims.FirstOrDefaultAsync(claim => claim.Id == id, cancellationToken);
     }
 
-    public async Task<IEnumerable<Claim>> GetByPolicyId(Guid policyId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Claim>> GetByPolicyIdAsync(Guid policyId, CancellationToken cancellationToken = default)
     {
         return await dbContext.Claims
             .AsNoTracking()
@@ -35,7 +35,7 @@ internal sealed class ClaimsRepository(PolicyDeskDbContext dbContext) :
             .ToListAsync(cancellationToken);
     }
 
-    public Task<decimal> SumCommittedAmount(Guid policyId, CancellationToken cancellationToken = default)
+    public Task<decimal> SumCommittedAmountAsync(Guid policyId, CancellationToken cancellationToken = default)
     {
         return dbContext.Claims
             .Where(claim => claim.PolicyId == policyId && claim.Status != ClaimStatus.Denied)

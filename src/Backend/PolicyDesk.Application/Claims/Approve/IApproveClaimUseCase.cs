@@ -2,5 +2,5 @@ namespace PolicyDesk.Application.Claims.Approve;
 
 public interface IApproveClaimUseCase
 {
-    Task Execute(Guid claimId, CancellationToken cancellationToken = default);
+    Task ExecuteAsync(Guid claimId, CancellationToken cancellationToken = default);
 }

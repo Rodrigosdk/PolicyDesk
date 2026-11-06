@@ -16,7 +16,7 @@ public class ListPolicyholdersUseCaseTests
         var policyholder = PolicyholderBuilder.Build();
         var useCase = CreateUseCase(new PolicyholdersReadOnlyRepositoryBuilder().GetAll([policyholder]));
 
-        var result = (await useCase.Listing()).ShouldHaveSingleItem();
+        var result = (await useCase.ListAsync()).ShouldHaveSingleItem();
 
         result.Id.ShouldBe(policyholder.Id);
         result.Name.ShouldBe(policyholder.Name);
@@ -35,7 +35,7 @@ public class ListPolicyholdersUseCaseTests
         var policyholder = PolicyholderBuilder.Build();
         var useCase = CreateUseCase(new PolicyholdersReadOnlyRepositoryBuilder().GetById(policyholder));
 
-        var result = await useCase.GetById(policyholder.Id);
+        var result = await useCase.GetByIdAsync(policyholder.Id);
 
         result.Id.ShouldBe(policyholder.Id);
         result.Email.ShouldBe(policyholder.Email);
@@ -47,7 +47,7 @@ public class ListPolicyholdersUseCaseTests
     {
         var useCase = CreateUseCase(new PolicyholdersReadOnlyRepositoryBuilder());
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.GetById(Guid.NewGuid()));
+        await Should.ThrowAsync<NotFoundException>(() => useCase.GetByIdAsync(Guid.NewGuid()));
     }
 
     [Fact(DisplayName = nameof(Deve_PropagarExcecaoOriginal_Quando_RepositorioFalhar))]
@@ -56,10 +56,10 @@ public class ListPolicyholdersUseCaseTests
     {
         // Com ContinueWith a falha chegava embrulhada em AggregateException e virava um 500 genérico
         var readBuilder = new PolicyholdersReadOnlyRepositoryBuilder();
-        readBuilder.Mock.Setup(r => r.GetAll()).ThrowsAsync(new TimeoutException("db timeout"));
+        readBuilder.Mock.Setup(r => r.GetAllAsync()).ThrowsAsync(new TimeoutException("db timeout"));
         var useCase = CreateUseCase(readBuilder);
 
-        var exception = await Should.ThrowAsync<TimeoutException>(() => useCase.Listing());
+        var exception = await Should.ThrowAsync<TimeoutException>(() => useCase.ListAsync());
 
         exception.Message.ShouldBe("db timeout");
     }

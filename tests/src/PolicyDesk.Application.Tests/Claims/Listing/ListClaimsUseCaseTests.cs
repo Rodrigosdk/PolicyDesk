@@ -24,7 +24,7 @@ public class ListClaimsUseCaseTests
         claims[1].StartAnalysis();
         var useCase = CreateUseCase(policy, claims);
 
-        var result = (await useCase.ListByPolicy(policy.Id)).ToList();
+        var result = (await useCase.ListByPolicyAsync(policy.Id)).ToList();
 
         result.Select(claim => claim.Id).ShouldBe(claims.Select(claim => claim.Id));
         result.ShouldAllBe(claim => claim.ApoliceId == policy.Id);
@@ -37,7 +37,7 @@ public class ListClaimsUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.ListByPolicy(Guid.NewGuid()));
+        await Should.ThrowAsync<NotFoundException>(() => useCase.ListByPolicyAsync(Guid.NewGuid()));
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarSinistroMapeado_Quando_BuscarPorId))]
@@ -49,7 +49,7 @@ public class ListClaimsUseCaseTests
         claim.Deny("No coverage");
         var useCase = CreateUseCase(claim: claim);
 
-        var result = await useCase.GetById(claim.Id);
+        var result = await useCase.GetByIdAsync(claim.Id);
 
         result.Id.ShouldBe(claim.Id);
         result.ApoliceId.ShouldBe(claim.PolicyId);
@@ -70,7 +70,7 @@ public class ListClaimsUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.GetById(Guid.NewGuid()));
+        await Should.ThrowAsync<NotFoundException>(() => useCase.GetByIdAsync(Guid.NewGuid()));
     }
 
     private static ListClaimsUseCase CreateUseCase(

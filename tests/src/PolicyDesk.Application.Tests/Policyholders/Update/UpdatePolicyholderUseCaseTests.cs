@@ -24,15 +24,15 @@ public class UpdatePolicyholderUseCaseTests
         var request = RequestPolicyholdersUpdateJsonBuilder.Build(email: "Jane.Updated@Example.com");
         request.PhoneNumber = "(83) 9 1234-5678";
 
-        await command.Execute(policyholder.Id, request);
+        await command.ExecuteAsync(policyholder.Id, request);
 
         policyholder.Name.ShouldBe(request.Name.Trim());
         policyholder.Email.ShouldBe("jane.updated@example.com");
         policyholder.BirthDate.ShouldBe(request.BirthDate);
         policyholder.Phone.ShouldBe("+5583912345678");
-        unitOfWork.Verify(u => u.Commit(), Times.Once);
+        unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
         readBuilder.Mock.Verify(
-            r => r.ExistActivePolicyholdersWithEmail("jane.updated@example.com", policyholder.Id),
+            r => r.ExistActivePolicyholdersWithEmailAsync("jane.updated@example.com", policyholder.Id),
             Times.Once);
     }
 
@@ -43,10 +43,10 @@ public class UpdatePolicyholderUseCaseTests
         var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand();
 
         await Should.ThrowAsync<ErrorOnValidationException>(
-            () => command.Execute(Guid.NewGuid(), RequestPolicyholdersUpdateJsonBuilder.Build(email: "invalid")));
+            () => command.ExecuteAsync(Guid.NewGuid(), RequestPolicyholdersUpdateJsonBuilder.Build(email: "invalid")));
 
-        updateBuilder.Mock.Verify(r => r.GetByIdForUpdate(It.IsAny<Guid>()), Times.Never);
-        unitOfWork.Verify(u => u.Commit(), Times.Never);
+        updateBuilder.Mock.Verify(r => r.GetByIdForUpdateAsync(It.IsAny<Guid>()), Times.Never);
+        unitOfWork.Verify(u => u.CommitAsync(), Times.Never);
     }
 
     [Theory(DisplayName = nameof(Deve_LancarExcecaoAntesDaBusca_Quando_NomeForVazio))]
@@ -113,12 +113,12 @@ public class UpdatePolicyholderUseCaseTests
         var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand();
 
         await Should.ThrowAsync<NotFoundException>(
-            () => command.Execute(Guid.NewGuid(), RequestPolicyholdersUpdateJsonBuilder.Build()));
+            () => command.ExecuteAsync(Guid.NewGuid(), RequestPolicyholdersUpdateJsonBuilder.Build()));
 
         readBuilder.Mock.Verify(
-            r => r.ExistActivePolicyholdersWithEmail(It.IsAny<string>(), It.IsAny<Guid?>()),
+            r => r.ExistActivePolicyholdersWithEmailAsync(It.IsAny<string>(), It.IsAny<Guid?>()),
             Times.Never);
-        unitOfWork.Verify(u => u.Commit(), Times.Never);
+        unitOfWork.Verify(u => u.CommitAsync(), Times.Never);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarExcecaoSemConfirmar_Quando_EmailPertencerAOutroSeguradoAtivo))]
@@ -130,15 +130,15 @@ public class UpdatePolicyholderUseCaseTests
         var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand(policyholder, emailAlreadyExists: true);
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => command.Execute(
+            () => command.ExecuteAsync(
                 policyholder.Id,
                 RequestPolicyholdersUpdateJsonBuilder.Build(email: "TAKEN@EXAMPLE.COM")));
 
         policyholder.Email.ShouldBe(originalEmail);
         exception.GetErrors().ShouldContain(ResourcesMessageException.POLICYHOLDER_ACTIVE_EMAIL_EXISTS);
-        unitOfWork.Verify(u => u.Commit(), Times.Never);
+        unitOfWork.Verify(u => u.CommitAsync(), Times.Never);
         readBuilder.Mock.Verify(
-            r => r.ExistActivePolicyholdersWithEmail("taken@example.com", policyholder.Id),
+            r => r.ExistActivePolicyholdersWithEmailAsync("taken@example.com", policyholder.Id),
             Times.Once);
     }
 
@@ -147,11 +147,11 @@ public class UpdatePolicyholderUseCaseTests
         var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand();
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => command.Execute(Guid.NewGuid(), request));
+            () => command.ExecuteAsync(Guid.NewGuid(), request));
 
         exception.GetErrors().ShouldBe([expectedError]);
-        updateBuilder.Mock.Verify(r => r.GetByIdForUpdate(It.IsAny<Guid>()), Times.Never);
-        unitOfWork.Verify(u => u.Commit(), Times.Never);
+        updateBuilder.Mock.Verify(r => r.GetByIdForUpdateAsync(It.IsAny<Guid>()), Times.Never);
+        unitOfWork.Verify(u => u.CommitAsync(), Times.Never);
     }
 
     private static (UpdatePolicyholderUseCase Command, PolicyholdersReadOnlyRepositoryBuilder ReadBuilder,

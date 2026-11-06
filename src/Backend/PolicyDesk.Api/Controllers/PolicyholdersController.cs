@@ -18,7 +18,7 @@ public class PolicyholdersController : ControllerBase
         [FromServices] IListPolicyholdersUseCase useCase,
         CancellationToken cancellationToken)
     {
-        var result = await useCase.Listing(cancellationToken);
+        var result = await useCase.ListAsync(cancellationToken);
 
         return Ok(result);
     }
@@ -30,7 +30,7 @@ public class PolicyholdersController : ControllerBase
         [FromServices] IListPolicyholdersUseCase useCase,
         CancellationToken cancellationToken)
     {
-        var result = await useCase.GetById(id, cancellationToken);
+        var result = await useCase.GetByIdAsync(id, cancellationToken);
 
         return Ok(result);
     }
@@ -42,7 +42,7 @@ public class PolicyholdersController : ControllerBase
         [FromServices] IRegisterPolicyholderUseCase useCase,
         CancellationToken cancellationToken)
     {
-        await useCase.Execute(request, cancellationToken);
+        await useCase.ExecuteAsync(request, cancellationToken);
 
         return StatusCode(StatusCodes.Status201Created);
     }
@@ -55,7 +55,7 @@ public class PolicyholdersController : ControllerBase
         [FromServices] IUpdatePolicyholderUseCase useCase,
         CancellationToken cancellationToken)
     {
-        await useCase.Execute(id, request, cancellationToken);
+        await useCase.ExecuteAsync(id, request, cancellationToken);
 
         return NoContent();
     }
@@ -67,7 +67,7 @@ public class PolicyholdersController : ControllerBase
         [FromServices] IDeactivatePolicyholderUseCase useCase,
         CancellationToken cancellationToken)
     {
-        await useCase.Execute(id, cancellationToken);
+        await useCase.ExecuteAsync(id, cancellationToken);
 
         return NoContent();
     }

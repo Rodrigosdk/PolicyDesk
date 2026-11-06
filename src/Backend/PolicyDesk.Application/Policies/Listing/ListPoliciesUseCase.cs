@@ -8,20 +8,20 @@ namespace PolicyDesk.Application.Policies.Listing;
 
 internal class ListPoliciesUseCase(IPoliciesReadOnlyRepository policiesReadOnlyRepository) : IListPoliciesUseCase
 {
-    public async Task<IEnumerable<ResponsePolicyJson>> List(Guid? policyholderId, PolicyStatus? status, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ResponsePolicyJson>> ListAsync(Guid? policyholderId, PolicyStatus? status, CancellationToken cancellationToken = default)
     {
         if (status.HasValue && !Enum.IsDefined(status.Value))
         {
             throw new ErrorOnValidationException(ResourcesMessageException.INVALID_POLICY_STATUS);
         }
 
-        var policies = await policiesReadOnlyRepository.GetAll(policyholderId, status, cancellationToken);
+        var policies = await policiesReadOnlyRepository.GetAllAsync(policyholderId, status, cancellationToken);
         return policies.Select(MapToResponse);
     }
 
-    public async Task<ResponsePolicyJson> GetById(Guid policyId, CancellationToken cancellationToken = default)
+    public async Task<ResponsePolicyJson> GetByIdAsync(Guid policyId, CancellationToken cancellationToken = default)
     {
-        var policy = await policiesReadOnlyRepository.GetById(policyId, cancellationToken)
+        var policy = await policiesReadOnlyRepository.GetByIdAsync(policyId, cancellationToken)
                      ?? throw new NotFoundException(ResourcesMessageException.POLICY_NOT_FOUND);
         return MapToResponse(policy);
     }

@@ -22,7 +22,7 @@ public class ClaimsController : ControllerBase
         [FromServices] IRegisterClaimUseCase useCase,
         CancellationToken cancellationToken)
     {
-        var result = await useCase.Execute(id, request, cancellationToken);
+        var result = await useCase.ExecuteAsync(id, request, cancellationToken);
 
         return StatusCode(StatusCodes.Status201Created, result);
     }
@@ -34,7 +34,7 @@ public class ClaimsController : ControllerBase
         [FromServices] IListClaimsUseCase useCase,
         CancellationToken cancellationToken)
     {
-        return Ok(await useCase.ListByPolicy(id, cancellationToken));
+        return Ok(await useCase.ListByPolicyAsync(id, cancellationToken));
     }
 
     [HttpGet("sinistros/{id:guid}")]
@@ -44,7 +44,7 @@ public class ClaimsController : ControllerBase
         [FromServices] IListClaimsUseCase useCase,
         CancellationToken cancellationToken)
     {
-        return Ok(await useCase.GetById(id, cancellationToken));
+        return Ok(await useCase.GetByIdAsync(id, cancellationToken));
     }
 
     [HttpPost("sinistros/{id:guid}/analise")]
@@ -54,7 +54,7 @@ public class ClaimsController : ControllerBase
         [FromServices] IAnalyzeClaimUseCase useCase,
         CancellationToken cancellationToken)
     {
-        await useCase.Execute(id, cancellationToken);
+        await useCase.ExecuteAsync(id, cancellationToken);
         return NoContent();
     }
 
@@ -65,7 +65,7 @@ public class ClaimsController : ControllerBase
         [FromServices] IApproveClaimUseCase useCase,
         CancellationToken cancellationToken)
     {
-        await useCase.Execute(id, cancellationToken);
+        await useCase.ExecuteAsync(id, cancellationToken);
 
         return NoContent();
     }
@@ -78,7 +78,7 @@ public class ClaimsController : ControllerBase
         [FromServices] IDenyClaimUseCase useCase,
         CancellationToken cancellationToken)
     {
-        await useCase.Execute(id, request, cancellationToken);
+        await useCase.ExecuteAsync(id, request, cancellationToken);
         return NoContent();
     }
 
@@ -89,7 +89,7 @@ public class ClaimsController : ControllerBase
         [FromServices] IPayClaimUseCase useCase,
         CancellationToken cancellationToken)
     {
-        await useCase.Execute(id, cancellationToken);
+        await useCase.ExecuteAsync(id, cancellationToken);
         return NoContent();
     }
 }

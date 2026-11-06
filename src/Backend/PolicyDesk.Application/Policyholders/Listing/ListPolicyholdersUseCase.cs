@@ -8,15 +8,15 @@ namespace PolicyDesk.Application.Policyholders.Listing;
 internal class ListPolicyholdersUseCase(
     IPolicyholdersReadOnlyRepository policyholdersReadOnlyRepository) : IListPolicyholdersUseCase
 {
-    public async Task<IEnumerable<ResponsePolicyholdersListingJson>> Listing(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ResponsePolicyholdersListingJson>> ListAsync(CancellationToken cancellationToken = default)
     {
-        var policyholders = await policyholdersReadOnlyRepository.GetAll(cancellationToken);
+        var policyholders = await policyholdersReadOnlyRepository.GetAllAsync(cancellationToken);
         return policyholders.Select(MapToResponse);
     }
 
-    public async Task<ResponsePolicyholdersListingJson> GetById(Guid policyholderId, CancellationToken cancellationToken = default)
+    public async Task<ResponsePolicyholdersListingJson> GetByIdAsync(Guid policyholderId, CancellationToken cancellationToken = default)
     {
-        var policyholder = await policyholdersReadOnlyRepository.GetById(policyholderId, cancellationToken)
+        var policyholder = await policyholdersReadOnlyRepository.GetByIdAsync(policyholderId, cancellationToken)
                            ?? throw new NotFoundException(ResourcesMessageException.POLICYHOLDER_NOT_FOUND);
         return MapToResponse(policyholder);
     }

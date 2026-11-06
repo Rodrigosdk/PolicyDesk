@@ -17,6 +17,6 @@ public abstract class PolicyholdersRepositoryTestBase(PostgreSqlInfrastructureFi
     {
         var tracked = await dbContext.Policyholders.SingleAsync(item => item.Id == policyholder.Id);
         tracked.Deactivate();
-        await new UnitOfWork(dbContext).Commit();
+        await new UnitOfWork(dbContext).CommitAsync();
     }
 }

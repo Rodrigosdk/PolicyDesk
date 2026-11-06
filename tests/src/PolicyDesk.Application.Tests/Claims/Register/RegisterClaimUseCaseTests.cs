@@ -24,15 +24,15 @@ public class RegisterClaimUseCaseTests
         var request = RequestClaimJsonBuilder.Build("  Broken window  ", 500, DateTime.UtcNow.Date);
         var (useCase, writeRepository, unitOfWork) = CreateUseCase(policy);
 
-        var result = await useCase.Execute(policy.Id, request);
+        var result = await useCase.ExecuteAsync(policy.Id, request);
 
         result.Id.ShouldNotBe(Guid.Empty);
-        writeRepository.Verify(repository => repository.Add(It.Is<Claim>(claim =>
+        writeRepository.Verify(repository => repository.AddAsync(It.Is<Claim>(claim =>
             claim.PolicyId == policy.Id &&
             claim.Description == "Broken window" &&
             claim.Amount == 500 &&
             claim.OccurredOn == request.OccurredOn.Date)), Times.Once);
-        unitOfWork.Verify(work => work.Commit(), Times.Once);
+        unitOfWork.Verify(work => work.CommitAsync(), Times.Once);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarNaoEncontradoSemSalvar_Quando_ApoliceNaoExistir))]
@@ -42,7 +42,7 @@ public class RegisterClaimUseCaseTests
         var (useCase, writeRepository, unitOfWork) = CreateUseCase();
 
         await Should.ThrowAsync<NotFoundException>(
-            () => useCase.Execute(Guid.NewGuid(), RequestClaimJsonBuilder.Build()));
+            () => useCase.ExecuteAsync(Guid.NewGuid(), RequestClaimJsonBuilder.Build()));
 
         VerifyNothingSaved(writeRepository, unitOfWork);
     }
@@ -56,7 +56,7 @@ public class RegisterClaimUseCaseTests
         var (useCase, writeRepository, unitOfWork) = CreateUseCase(policy);
 
         await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.Execute(policy.Id, RequestClaimJsonBuilder.Build()));
+            () => useCase.ExecuteAsync(policy.Id, RequestClaimJsonBuilder.Build()));
 
         VerifyNothingSaved(writeRepository, unitOfWork);
     }
@@ -73,7 +73,7 @@ public class RegisterClaimUseCaseTests
         var (useCase, writeRepository, unitOfWork) = CreateUseCase(policy);
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.Execute(policy.Id, RequestClaimJsonBuilder.Build(occurredOn: today.AddDays(dayOffset))));
+            () => useCase.ExecuteAsync(policy.Id, RequestClaimJsonBuilder.Build(occurredOn: today.AddDays(dayOffset))));
 
         exception.GetErrors().ShouldBe([ResourcesMessageException.CLAIM_DATE_OUTSIDE_POLICY_PERIOD]);
         VerifyNothingSaved(writeRepository, unitOfWork);
@@ -89,10 +89,10 @@ public class RegisterClaimUseCaseTests
         var useCase = new RegisterClaimUseCase(writeRepository.Object, new ClaimsReadOnlyRepositoryBuilder().Build(), policiesRepository.Build(), unitOfWork.Object, NullLogger<RegisterClaimUseCase>.Instance);
         var request = RequestClaimJsonBuilder.Build(occurredOn: DateTime.UtcNow.Date.AddDays(1));
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(Guid.NewGuid(), request));
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(Guid.NewGuid(), request));
 
         exception.GetErrors().ShouldBe([ResourcesMessageException.CLAIM_OCCURRENCE_DATE_IN_FUTURE]);
-        policiesRepository.Mock.Verify(repository => repository.GetByIdForUpdate(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        policiesRepository.Mock.Verify(repository => repository.GetByIdForUpdateAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         VerifyNothingSaved(writeRepository, unitOfWork);
     }
 
@@ -105,10 +105,10 @@ public class RegisterClaimUseCaseTests
         var policy = PolicyBuilder.Build(coverageAmount: 10000, startDate: today.AddDays(-1), endDate: today.AddDays(30));
         var (useCase, writeRepository, unitOfWork) = CreateUseCase(policy);
 
-        await useCase.Execute(policy.Id, RequestClaimJsonBuilder.Build(amount: 500, occurredOn: today));
+        await useCase.ExecuteAsync(policy.Id, RequestClaimJsonBuilder.Build(amount: 500, occurredOn: today));
 
-        writeRepository.Verify(repository => repository.Add(It.Is<Claim>(claim => claim.OccurredOn == today)), Times.Once);
-        unitOfWork.Verify(work => work.Commit(), Times.Once);
+        writeRepository.Verify(repository => repository.AddAsync(It.Is<Claim>(claim => claim.OccurredOn == today)), Times.Once);
+        unitOfWork.Verify(work => work.CommitAsync(), Times.Once);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarRegraSemSalvar_Quando_ValorExcederCobertura))]
@@ -119,7 +119,7 @@ public class RegisterClaimUseCaseTests
         var (useCase, writeRepository, unitOfWork) = CreateUseCase(policy);
 
         var exception = await Should.ThrowAsync<DomainRuleException>(
-            () => useCase.Execute(policy.Id, RequestClaimJsonBuilder.Build(amount: 1000.01m)));
+            () => useCase.ExecuteAsync(policy.Id, RequestClaimJsonBuilder.Build(amount: 1000.01m)));
 
         exception.Message.ShouldBe(ResourcesMessageException.CLAIM_AMOUNT_EXCEEDS_COVERAGE);
         VerifyNothingSaved(writeRepository, unitOfWork);
@@ -133,7 +133,7 @@ public class RegisterClaimUseCaseTests
         var (useCase, writeRepository, unitOfWork) = CreateUseCase(policy, committedAmount: 8000);
 
         var exception = await Should.ThrowAsync<DomainRuleException>(
-            () => useCase.Execute(policy.Id, RequestClaimJsonBuilder.Build(amount: 2000.01m)));
+            () => useCase.ExecuteAsync(policy.Id, RequestClaimJsonBuilder.Build(amount: 2000.01m)));
 
         exception.Message.ShouldBe(ResourcesMessageException.CLAIM_AMOUNT_EXCEEDS_COVERAGE);
         VerifyNothingSaved(writeRepository, unitOfWork);
@@ -146,10 +146,10 @@ public class RegisterClaimUseCaseTests
         var policy = PolicyBuilder.Build(coverageAmount: 10000);
         var (useCase, writeRepository, unitOfWork) = CreateUseCase(policy, committedAmount: 8000);
 
-        await useCase.Execute(policy.Id, RequestClaimJsonBuilder.Build(amount: 2000));
+        await useCase.ExecuteAsync(policy.Id, RequestClaimJsonBuilder.Build(amount: 2000));
 
-        writeRepository.Verify(repository => repository.Add(It.Is<Claim>(claim => claim.Amount == 2000)), Times.Once);
-        unitOfWork.Verify(work => work.Commit(), Times.Once);
+        writeRepository.Verify(repository => repository.AddAsync(It.Is<Claim>(claim => claim.Amount == 2000)), Times.Once);
+        unitOfWork.Verify(work => work.CommitAsync(), Times.Once);
         policy.UpdatedAt.ShouldNotBeNull();
     }
 
@@ -171,16 +171,16 @@ public class RegisterClaimUseCaseTests
         var useCase = new RegisterClaimUseCase(writeRepository.Object, new ClaimsReadOnlyRepositoryBuilder().Build(), policiesRepository.Build(), unitOfWork.Object, NullLogger<RegisterClaimUseCase>.Instance);
         var request = RequestClaimJsonBuilder.Build(description, amount, missingDate ? default(DateTime) : DateTime.UtcNow.Date);
 
-        await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(Guid.NewGuid(), request));
+        await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(Guid.NewGuid(), request));
 
-        policiesRepository.Mock.Verify(repository => repository.GetByIdForUpdate(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        policiesRepository.Mock.Verify(repository => repository.GetByIdForUpdateAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         VerifyNothingSaved(writeRepository, unitOfWork);
     }
 
     private static void VerifyNothingSaved(Mock<IClaimsWriteOnlyRepository> writeRepository, Mock<IUnitOfWork> unitOfWork)
     {
-        writeRepository.Verify(repository => repository.Add(It.IsAny<Claim>()), Times.Never);
-        unitOfWork.Verify(work => work.Commit(), Times.Never);
+        writeRepository.Verify(repository => repository.AddAsync(It.IsAny<Claim>()), Times.Never);
+        unitOfWork.Verify(work => work.CommitAsync(), Times.Never);
     }
 
     private static (
@@ -210,7 +210,7 @@ public class RegisterClaimUseCaseTests
         var (useCase, writeRepository, unitOfWork) = CreateUseCase(policy);
         var request = RequestClaimJsonBuilder.Build(description: new string('a', FieldLimits.Description + 1));
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(policy.Id, request));
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(policy.Id, request));
 
         exception.GetErrors().ShouldBe([FieldLimits.DescriptionTooLong]);
         VerifyNothingSaved(writeRepository, unitOfWork);

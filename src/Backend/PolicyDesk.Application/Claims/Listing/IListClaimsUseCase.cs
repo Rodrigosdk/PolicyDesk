@@ -4,6 +4,6 @@ namespace PolicyDesk.Application.Claims.Listing;
 
 public interface IListClaimsUseCase
 {
-    Task<IEnumerable<ResponseClaimJson>> ListByPolicy(Guid policyId, CancellationToken cancellationToken = default);
-    Task<ResponseClaimJson> GetById(Guid claimId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ResponseClaimJson>> ListByPolicyAsync(Guid policyId, CancellationToken cancellationToken = default);
+    Task<ResponseClaimJson> GetByIdAsync(Guid claimId, CancellationToken cancellationToken = default);
 }

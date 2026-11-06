@@ -22,10 +22,10 @@ public class PoliciesRepositoryTests(PostgreSqlInfrastructureFixture fixture) : 
         await dbContext.SaveChangesAsync();
         var policy = PolicyBuilder.Build(policyholder.Id);
 
-        await repository.Add(policy);
-        await new UnitOfWork(dbContext).Commit();
+        await repository.AddAsync(policy);
+        await new UnitOfWork(dbContext).CommitAsync();
 
-        var saved = await repository.GetById(policy.Id);
+        var saved = await repository.GetByIdAsync(policy.Id);
         saved.ShouldNotBeNull();
         saved.Id.ShouldBe(policy.Id);
         saved.PolicyholderId.ShouldBe(policyholder.Id);
@@ -42,7 +42,7 @@ public class PoliciesRepositoryTests(PostgreSqlInfrastructureFixture fixture) : 
         await using var dbContext = Fixture.CreateDbContext();
         var repository = CreateRepository(dbContext);
 
-        (await repository.GetById(Guid.NewGuid())).ShouldBeNull();
+        (await repository.GetByIdAsync(Guid.NewGuid())).ShouldBeNull();
     }
 
     [Fact(DisplayName = nameof(Deve_AplicarFiltrosDeSeguradoEStatus_Quando_Listar))]
@@ -63,9 +63,9 @@ public class PoliciesRepositoryTests(PostgreSqlInfrastructureFixture fixture) : 
         dbContext.Policies.AddRange(activeForFirst, cancelledForFirst, activeForSecond);
         await dbContext.SaveChangesAsync();
 
-        var byHolder = await repository.GetAll(firstHolder.Id, null);
-        var byStatus = await repository.GetAll(firstHolder.Id, PolicyStatus.Cancelled);
-        var byBoth = await repository.GetAll(firstHolder.Id, PolicyStatus.Active);
+        var byHolder = await repository.GetAllAsync(firstHolder.Id, null);
+        var byStatus = await repository.GetAllAsync(firstHolder.Id, PolicyStatus.Cancelled);
+        var byBoth = await repository.GetAllAsync(firstHolder.Id, PolicyStatus.Active);
 
         byHolder.Select(policy => policy.Id).ShouldBe([activeForFirst.Id, cancelledForFirst.Id], ignoreOrder: true);
         byStatus.Select(policy => policy.Id).ShouldBe([cancelledForFirst.Id]);
@@ -85,10 +85,10 @@ public class PoliciesRepositoryTests(PostgreSqlInfrastructureFixture fixture) : 
         await dbContext.SaveChangesAsync();
 
         var repository = CreateRepository(dbContext);
-        var trackedPolicy = await repository.GetByIdForUpdate(policy.Id);
+        var trackedPolicy = await repository.GetByIdForUpdateAsync(policy.Id);
         trackedPolicy.ShouldNotBeNull();
         trackedPolicy.Cancel();
-        await new UnitOfWork(dbContext).Commit();
+        await new UnitOfWork(dbContext).CommitAsync();
 
         await using var verificationContext = Fixture.CreateDbContext();
         var saved = await verificationContext.Policies.AsNoTracking().SingleAsync(item => item.Id == policy.Id);
@@ -110,11 +110,11 @@ public class PoliciesRepositoryTests(PostgreSqlInfrastructureFixture fixture) : 
         await setupContext.SaveChangesAsync();
 
         await using var readContext = Fixture.CreateDbContext();
-        (await CreateRepository(readContext).GetById(policy.Id)).ShouldNotBeNull();
+        (await CreateRepository(readContext).GetByIdAsync(policy.Id)).ShouldNotBeNull();
         readContext.ChangeTracker.Entries<Policy>().ShouldBeEmpty();
 
         await using var updateContext = Fixture.CreateDbContext();
-        (await CreateRepository(updateContext).GetByIdForUpdate(policy.Id)).ShouldNotBeNull();
+        (await CreateRepository(updateContext).GetByIdForUpdateAsync(policy.Id)).ShouldNotBeNull();
         updateContext.ChangeTracker.Entries<Policy>().ShouldHaveSingleItem();
     }
 }

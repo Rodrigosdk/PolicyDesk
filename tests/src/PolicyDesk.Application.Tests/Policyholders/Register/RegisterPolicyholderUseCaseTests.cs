@@ -23,10 +23,10 @@ public class RegisterPolicyholderUseCaseTests
         var useCase = CreateUseCase(writeRepository);
         var request = RequestPolicyholdersJsonBuilder.Build(email: "Jane.Doe@Example.com");
 
-        await useCase.Execute(request);
+        await useCase.ExecuteAsync(request);
 
         writeRepository.Verify(
-            r => r.RegisterOrReactivate(It.Is<Policyholder>(p =>
+            r => r.RegisterOrReactivateAsync(It.Is<Policyholder>(p =>
                 p.Cpf == request.Cpf && p.Email == "jane.doe@example.com" && p.Name == request.Name.Trim())),
             Times.Once);
     }
@@ -39,10 +39,10 @@ public class RegisterPolicyholderUseCaseTests
         var useCase = CreateUseCase(writeRepository);
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.Execute(RequestPolicyholdersJsonBuilder.Build(cpf: "111.111.111-11")));
+            () => useCase.ExecuteAsync(RequestPolicyholdersJsonBuilder.Build(cpf: "111.111.111-11")));
 
         exception.GetErrors().ShouldContain(ResourcesMessageException.INVALID_CPF);
-        writeRepository.Verify(r => r.RegisterOrReactivate(It.IsAny<Policyholder>()), Times.Never);
+        writeRepository.Verify(r => r.RegisterOrReactivateAsync(It.IsAny<Policyholder>()), Times.Never);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarExcecaoSemChamarRepositorio_Quando_EmailForInvalido))]
@@ -53,10 +53,10 @@ public class RegisterPolicyholderUseCaseTests
         var useCase = CreateUseCase(writeRepository);
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.Execute(RequestPolicyholdersJsonBuilder.Build(email: "invalid-email")));
+            () => useCase.ExecuteAsync(RequestPolicyholdersJsonBuilder.Build(email: "invalid-email")));
 
         exception.GetErrors().ShouldContain(ResourcesMessageException.INVALID_EMAIL);
-        writeRepository.Verify(r => r.RegisterOrReactivate(It.IsAny<Policyholder>()), Times.Never);
+        writeRepository.Verify(r => r.RegisterOrReactivateAsync(It.IsAny<Policyholder>()), Times.Never);
     }
 
     [Theory(DisplayName = nameof(Deve_LancarExcecaoDeValidacao_Quando_JaExistirSeguradoAtivoComCpfOuEmail))]
@@ -69,13 +69,13 @@ public class RegisterPolicyholderUseCaseTests
         var useCase = CreateUseCase(writeRepository);
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.Execute(RequestPolicyholdersJsonBuilder.Build()));
+            () => useCase.ExecuteAsync(RequestPolicyholdersJsonBuilder.Build()));
 
         var expectedError = result == PolicyholderRegistrationResult.ActiveCpfAlreadyExists
             ? ResourcesMessageException.POLICYHOLDER_ACTIVE_CPF_EXISTS
             : ResourcesMessageException.POLICYHOLDER_ACTIVE_EMAIL_EXISTS;
         exception.GetErrors().ShouldContain(expectedError);
-        writeRepository.Verify(r => r.RegisterOrReactivate(It.IsAny<Policyholder>()), Times.Once);
+        writeRepository.Verify(r => r.RegisterOrReactivateAsync(It.IsAny<Policyholder>()), Times.Once);
     }
 
     [Theory(DisplayName = nameof(Deve_LancarExcecaoSemChamarRepositorio_Quando_NomeForVazio))]
@@ -150,9 +150,9 @@ public class RegisterPolicyholderUseCaseTests
         var request = RequestPolicyholdersJsonBuilder.Build();
         request.PhoneNumber = phone;
 
-        await useCase.Execute(request);
+        await useCase.ExecuteAsync(request);
 
-        writeRepository.Verify(r => r.RegisterOrReactivate(It.Is<Policyholder>(p => p.Phone == expectedPhone)), Times.Once);
+        writeRepository.Verify(r => r.RegisterOrReactivateAsync(It.Is<Policyholder>(p => p.Phone == expectedPhone)), Times.Once);
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarTodosOsErros_Quando_VariosCamposForemInvalidos))]
@@ -163,7 +163,7 @@ public class RegisterPolicyholderUseCaseTests
         var useCase = CreateUseCase(writeRepository);
         var request = new RequestPolicyholdersJson { Cpf = "111.111.111-11", Email = "invalid" };
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(request));
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(request));
 
         exception.GetErrors().ShouldBe(
         [
@@ -173,7 +173,7 @@ public class RegisterPolicyholderUseCaseTests
             ResourcesMessageException.INVALID_EMAIL,
             ResourcesMessageException.POLICYHOLDER_PHONE_REQUIRED
         ], ignoreOrder: true);
-        writeRepository.Verify(r => r.RegisterOrReactivate(It.IsAny<Policyholder>()), Times.Never);
+        writeRepository.Verify(r => r.RegisterOrReactivateAsync(It.IsAny<Policyholder>()), Times.Never);
     }
 
     private static async Task ShouldFailWithoutCallingRepository(RequestPolicyholdersJson request, string expectedError)
@@ -181,10 +181,10 @@ public class RegisterPolicyholderUseCaseTests
         var writeRepository = PolicyholdersWriteOnlyRepositoryBuilder.Build();
         var useCase = CreateUseCase(writeRepository);
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(request));
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(request));
 
         exception.GetErrors().ShouldBe([expectedError]);
-        writeRepository.Verify(r => r.RegisterOrReactivate(It.IsAny<Policyholder>()), Times.Never);
+        writeRepository.Verify(r => r.RegisterOrReactivateAsync(It.IsAny<Policyholder>()), Times.Never);
     }
 
     private static RegisterPolicyholderUseCase CreateUseCase(Mock<IPolicyholdersWriteOnlyRepository> writeRepository) =>
@@ -201,9 +201,9 @@ public class RegisterPolicyholderUseCaseTests
         request.Name = new string('a', FieldLimits.PolicyholderName + 1);
         request.PhoneNumber = "(83) 98647-1687 celular";
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(request));
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(request));
 
         exception.GetErrors().ShouldBe([FieldLimits.PolicyholderNameTooLong, ResourcesMessageException.INVALID_PHONE]);
-        writeRepository.Verify(r => r.RegisterOrReactivate(It.IsAny<Policyholder>()), Times.Never);
+        writeRepository.Verify(r => r.RegisterOrReactivateAsync(It.IsAny<Policyholder>()), Times.Never);
     }
 }

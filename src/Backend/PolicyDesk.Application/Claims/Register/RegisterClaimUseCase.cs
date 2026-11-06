@@ -19,11 +19,11 @@ internal class RegisterClaimUseCase(
     IUnitOfWork unitOfWork,
     ILogger<RegisterClaimUseCase> logger) : IRegisterClaimUseCase
 {
-    public async Task<ResponseCreatedJson> Execute(Guid policyId, RequestClaimJson request, CancellationToken cancellationToken = default)
+    public async Task<ResponseCreatedJson> ExecuteAsync(Guid policyId, RequestClaimJson request, CancellationToken cancellationToken = default)
     {
         Validate(request);
 
-        var policy = await policiesUpdateOnlyRepository.GetByIdForUpdate(policyId, cancellationToken)
+        var policy = await policiesUpdateOnlyRepository.GetByIdForUpdateAsync(policyId, cancellationToken)
                      ?? throw new NotFoundException(ResourcesMessageException.POLICY_NOT_FOUND);
 
         if (policy.IsCancelled)
@@ -36,13 +36,13 @@ internal class RegisterClaimUseCase(
             throw new ErrorOnValidationException(ResourcesMessageException.CLAIM_DATE_OUTSIDE_POLICY_PERIOD);
         }
 
-        var committedAmount = await claimsReadOnlyRepository.SumCommittedAmount(policy.Id, cancellationToken);
+        var committedAmount = await claimsReadOnlyRepository.SumCommittedAmountAsync(policy.Id, cancellationToken);
         policy.RegisterClaim(request.Amount, committedAmount);
 
         var claim = new Claim(policy.Id, request.Description, request.Amount, request.OccurredOn);
 
-        await claimsWriteOnlyRepository.Add(claim);
-        await unitOfWork.Commit(cancellationToken);
+        await claimsWriteOnlyRepository.AddAsync(claim);
+        await unitOfWork.CommitAsync(cancellationToken);
         logger.ClaimRegistered(claim.Id, policy.Id, claim.Amount);
 
         return new ResponseCreatedJson { Id = claim.Id };

@@ -2,5 +2,5 @@ namespace PolicyDesk.Application.Claims.Payment;
 
 public interface IPayClaimUseCase
 {
-    Task Execute(Guid claimId, CancellationToken cancellationToken = default);
+    Task ExecuteAsync(Guid claimId, CancellationToken cancellationToken = default);
 }
