@@ -1,3 +1,5 @@
+using PolicyDesk.Application.Common;
+using PolicyDesk.Communication.Requests;
 using PolicyDesk.Communication.Responses;
 using PolicyDesk.Domain.Repositories.Policyholders;
 using PolicyDesk.Exception;
@@ -8,10 +10,14 @@ namespace PolicyDesk.Application.Policyholders.Listing;
 internal class ListPolicyholdersUseCase(
     IPolicyholdersReadOnlyRepository policyholdersReadOnlyRepository) : IListPolicyholdersUseCase
 {
-    public async Task<IEnumerable<ResponsePolicyholdersListingJson>> ListAsync(CancellationToken cancellationToken = default)
+    public async Task<ResponsePagedJson<ResponsePolicyholdersListingJson>> ListAsync(RequestPaginationJson pagination, CancellationToken cancellationToken = default)
     {
-        var policyholders = await policyholdersReadOnlyRepository.GetAllAsync(cancellationToken);
-        return policyholders.Select(MapToResponse);
+        var errors = Pagination.Validate(pagination);
+        if (errors.Count > 0)
+            throw new ErrorOnValidationException(errors);
+
+        var page = await policyholdersReadOnlyRepository.GetPageAsync(pagination.Pagina, pagination.TamanhoPagina, cancellationToken);
+        return Pagination.ToResponse(page, pagination, MapToResponse);
     }
 
     public async Task<ResponsePolicyholdersListingJson> GetByIdAsync(Guid policyholderId, CancellationToken cancellationToken = default)

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Enums;
+using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Policies;
 
 namespace PolicyDesk.Infrastructure.DataAccess.Repositories;
@@ -26,14 +27,23 @@ internal sealed class PoliciesRepository(PolicyDeskDbContext dbContext) :
         return dbContext.Policies.FirstOrDefaultAsync(policy => policy.Id == id, cancellationToken);
     }
 
-    public async Task<IEnumerable<Policy>> GetAllAsync(Guid? policyholderId, PolicyStatus? status, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Policy>> GetPageAsync(Guid? policyholderId, PolicyStatus? status, int page, int pageSize, CancellationToken cancellationToken = default)
     {
         var query = dbContext.Policies.AsNoTracking();
         if (policyholderId.HasValue)
             query = query.Where(policy => policy.PolicyholderId == policyholderId.Value);
         if (status.HasValue)
             query = query.Where(policy => policy.Status == status.Value);
-        return await query.ToListAsync(cancellationToken);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var items = await query
+            .OrderBy(policy => policy.CreatedAt)
+            .ThenBy(policy => policy.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<Policy>(items, totalCount);
     }
 
 }

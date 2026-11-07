@@ -302,5 +302,17 @@ namespace PolicyDesk.Exception {
                 return ResourceManager.GetString("CLAIM_AMOUNT_INVALID_PRECISION", resourceCulture);
             }
         }
+
+        public static string INVALID_PAGE {
+            get {
+                return ResourceManager.GetString("INVALID_PAGE", resourceCulture);
+            }
+        }
+
+        public static string INVALID_PAGE_SIZE {
+            get {
+                return ResourceManager.GetString("INVALID_PAGE_SIZE", resourceCulture);
+            }
+        }
     }
 }

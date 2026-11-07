@@ -1,6 +1,7 @@
 using Moq;
 using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Enums;
+using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Policies;
 
 namespace CommonTestUtilities.Repositories;
@@ -15,11 +16,12 @@ public class PoliciesReadOnlyRepositoryBuilder
         return this;
     }
 
-    public PoliciesReadOnlyRepositoryBuilder GetAll(IEnumerable<Policy> policies)
+    public PoliciesReadOnlyRepositoryBuilder GetPage(IEnumerable<Policy> policies, int? totalCount = null)
     {
+        var items = policies.ToList();
         _repository
-            .Setup(repository => repository.GetAllAsync(It.IsAny<Guid?>(), It.IsAny<PolicyStatus?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(policies);
+            .Setup(repository => repository.GetPageAsync(It.IsAny<Guid?>(), It.IsAny<PolicyStatus?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PagedResult<Policy>(items, totalCount ?? items.Count));
         return this;
     }
 

@@ -63,9 +63,9 @@ public class PoliciesRepositoryTests(PostgreSqlInfrastructureFixture fixture) : 
         dbContext.Policies.AddRange(activeForFirst, cancelledForFirst, activeForSecond);
         await dbContext.SaveChangesAsync();
 
-        var byHolder = await repository.GetAllAsync(firstHolder.Id, null);
-        var byStatus = await repository.GetAllAsync(firstHolder.Id, PolicyStatus.Cancelled);
-        var byBoth = await repository.GetAllAsync(firstHolder.Id, PolicyStatus.Active);
+        var byHolder = (await repository.GetPageAsync(firstHolder.Id, null, 1, 100)).Items;
+        var byStatus = (await repository.GetPageAsync(firstHolder.Id, PolicyStatus.Cancelled, 1, 100)).Items;
+        var byBoth = (await repository.GetPageAsync(firstHolder.Id, PolicyStatus.Active, 1, 100)).Items;
 
         byHolder.Select(policy => policy.Id).ShouldBe([activeForFirst.Id, cancelledForFirst.Id], ignoreOrder: true);
         byStatus.Select(policy => policy.Id).ShouldBe([cancelledForFirst.Id]);

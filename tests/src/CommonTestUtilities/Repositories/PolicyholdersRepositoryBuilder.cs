@@ -1,4 +1,5 @@
 using Moq;
+using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Policyholders;
 using PolicyDesk.Domain.Entities;
 
@@ -10,9 +11,12 @@ public class PolicyholdersReadOnlyRepositoryBuilder
 
     public Mock<IPolicyholdersReadOnlyRepository> Mock => _repository;
 
-    public PolicyholdersReadOnlyRepositoryBuilder GetAll(IEnumerable<Policyholder> policyholders)
+    public PolicyholdersReadOnlyRepositoryBuilder GetPage(IEnumerable<Policyholder> policyholders, int? totalCount = null)
     {
-        _repository.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(policyholders);
+        var items = policyholders.ToList();
+        _repository
+            .Setup(r => r.GetPageAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PagedResult<Policyholder>(items, totalCount ?? items.Count));
         return this;
     }
 

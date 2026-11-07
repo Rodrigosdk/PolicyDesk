@@ -1,5 +1,6 @@
 using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Enums;
+using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Policyholders;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -48,11 +49,18 @@ internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) :
             : PolicyholderRegistrationResult.RegisteredOrReactivated;
     }
 
-    public async Task<IEnumerable<Policyholder>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Policyholder>> GetPageAsync(int page, int pageSize, CancellationToken cancellationToken = default)
     {
-        return await dbContext.Policyholders
-            .AsNoTracking()
+        var query = dbContext.Policyholders.AsNoTracking();
+        var totalCount = await query.CountAsync(cancellationToken);
+        var items = await query
+            .OrderBy(policyholder => policyholder.CreatedAt)
+            .ThenBy(policyholder => policyholder.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellationToken);
+
+        return new PagedResult<Policyholder>(items, totalCount);
     }
 
     public Task<Policyholder?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)

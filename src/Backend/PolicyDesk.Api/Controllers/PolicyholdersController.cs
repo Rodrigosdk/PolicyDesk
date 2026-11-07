@@ -13,12 +13,13 @@ namespace PolicyDesk.Api.Controllers;
 public class PolicyholdersController : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<ResponsePolicyholdersListingJson>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<ResponsePolicyholdersListingJson>>> GetAll(
+    [ProducesResponseType(typeof(ResponsePagedJson<ResponsePolicyholdersListingJson>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ResponsePagedJson<ResponsePolicyholdersListingJson>>> GetAll(
+        [FromQuery] RequestPaginationJson pagination,
         [FromServices] IListPolicyholdersUseCase useCase,
         CancellationToken cancellationToken)
     {
-        var result = await useCase.ListAsync(cancellationToken);
+        var result = await useCase.ListAsync(pagination, cancellationToken);
 
         return Ok(result);
     }

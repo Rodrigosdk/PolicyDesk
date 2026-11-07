@@ -21,7 +21,7 @@ public class QueryPolicyholdersRepositoryTests(PostgreSqlInfrastructureFixture f
         await repository.RegisterOrReactivateAsync(inactive);
         await DeactivateAndCommit(dbContext, inactive);
 
-        var listed = await repository.GetAllAsync();
+        var listed = (await repository.GetPageAsync(1, 100)).Items;
         var inactiveById = await repository.GetByIdAsync(inactive.Id);
 
         listed.Select(item => item.Id).ShouldBe([active.Id]);
@@ -41,7 +41,7 @@ public class QueryPolicyholdersRepositoryTests(PostgreSqlInfrastructureFixture f
             VALUES ({id}, '', '00000000000', '0001-01-01', 'legacy', '123', {DateTime.UtcNow}, NULL, TRUE)
             """);
 
-        var listed = await CreateRepository(dbContext).GetAllAsync();
+        var listed = (await CreateRepository(dbContext).GetPageAsync(1, 100)).Items;
         var byId = await CreateRepository(dbContext).GetByIdAsync(id);
 
         listed.Select(item => item.Id).ShouldBe([id]);

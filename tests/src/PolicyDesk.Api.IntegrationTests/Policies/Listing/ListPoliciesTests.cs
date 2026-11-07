@@ -20,9 +20,9 @@ public class ListPoliciesTests(PolicyDeskApplicationFactory factory) : PoliciesT
         var response = await Get($"/api/apolices?seguradoId={holder.Id}");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var items = await response.Content.ReadFromJsonAsync<List<ResponsePolicyJson>>();
+        var items = await response.Content.ReadFromJsonAsync<ResponsePagedJson<ResponsePolicyJson>>();
         items.ShouldNotBeNull();
-        items.Select(item => item.Id).ShouldBe([expected.Id]);
+        items.Itens.Select(item => item.Id).ShouldBe([expected.Id]);
     }
 
     [Fact(DisplayName = nameof(Deve_FiltrarApolicesPorStatus_Quando_StatusForInformado))]
@@ -35,13 +35,13 @@ public class ListPoliciesTests(PolicyDeskApplicationFactory factory) : PoliciesT
         (await Post($"/api/apolices/{cancelled.Id}/cancelamento", new { }))
             .StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
-        var response = await Get($"/api/apolices?status={PolicyStatus.Cancelled}");
+        var response = await Get($"/api/apolices?seguradoId={holder.Id}&status={PolicyStatus.Cancelled}");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var items = await response.Content.ReadFromJsonAsync<List<ResponsePolicyJson>>();
+        var items = await response.Content.ReadFromJsonAsync<ResponsePagedJson<ResponsePolicyJson>>();
         items.ShouldNotBeNull();
-        items.Select(item => item.Id).ShouldContain(cancelled.Id);
-        items.Select(item => item.Id).ShouldNotContain(active.Id);
+        items.Itens.Select(item => item.Id).ShouldBe([cancelled.Id]);
+        items.Itens.Select(item => item.Id).ShouldNotContain(active.Id);
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarApolice_Quando_BuscarPorId))]
@@ -60,6 +60,38 @@ public class ListPoliciesTests(PolicyDeskApplicationFactory factory) : PoliciesT
         item.ValorCobertura.ShouldBe(policy.CoverageAmount);
     }
 
+    [Fact(DisplayName = nameof(Deve_PaginarNaOrdemDeCadastro_Quando_InformarPaginaETamanho))]
+    [Trait("Integration", "Policies - Listagem")]
+    public async Task Deve_PaginarNaOrdemDeCadastro_Quando_InformarPaginaETamanho()
+    {
+        var holder = await RegisterPolicyholder();
+        var first = await RegisterPolicyForHolder(holder);
+        var second = await RegisterPolicyForHolder(holder);
+        var third = await RegisterPolicyForHolder(holder);
+
+        var firstPage = await ReadPage($"/api/apolices?seguradoId={holder.Id}&pagina=1&tamanhoPagina=2");
+        var secondPage = await ReadPage($"/api/apolices?seguradoId={holder.Id}&pagina=2&tamanhoPagina=2");
+
+        firstPage.Itens.Select(item => item.Id).ShouldBe([first.Id, second.Id]);
+        secondPage.Itens.Select(item => item.Id).ShouldBe([third.Id]);
+        secondPage.Pagina.ShouldBe(2);
+        secondPage.TamanhoPagina.ShouldBe(2);
+        secondPage.TotalItens.ShouldBe(3);
+        secondPage.TotalPaginas.ShouldBe(2);
+    }
+
+    [Theory(DisplayName = nameof(Deve_RetornarBadRequest_Quando_PaginacaoForInvalida))]
+    [Trait("Integration", "Policies - Listagem")]
+    [InlineData("pagina=0")]
+    [InlineData("tamanhoPagina=0")]
+    [InlineData("tamanhoPagina=101")]
+    public async Task Deve_RetornarBadRequest_Quando_PaginacaoForInvalida(string query)
+    {
+        var response = await Get($"/api/apolices?{query}");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
     [Fact(DisplayName = nameof(Deve_RetornarNotFound_Quando_BuscarApoliceInexistente))]
     [Trait("Integration", "Policies - Listagem")]
     public async Task Deve_RetornarNotFound_Quando_BuscarApoliceInexistente()
@@ -67,5 +99,14 @@ public class ListPoliciesTests(PolicyDeskApplicationFactory factory) : PoliciesT
         var response = await Get($"/api/apolices/{Guid.NewGuid()}");
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    private async Task<ResponsePagedJson<ResponsePolicyJson>> ReadPage(string requestUri)
+    {
+        var response = await Get(requestUri);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var page = await response.Content.ReadFromJsonAsync<ResponsePagedJson<ResponsePolicyJson>>();
+        page.ShouldNotBeNull();
+        return page;
     }
 }

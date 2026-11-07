@@ -190,7 +190,7 @@ A API ficará disponível em http://localhost:5045, com o Swagger em http://loca
 
 | Método | Rota | Descrição |
 | :---: | --- | --- |
-| `GET` | `/api/segurados` | Lista os segurados ativos |
+| `GET` | `/api/segurados?pagina=&tamanhoPagina=` | Lista os segurados ativos, paginado |
 | `GET` | `/api/segurados/{id}` | Busca um segurado |
 | `POST` | `/api/segurados` | Cadastra um segurado |
 | `PUT` | `/api/segurados/{id}` | Atualiza os dados de um segurado |
@@ -200,7 +200,7 @@ A API ficará disponível em http://localhost:5045, com o Swagger em http://loca
 
 | Método | Rota | Descrição |
 | :---: | --- | --- |
-| `GET` | `/api/apolices?seguradoId=&status=` | Lista apólices, com filtros opcionais |
+| `GET` | `/api/apolices?seguradoId=&status=&pagina=&tamanhoPagina=` | Lista apólices, com filtros opcionais e paginado |
 | `GET` | `/api/apolices/{id}` | Busca uma apólice |
 | `POST` | `/api/apolices` | Emite uma apólice |
 | `POST` | `/api/apolices/{id}/cancelamento` | Cancela uma apólice |

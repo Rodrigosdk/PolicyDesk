@@ -25,14 +25,15 @@ public class PoliciesController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<ResponsePolicyJson>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<ResponsePolicyJson>>> GetAll(
+    [ProducesResponseType(typeof(ResponsePagedJson<ResponsePolicyJson>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ResponsePagedJson<ResponsePolicyJson>>> GetAll(
         [FromQuery] Guid? seguradoId,
         [FromQuery] PolicyStatus? status,
+        [FromQuery] RequestPaginationJson pagination,
         [FromServices] IListPoliciesUseCase useCase,
         CancellationToken cancellationToken)
     {
-        return Ok(await useCase.ListAsync(seguradoId, status, cancellationToken));
+        return Ok(await useCase.ListAsync(seguradoId, status, pagination, cancellationToken));
     }
 
     [HttpGet("{id:guid}")]

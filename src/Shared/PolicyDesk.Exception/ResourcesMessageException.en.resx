@@ -147,4 +147,10 @@
     <data name="CLAIM_AMOUNT_INVALID_PRECISION" xml:space="preserve">
         <value>The claim amount must have at most {0} integer digits and {1} decimal places.</value>
     </data>
+    <data name="INVALID_PAGE" xml:space="preserve">
+        <value>The page must be greater than or equal to 1.</value>
+    </data>
+    <data name="INVALID_PAGE_SIZE" xml:space="preserve">
+        <value>The page size must be between 1 and {0}.</value>
+    </data>
 </root>
