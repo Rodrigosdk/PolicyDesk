@@ -24,9 +24,11 @@ internal class PolicyMap : IEntityTypeConfiguration<Policy>
             .IsRequired();
         builder.Property(policy => policy.CoverageAmount)
             .HasColumnName("coverage_amount")
+            .HasPrecision(MoneyLimits.Precision, MoneyLimits.Scale)
             .IsRequired();
         builder.Property(policy => policy.PremiumAmount)
             .HasColumnName("premium_amount")
+            .HasPrecision(MoneyLimits.Precision, MoneyLimits.Scale)
             .IsRequired();
         builder.Property(policy => policy.StartDate)
             .HasColumnName("start_date")

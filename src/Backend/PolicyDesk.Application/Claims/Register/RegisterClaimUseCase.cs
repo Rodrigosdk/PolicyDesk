@@ -59,6 +59,8 @@ internal class RegisterClaimUseCase(
 
         if (request.Amount <= 0)
             errors.Add(ResourcesMessageException.CLAIM_AMOUNT_MUST_BE_POSITIVE);
+        else if (!MoneyLimits.IsValid(request.Amount))
+            errors.Add(MoneyLimits.ClaimAmountInvalidPrecision);
 
         if (request.OccurredOn == default)
             errors.Add(ResourcesMessageException.CLAIM_OCCURRENCE_DATE_REQUIRED);

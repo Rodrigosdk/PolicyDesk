@@ -24,8 +24,12 @@ public class Policy : Entity
             throw new DomainRuleException(FieldLimits.DescriptionTooLong);
         if (coverageAmount <= 0)
             throw new DomainRuleException(ResourcesMessageException.COVERAGE_AMOUNT_MUST_BE_POSITIVE);
+        if (!MoneyLimits.IsValid(coverageAmount))
+            throw new DomainRuleException(MoneyLimits.CoverageAmountInvalidPrecision);
         if (premiumAmount <= 0)
             throw new DomainRuleException(ResourcesMessageException.PREMIUM_AMOUNT_MUST_BE_POSITIVE);
+        if (!MoneyLimits.IsValid(premiumAmount))
+            throw new DomainRuleException(MoneyLimits.PremiumAmountInvalidPrecision);
         if (startDate == default || endDate == default)
             throw new DomainRuleException(ResourcesMessageException.POLICY_DATES_REQUIRED);
         if (endDate.Date <= startDate.Date)

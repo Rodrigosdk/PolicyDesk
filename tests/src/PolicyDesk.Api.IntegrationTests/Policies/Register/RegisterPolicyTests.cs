@@ -35,6 +35,22 @@ public class RegisterPolicyTests(PolicyDeskApplicationFactory factory) : Policie
         saved.PremiumAmount.ShouldBe(request.PremiumAmount);
     }
 
+    [Theory(DisplayName = nameof(Deve_RetornarBadRequestSemGravar_Quando_ValorTiverMaisDeDuasCasasDecimais))]
+    [Trait("Integration", "Policies - Cadastro")]
+    [InlineData(1000.001, 100)]
+    [InlineData(1000, 99.999)]
+    public async Task Deve_RetornarBadRequestSemGravar_Quando_ValorTiverMaisDeDuasCasasDecimais(decimal coverageAmount, decimal premiumAmount)
+    {
+        var policyholder = await RegisterPolicyholder();
+
+        var response = await Post(
+            "/api/apolices",
+            RequestPolicyJsonBuilder.Build(policyholder.Id, coverageAmount: coverageAmount, premiumAmount: premiumAmount));
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await DbContext.Policies.CountAsync(policy => policy.PolicyholderId == policyholder.Id)).ShouldBe(0);
+    }
+
     [Fact(DisplayName = nameof(Deve_RetornarBadRequest_Quando_ValorCoberturaForInvalido))]
     [Trait("Integration", "Policies - Cadastro")]
     public async Task Deve_RetornarBadRequest_Quando_ValorCoberturaForInvalido()

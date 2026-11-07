@@ -18,6 +18,8 @@ public class Claim : Entity
             throw new DomainRuleException(FieldLimits.DescriptionTooLong);
         if (amount <= 0)
             throw new DomainRuleException(ResourcesMessageException.CLAIM_AMOUNT_MUST_BE_POSITIVE);
+        if (!MoneyLimits.IsValid(amount))
+            throw new DomainRuleException(MoneyLimits.ClaimAmountInvalidPrecision);
         if (occurredOn == default)
             throw new DomainRuleException(ResourcesMessageException.CLAIM_OCCURRENCE_DATE_REQUIRED);
 

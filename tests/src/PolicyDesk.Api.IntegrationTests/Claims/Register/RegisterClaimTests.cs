@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Communication.Requests;
 using PolicyDesk.Communication.Responses;
 using PolicyDesk.Domain.Enums;
+using PolicyDesk.Domain.Validations;
 using PolicyDesk.Exception;
 using Shouldly;
 using Policy = PolicyDesk.Domain.Entities.Policy;
@@ -119,6 +120,21 @@ public class RegisterClaimTests(PolicyDeskApplicationFactory factory) : ClaimsTe
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await response.Content.ReadAsStringAsync())
             .ShouldContain(ResourcesMessageException.POLICY_CANCELLED_CANNOT_REGISTER_CLAIM);
+    }
+
+    [Fact(DisplayName = nameof(Deve_RetornarBadRequestSemGravar_Quando_ValorTiverMaisDeDuasCasasDecimais))]
+    [Trait("Integration", "Claims - Cadastro")]
+    public async Task Deve_RetornarBadRequestSemGravar_Quando_ValorTiverMaisDeDuasCasasDecimais()
+    {
+        var policy = await RegisterPolicyWithCoverage(10000);
+
+        var response = await Post(
+            $"/api/apolices/{policy.Id}/sinistros",
+            RequestClaimJsonBuilder.Build(amount: 100.123456789m));
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).ShouldContain(MoneyLimits.ClaimAmountInvalidPrecision);
+        (await DbContext.Claims.CountAsync(claim => claim.PolicyId == policy.Id)).ShouldBe(0);
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarBadRequestSemGravar_Quando_SomaDosSinistrosExcederCobertura))]

@@ -61,9 +61,13 @@ internal class RegisterPolicyUseCase(
 
         if (request.CoverageAmount <= 0)
             errors.Add(ResourcesMessageException.COVERAGE_AMOUNT_MUST_BE_POSITIVE);
+        else if (!MoneyLimits.IsValid(request.CoverageAmount))
+            errors.Add(MoneyLimits.CoverageAmountInvalidPrecision);
 
         if (request.PremiumAmount <= 0)
             errors.Add(ResourcesMessageException.PREMIUM_AMOUNT_MUST_BE_POSITIVE);
+        else if (!MoneyLimits.IsValid(request.PremiumAmount))
+            errors.Add(MoneyLimits.PremiumAmountInvalidPrecision);
 
         if (request.StartDate == default || request.EndDate == default)
             errors.Add(ResourcesMessageException.POLICY_DATES_REQUIRED);

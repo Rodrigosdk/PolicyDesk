@@ -138,4 +138,13 @@
     <data name="CLAIM_DENIAL_REASON_TOO_LONG" xml:space="preserve">
         <value>The denial reason must have at most {0} characters.</value>
     </data>
+    <data name="COVERAGE_AMOUNT_INVALID_PRECISION" xml:space="preserve">
+        <value>The coverage amount must have at most {0} integer digits and {1} decimal places.</value>
+    </data>
+    <data name="PREMIUM_AMOUNT_INVALID_PRECISION" xml:space="preserve">
+        <value>The premium amount must have at most {0} integer digits and {1} decimal places.</value>
+    </data>
+    <data name="CLAIM_AMOUNT_INVALID_PRECISION" xml:space="preserve">
+        <value>The claim amount must have at most {0} integer digits and {1} decimal places.</value>
+    </data>
 </root>

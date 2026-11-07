@@ -15,7 +15,7 @@ internal class ClaimMap : IEntityTypeConfiguration<Claim>
         builder.Property(claim => claim.Id).HasColumnName("id").ValueGeneratedNever();
         builder.Property(claim => claim.PolicyId).HasColumnName("policy_id").IsRequired();
         builder.Property(claim => claim.Description).HasColumnName("description").HasMaxLength(FieldLimits.Description).IsRequired();
-        builder.Property(claim => claim.Amount).HasColumnName("amount").IsRequired();
+        builder.Property(claim => claim.Amount).HasColumnName("amount").HasPrecision(MoneyLimits.Precision, MoneyLimits.Scale).IsRequired();
         builder.Property(claim => claim.OccurredOn).HasColumnName("occurred_on").HasColumnType("date").IsRequired();
         builder.Property(claim => claim.Status).HasColumnName("status").HasConversion<int>().IsRequired();
         builder.Property(claim => claim.ApprovedAt).HasColumnName("approved_at");
