@@ -63,8 +63,10 @@ namespace PolicyDesk.Infrastructure.DataAccess.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("policy_id");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer")
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
                         .HasColumnName("status");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -126,8 +128,10 @@ namespace PolicyDesk.Infrastructure.DataAccess.Migrations
                         .HasColumnType("date")
                         .HasColumnName("start_date");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer")
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
                         .HasColumnName("status");
 
                     b.Property<DateTime?>("UpdatedAt")

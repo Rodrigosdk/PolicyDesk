@@ -40,7 +40,8 @@ internal class PolicyMap : IEntityTypeConfiguration<Policy>
             .IsRequired();
         builder.Property(policy => policy.Status)
             .HasColumnName("status")
-            .HasConversion<int>()
+            .HasConversion<string>()
+            .HasMaxLength(FieldLimits.Status)
             .IsRequired();
         builder.Property(policy => policy.CancelledAt)
             .HasColumnName("cancelled_at");
