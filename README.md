@@ -151,7 +151,7 @@ Sobe a API e o PostgreSQL com um único comando:
 ```bash
 git clone https://github.com/Rodrigosdk/PolicyDesk.git
 cd PolicyDesk
-docker compose up --build
+docker compose -f docker/compose.yml up --build
 ```
 
 | Serviço | Endereço |
@@ -166,10 +166,10 @@ As migrations são aplicadas automaticamente na inicialização, fora do ambient
 
 #### Ferramentas de desenvolvimento (Aspire Dashboard e pgAdmin)
 
-O `compose.dev.yml` complementa o `compose.yml` com as ferramentas de desenvolvimento: o Aspire Dashboard, para onde a API passa a exportar logs, traces e métricas, e o pgAdmin, já apontando para o banco do projeto. Elas só sobem quando os dois arquivos são informados:
+O `docker/compose.dev.yml` complementa o `docker/compose.yml` com as ferramentas de desenvolvimento: o Aspire Dashboard, para onde a API passa a exportar logs, traces e métricas, e o pgAdmin, já apontando para o banco do projeto. Elas só sobem quando os dois arquivos são informados:
 
 ```bash
-docker compose -f compose.yml -f compose.dev.yml up -d --build
+docker compose -f docker/compose.yml -f docker/compose.dev.yml up -d --build
 ```
 
 | Serviço | Endereço |
@@ -183,7 +183,7 @@ O servidor **PolicyDesk (local)** já aparece cadastrado; na primeira conexão, 
 
 ```bash
 # 1. Suba o banco e as ferramentas de desenvolvimento
-docker compose -f compose.yml -f compose.dev.yml up -d db dashboard pgadmin
+docker compose -f docker/compose.yml -f docker/compose.dev.yml up -d db dashboard pgadmin
 
 # 2. Configure a connection string via User Secrets
 dotnet user-secrets set "ConnectionStrings:DbConnection" \
