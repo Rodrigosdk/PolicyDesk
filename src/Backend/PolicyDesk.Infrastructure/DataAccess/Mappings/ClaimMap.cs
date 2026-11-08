@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PolicyDesk.Domain.Entities;
+using PolicyDesk.Domain.Enums;
 using PolicyDesk.Domain.Validations;
 
 namespace PolicyDesk.Infrastructure.DataAccess.Mappings;
@@ -9,7 +10,8 @@ internal class ClaimMap : IEntityTypeConfiguration<Claim>
 {
     public void Configure(EntityTypeBuilder<Claim> builder)
     {
-        builder.ToTable("claims");
+        builder.ToTable("claims", table =>
+            table.HasCheckConstraint("CK_claims_status", EnumCheckConstraint.AllowedValues<ClaimStatus>("status")));
 
         builder.HasKey(claim => claim.Id);
         builder.Property(claim => claim.Id).HasColumnName("id").ValueGeneratedNever();

@@ -83,7 +83,10 @@ namespace PolicyDesk.Infrastructure.DataAccess.Migrations
 
                     b.HasIndex("PolicyId");
 
-                    b.ToTable("claims", (string)null);
+                    b.ToTable("claims", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_claims_status", "status IN ('Pending', 'InAnalysis', 'Approved', 'Denied', 'Paid')");
+                        });
                 });
 
             modelBuilder.Entity("PolicyDesk.Domain.Entities.Policy", b =>
@@ -148,7 +151,10 @@ namespace PolicyDesk.Infrastructure.DataAccess.Migrations
 
                     b.HasIndex("PolicyholderId");
 
-                    b.ToTable("policies", (string)null);
+                    b.ToTable("policies", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_policies_status", "status IN ('Active', 'Cancelled')");
+                        });
                 });
 
             modelBuilder.Entity("PolicyDesk.Domain.Entities.Policyholder", b =>
