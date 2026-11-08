@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using PolicyDesk.Communication.Responses;
-using PolicyDesk.Domain.Enums;
+using PolicyDesk.Communication.Enums;
 using Shouldly;
 
 namespace PolicyDesk.Api.IntegrationTests.Claims.Listing;
@@ -20,7 +20,7 @@ public class ListClaimsTests(PolicyDeskApplicationFactory factory) : ClaimsTestB
         var response = await Get($"/api/apolices/{policy.Id}/sinistros");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var claims = await response.Content.ReadFromJsonAsync<List<ResponseClaimJson>>();
+        var claims = await response.Content.ReadFromJsonAsync<List<ResponseClaimJson>>(TestJson.Options);
         claims.ShouldNotBeNull();
         claims.Select(claim => claim.Id).ShouldBe([first.Id, second.Id], ignoreOrder: true);
         claims.ShouldAllBe(claim => claim.ApoliceId == policy.Id);
@@ -44,13 +44,13 @@ public class ListClaimsTests(PolicyDeskApplicationFactory factory) : ClaimsTestB
         var response = await Get($"/api/sinistros/{claim.Id}");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<ResponseClaimJson>();
+        var body = await response.Content.ReadFromJsonAsync<ResponseClaimJson>(TestJson.Options);
         body.ShouldNotBeNull();
         body.Id.ShouldBe(claim.Id);
         body.ApoliceId.ShouldBe(claim.PolicyId);
         body.Descricao.ShouldBe(claim.Description);
         body.Valor.ShouldBe(claim.Amount);
-        body.Status.ShouldBe(ClaimStatus.Pending.ToString());
+        body.Status.ShouldBe(StatusSinistro.Pendente);
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarNotFound_Quando_BuscarSinistroInexistente))]

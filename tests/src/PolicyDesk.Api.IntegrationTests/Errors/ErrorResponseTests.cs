@@ -69,12 +69,12 @@ public class ErrorResponseTests(PolicyDeskApplicationFactory factory) : IClassFi
     [Trait("Integration", "Erros - Formato único")]
     public async Task Deve_RetornarListaDeErros_Quando_CorpoDaRequisicaoForMalformado()
     {
-        var body = new StringContent("{ \"coverageAmount\": \"não é número\" ", Encoding.UTF8, "application/json");
+        var body = new StringContent("{ \"valorCobertura\": \"não é número\" ", Encoding.UTF8, "application/json");
 
         var response = await factory.CreateClient().PostAsync("/api/apolices", body);
 
         var problem = await ShouldBeProblem(response, HttpStatusCode.BadRequest);
-        Errors(problem).ShouldContain(error => error.Contains("coverageAmount"));
+        Errors(problem).ShouldContain(error => error.Contains("valorCobertura"));
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarProblemDetails_Quando_RotaNaoExistir))]

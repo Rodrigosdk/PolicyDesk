@@ -1,6 +1,7 @@
 using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
 using Moq;
+using PolicyDesk.Communication.Enums;
 using PolicyDesk.Application.Claims.Listing;
 using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Enums;
@@ -28,7 +29,7 @@ public class ListClaimsUseCaseTests
 
         result.Select(claim => claim.Id).ShouldBe(claims.Select(claim => claim.Id));
         result.ShouldAllBe(claim => claim.ApoliceId == policy.Id);
-        result[1].Status.ShouldBe(ClaimStatus.InAnalysis.ToString());
+        result[1].Status.ShouldBe(StatusSinistro.EmAnalise);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarNaoEncontrado_Quando_ListarDeApoliceInexistente))]
@@ -56,12 +57,12 @@ public class ListClaimsUseCaseTests
         result.Descricao.ShouldBe("Fire");
         result.Valor.ShouldBe(2000);
         result.DataOcorrencia.ShouldBe(claim.OccurredOn);
-        result.Status.ShouldBe(ClaimStatus.Denied.ToString());
+        result.Status.ShouldBe(StatusSinistro.Negado);
         result.MotivoNegacao.ShouldBe("No coverage");
         result.DataAprovacao.ShouldBeNull();
         result.DataPagamento.ShouldBeNull();
-        result.CreatedAt.ShouldBe(claim.CreatedAt);
-        result.UpdatedAt.ShouldBe(claim.UpdatedAt);
+        result.CriadoEm.ShouldBe(claim.CreatedAt);
+        result.AtualizadoEm.ShouldBe(claim.UpdatedAt);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarNaoEncontrado_Quando_BuscarSinistroInexistente))]

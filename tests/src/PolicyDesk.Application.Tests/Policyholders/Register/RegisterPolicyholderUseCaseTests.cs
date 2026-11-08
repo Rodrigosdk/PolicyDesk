@@ -21,13 +21,13 @@ public class RegisterPolicyholderUseCaseTests
     {
         var writeRepository = PolicyholdersWriteOnlyRepositoryBuilder.Build();
         var useCase = CreateUseCase(writeRepository);
-        var request = RequestPolicyholdersJsonBuilder.Build(email: "Jane.Doe@Example.com");
+        var request = RequestPolicyholderJsonBuilder.Build(email: "Jane.Doe@Example.com");
 
         await useCase.ExecuteAsync(request);
 
         writeRepository.Verify(
             r => r.RegisterOrReactivateAsync(It.Is<Policyholder>(p =>
-                p.Cpf == request.Cpf && p.Email == "jane.doe@example.com" && p.Name == request.Name.Trim())),
+                p.Cpf == request.Cpf && p.Email == "jane.doe@example.com" && p.Name == request.Nome.Trim())),
             Times.Once);
     }
 
@@ -39,7 +39,7 @@ public class RegisterPolicyholderUseCaseTests
         var useCase = CreateUseCase(writeRepository);
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.ExecuteAsync(RequestPolicyholdersJsonBuilder.Build(cpf: "111.111.111-11")));
+            () => useCase.ExecuteAsync(RequestPolicyholderJsonBuilder.Build(cpf: "111.111.111-11")));
 
         exception.GetErrors().ShouldContain(ResourcesMessageException.INVALID_CPF);
         writeRepository.Verify(r => r.RegisterOrReactivateAsync(It.IsAny<Policyholder>()), Times.Never);
@@ -53,7 +53,7 @@ public class RegisterPolicyholderUseCaseTests
         var useCase = CreateUseCase(writeRepository);
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.ExecuteAsync(RequestPolicyholdersJsonBuilder.Build(email: "invalid-email")));
+            () => useCase.ExecuteAsync(RequestPolicyholderJsonBuilder.Build(email: "invalid-email")));
 
         exception.GetErrors().ShouldContain(ResourcesMessageException.INVALID_EMAIL);
         writeRepository.Verify(r => r.RegisterOrReactivateAsync(It.IsAny<Policyholder>()), Times.Never);
@@ -69,7 +69,7 @@ public class RegisterPolicyholderUseCaseTests
         var useCase = CreateUseCase(writeRepository);
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.ExecuteAsync(RequestPolicyholdersJsonBuilder.Build()));
+            () => useCase.ExecuteAsync(RequestPolicyholderJsonBuilder.Build()));
 
         var expectedError = result == PolicyholderRegistrationResult.ActiveCpfAlreadyExists
             ? ResourcesMessageException.POLICYHOLDER_ACTIVE_CPF_EXISTS
@@ -85,8 +85,8 @@ public class RegisterPolicyholderUseCaseTests
     [InlineData("   ")]
     public async Task Deve_LancarExcecaoSemChamarRepositorio_Quando_NomeForVazio(string? name)
     {
-        var request = RequestPolicyholdersJsonBuilder.Build();
-        request.Name = name!;
+        var request = RequestPolicyholderJsonBuilder.Build();
+        request.Nome = name!;
 
         await ShouldFailWithoutCallingRepository(request, ResourcesMessageException.POLICYHOLDER_NAME_REQUIRED);
     }
@@ -95,8 +95,8 @@ public class RegisterPolicyholderUseCaseTests
     [Trait("Application", "Policyholders - Register")]
     public async Task Deve_LancarExcecaoSemChamarRepositorio_Quando_DataDeNascimentoNaoForInformada()
     {
-        var request = RequestPolicyholdersJsonBuilder.Build();
-        request.BirthDate = default;
+        var request = RequestPolicyholderJsonBuilder.Build();
+        request.DataNascimento = default;
 
         await ShouldFailWithoutCallingRepository(request, ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_REQUIRED);
     }
@@ -105,8 +105,8 @@ public class RegisterPolicyholderUseCaseTests
     [Trait("Application", "Policyholders - Register")]
     public async Task Deve_LancarExcecaoSemChamarRepositorio_Quando_DataDeNascimentoForFutura()
     {
-        var request = RequestPolicyholdersJsonBuilder.Build();
-        request.BirthDate = DateTime.UtcNow.Date.AddDays(1);
+        var request = RequestPolicyholderJsonBuilder.Build();
+        request.DataNascimento = DateTime.UtcNow.Date.AddDays(1);
 
         await ShouldFailWithoutCallingRepository(request, ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_IN_FUTURE);
     }
@@ -118,8 +118,8 @@ public class RegisterPolicyholderUseCaseTests
     [InlineData("   ")]
     public async Task Deve_LancarExcecaoSemChamarRepositorio_Quando_TelefoneForVazio(string? phone)
     {
-        var request = RequestPolicyholdersJsonBuilder.Build();
-        request.PhoneNumber = phone!;
+        var request = RequestPolicyholderJsonBuilder.Build();
+        request.Telefone = phone!;
 
         await ShouldFailWithoutCallingRepository(request, ResourcesMessageException.POLICYHOLDER_PHONE_REQUIRED);
     }
@@ -132,8 +132,8 @@ public class RegisterPolicyholderUseCaseTests
     [InlineData("telefone")]
     public async Task Deve_LancarExcecaoSemChamarRepositorio_Quando_TelefoneTiverQuantidadeDeDigitosInvalida(string phone)
     {
-        var request = RequestPolicyholdersJsonBuilder.Build();
-        request.PhoneNumber = phone;
+        var request = RequestPolicyholderJsonBuilder.Build();
+        request.Telefone = phone;
 
         await ShouldFailWithoutCallingRepository(request, ResourcesMessageException.INVALID_PHONE);
     }
@@ -147,8 +147,8 @@ public class RegisterPolicyholderUseCaseTests
     {
         var writeRepository = PolicyholdersWriteOnlyRepositoryBuilder.Build();
         var useCase = CreateUseCase(writeRepository);
-        var request = RequestPolicyholdersJsonBuilder.Build();
-        request.PhoneNumber = phone;
+        var request = RequestPolicyholderJsonBuilder.Build();
+        request.Telefone = phone;
 
         await useCase.ExecuteAsync(request);
 
@@ -161,7 +161,7 @@ public class RegisterPolicyholderUseCaseTests
     {
         var writeRepository = PolicyholdersWriteOnlyRepositoryBuilder.Build();
         var useCase = CreateUseCase(writeRepository);
-        var request = new RequestPolicyholdersJson { Cpf = "111.111.111-11", Email = "invalid" };
+        var request = new RequestPolicyholderJson { Cpf = "111.111.111-11", Email = "invalid" };
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(request));
 
@@ -176,7 +176,7 @@ public class RegisterPolicyholderUseCaseTests
         writeRepository.Verify(r => r.RegisterOrReactivateAsync(It.IsAny<Policyholder>()), Times.Never);
     }
 
-    private static async Task ShouldFailWithoutCallingRepository(RequestPolicyholdersJson request, string expectedError)
+    private static async Task ShouldFailWithoutCallingRepository(RequestPolicyholderJson request, string expectedError)
     {
         var writeRepository = PolicyholdersWriteOnlyRepositoryBuilder.Build();
         var useCase = CreateUseCase(writeRepository);
@@ -197,9 +197,9 @@ public class RegisterPolicyholderUseCaseTests
     {
         var writeRepository = PolicyholdersWriteOnlyRepositoryBuilder.Build();
         var useCase = CreateUseCase(writeRepository);
-        var request = RequestPolicyholdersJsonBuilder.Build();
-        request.Name = new string('a', FieldLimits.PolicyholderName + 1);
-        request.PhoneNumber = "(83) 98647-1687 celular";
+        var request = RequestPolicyholderJsonBuilder.Build();
+        request.Nome = new string('a', FieldLimits.PolicyholderName + 1);
+        request.Telefone = "(83) 98647-1687 celular";
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(request));
 

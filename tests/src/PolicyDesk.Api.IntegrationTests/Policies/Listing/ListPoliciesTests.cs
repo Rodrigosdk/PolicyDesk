@@ -1,7 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using PolicyDesk.Communication.Responses;
-using PolicyDesk.Domain.Enums;
+using PolicyDesk.Communication.Enums;
 using Shouldly;
 
 namespace PolicyDesk.Api.IntegrationTests.Policies.Listing;
@@ -20,7 +21,7 @@ public class ListPoliciesTests(PolicyDeskApplicationFactory factory) : PoliciesT
         var response = await Get($"/api/apolices?seguradoId={holder.Id}");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var items = await response.Content.ReadFromJsonAsync<ResponsePagedJson<ResponsePolicyJson>>();
+        var items = await response.Content.ReadFromJsonAsync<ResponsePagedJson<ResponsePolicyJson>>(TestJson.Options);
         items.ShouldNotBeNull();
         items.Itens.Select(item => item.Id).ShouldBe([expected.Id]);
     }
@@ -35,10 +36,10 @@ public class ListPoliciesTests(PolicyDeskApplicationFactory factory) : PoliciesT
         (await Post($"/api/apolices/{cancelled.Id}/cancelamento", new { }))
             .StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
-        var response = await Get($"/api/apolices?seguradoId={holder.Id}&status={PolicyStatus.Cancelled}");
+        var response = await Get($"/api/apolices?seguradoId={holder.Id}&status=Cancelada");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var items = await response.Content.ReadFromJsonAsync<ResponsePagedJson<ResponsePolicyJson>>();
+        var items = await response.Content.ReadFromJsonAsync<ResponsePagedJson<ResponsePolicyJson>>(TestJson.Options);
         items.ShouldNotBeNull();
         items.Itens.Select(item => item.Id).ShouldBe([cancelled.Id]);
         items.Itens.Select(item => item.Id).ShouldNotContain(active.Id);
@@ -53,7 +54,7 @@ public class ListPoliciesTests(PolicyDeskApplicationFactory factory) : PoliciesT
         var response = await Get($"/api/apolices/{policy.Id}");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var item = await response.Content.ReadFromJsonAsync<ResponsePolicyJson>();
+        var item = await response.Content.ReadFromJsonAsync<ResponsePolicyJson>(TestJson.Options);
         item.ShouldNotBeNull();
         item.Id.ShouldBe(policy.Id);
         item.SeguradoId.ShouldBe(policy.PolicyholderId);
@@ -92,6 +93,21 @@ public class ListPoliciesTests(PolicyDeskApplicationFactory factory) : PoliciesT
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
+    [Fact(DisplayName = nameof(Deve_SerializarStatusComoTexto_Quando_BuscarPorId))]
+    [Trait("Integration", "Policies - Listagem")]
+    public async Task Deve_SerializarStatusComoTexto_Quando_BuscarPorId()
+    {
+        var policy = await RegisterPolicyForNewHolder();
+        await Post($"/api/apolices/{policy.Id}/cancelamento", new { });
+
+        var response = await Get($"/api/apolices/{policy.Id}");
+
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        json.RootElement.GetProperty("status").GetString().ShouldBe(nameof(StatusApolice.Cancelada));
+        json.RootElement.TryGetProperty("valorCobertura", out _).ShouldBeTrue();
+        json.RootElement.TryGetProperty("criadoEm", out _).ShouldBeTrue();
+    }
+
     [Fact(DisplayName = nameof(Deve_RetornarNotFound_Quando_BuscarApoliceInexistente))]
     [Trait("Integration", "Policies - Listagem")]
     public async Task Deve_RetornarNotFound_Quando_BuscarApoliceInexistente()
@@ -105,7 +121,7 @@ public class ListPoliciesTests(PolicyDeskApplicationFactory factory) : PoliciesT
     {
         var response = await Get(requestUri);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var page = await response.Content.ReadFromJsonAsync<ResponsePagedJson<ResponsePolicyJson>>();
+        var page = await response.Content.ReadFromJsonAsync<ResponsePagedJson<ResponsePolicyJson>>(TestJson.Options);
         page.ShouldNotBeNull();
         return page;
     }

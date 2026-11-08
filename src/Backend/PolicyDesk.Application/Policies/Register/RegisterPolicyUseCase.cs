@@ -22,7 +22,7 @@ internal class RegisterPolicyUseCase(
     {
         Validate(request);
 
-        var policyholder = await policyholdersUpdateOnlyRepository.GetByIdIncludingInactiveAsync(request.PolicyholderId, cancellationToken)
+        var policyholder = await policyholdersUpdateOnlyRepository.GetByIdIncludingInactiveAsync(request.SeguradoId, cancellationToken)
                            ?? throw new NotFoundException(ResourcesMessageException.POLICYHOLDER_NOT_FOUND);
 
         if (!policyholder.Active)
@@ -31,12 +31,12 @@ internal class RegisterPolicyUseCase(
         }
 
         var policy = new Policy(
-            request.PolicyholderId,
-            request.Description,
-            request.CoverageAmount,
-            request.PremiumAmount,
-            request.StartDate,
-            request.EndDate);
+            request.SeguradoId,
+            request.Descricao,
+            request.ValorCobertura,
+            request.ValorPremio,
+            request.InicioVigencia,
+            request.FimVigencia);
 
         policyholder.RegisterPolicy();
 
@@ -51,27 +51,27 @@ internal class RegisterPolicyUseCase(
     {
         var errors = new List<string>();
 
-        if (request.PolicyholderId == Guid.Empty)
+        if (request.SeguradoId == Guid.Empty)
             errors.Add(ResourcesMessageException.POLICYHOLDER_REQUIRED);
 
-        if (string.IsNullOrWhiteSpace(request.Description))
+        if (string.IsNullOrWhiteSpace(request.Descricao))
             errors.Add(ResourcesMessageException.DESCRIPTION_REQUIRED);
-        else if (FieldLimits.Exceeds(request.Description, FieldLimits.Description))
+        else if (FieldLimits.Exceeds(request.Descricao, FieldLimits.Description))
             errors.Add(FieldLimits.DescriptionTooLong);
 
-        if (request.CoverageAmount <= 0)
+        if (request.ValorCobertura <= 0)
             errors.Add(ResourcesMessageException.COVERAGE_AMOUNT_MUST_BE_POSITIVE);
-        else if (!MoneyLimits.IsValid(request.CoverageAmount))
+        else if (!MoneyLimits.IsValid(request.ValorCobertura))
             errors.Add(MoneyLimits.CoverageAmountInvalidPrecision);
 
-        if (request.PremiumAmount <= 0)
+        if (request.ValorPremio <= 0)
             errors.Add(ResourcesMessageException.PREMIUM_AMOUNT_MUST_BE_POSITIVE);
-        else if (!MoneyLimits.IsValid(request.PremiumAmount))
+        else if (!MoneyLimits.IsValid(request.ValorPremio))
             errors.Add(MoneyLimits.PremiumAmountInvalidPrecision);
 
-        if (request.StartDate == default || request.EndDate == default)
+        if (request.InicioVigencia == default || request.FimVigencia == default)
             errors.Add(ResourcesMessageException.POLICY_DATES_REQUIRED);
-        else if (request.EndDate.Date <= request.StartDate.Date)
+        else if (request.FimVigencia.Date <= request.InicioVigencia.Date)
             errors.Add(ResourcesMessageException.POLICY_END_DATE_MUST_BE_AFTER_START_DATE);
 
         if (errors.Count > 0)

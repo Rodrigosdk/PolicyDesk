@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using PolicyDesk.Application.Logging;
 using PolicyDesk.Communication.Requests;
+using PolicyDesk.Communication.Responses;
 using PolicyDesk.Domain.Repositories.Policyholders;
 using PolicyDesk.Domain.Validations;
 using PolicyDesk.Exception;
@@ -14,20 +15,20 @@ internal class RegisterPolicyholderUseCase(
     ILogger<RegisterPolicyholderUseCase> logger) : IRegisterPolicyholderUseCase
 {
     
-    public async Task ExecuteAsync(RequestPolicyholdersJson request, CancellationToken cancellationToken = default)
+    public async Task<ResponseCreatedJson> ExecuteAsync(RequestPolicyholderJson request, CancellationToken cancellationToken = default)
     {
         ValidateAndThrowOnFailures(request);
 
         var policyholder = new Domain.Entities.Policyholder(
-            request.Name,
+            request.Nome,
             request.Cpf,
-            request.BirthDate,
+            request.DataNascimento,
             request.Email,
-            request.PhoneNumber
+            request.Telefone
         );
 
-        var result = await policyholdersWriteOnlyRepository.RegisterOrReactivateAsync(policyholder, cancellationToken);
-        switch (result)
+        var registration = await policyholdersWriteOnlyRepository.RegisterOrReactivateAsync(policyholder, cancellationToken);
+        switch (registration.Result)
         {
             case PolicyholderRegistrationResult.ActiveCpfAlreadyExists:
                 throw new ErrorOnValidationException(ResourcesMessageException.POLICYHOLDER_ACTIVE_CPF_EXISTS);
@@ -35,19 +36,19 @@ internal class RegisterPolicyholderUseCase(
                 throw new ErrorOnValidationException(ResourcesMessageException.POLICYHOLDER_ACTIVE_EMAIL_EXISTS);
             case PolicyholderRegistrationResult.RegisteredOrReactivated:
                 logger.PolicyholderRegisteredOrReactivated();
-                break;
+                return new ResponseCreatedJson { Id = registration.PolicyholderId ?? policyholder.Id };
             default:
-                throw new UnreachableException($"Resultado de cadastro inesperado: {result}");
+                throw new UnreachableException($"Resultado de cadastro inesperado: {registration.Result}");
         }
     }
     
-    private static void ValidateAndThrowOnFailures(RequestPolicyholdersJson request)
+    private static void ValidateAndThrowOnFailures(RequestPolicyholderJson request)
     {
         var errors = PolicyholderDataValidator.Validate(
-            request.Name,
-            request.BirthDate,
+            request.Nome,
+            request.DataNascimento,
             request.Email,
-            request.PhoneNumber);
+            request.Telefone);
 
         if (!CpfValidator.IsValid(request.Cpf))
             errors.Insert(0, ResourcesMessageException.INVALID_CPF);

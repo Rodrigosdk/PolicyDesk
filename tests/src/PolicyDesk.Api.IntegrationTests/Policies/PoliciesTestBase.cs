@@ -18,7 +18,7 @@ public abstract class PoliciesTestBase(PolicyDeskApplicationFactory factory) : P
             "/api/apolices",
             request ?? RequestPolicyJsonBuilder.Build(policyholder.Id));
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var created = await response.Content.ReadFromJsonAsync<ResponseCreatedJson>();
+        var created = await response.Content.ReadFromJsonAsync<ResponseCreatedJson>(TestJson.Options);
         Assert.NotNull(created);
         return await DbContext.Policies.AsNoTracking().SingleAsync(policy => policy.Id == created.Id);
     }

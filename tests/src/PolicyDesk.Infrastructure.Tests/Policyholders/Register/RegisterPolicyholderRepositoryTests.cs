@@ -19,7 +19,7 @@ public class RegisterPolicyholderRepositoryTests(PostgreSqlInfrastructureFixture
         var result = await repository.RegisterOrReactivateAsync(policyholder);
         var saved = await repository.GetByIdAsync(policyholder.Id);
 
-        result.ShouldBe(PolicyholderRegistrationResult.RegisteredOrReactivated);
+        result.Result.ShouldBe(PolicyholderRegistrationResult.RegisteredOrReactivated);
         saved.ShouldNotBeNull();
         saved.Cpf.ShouldBe(policyholder.Cpf);
         saved.Email.ShouldBe(policyholder.Email);
@@ -39,7 +39,7 @@ public class RegisterPolicyholderRepositoryTests(PostgreSqlInfrastructureFixture
         var result = await repository.RegisterOrReactivateAsync(duplicate);
         var saved = await repository.GetByIdAsync(existing.Id);
 
-        result.ShouldBe(PolicyholderRegistrationResult.ActiveCpfAlreadyExists);
+        result.Result.ShouldBe(PolicyholderRegistrationResult.ActiveCpfAlreadyExists);
         saved.ShouldNotBeNull();
         saved.Name.ShouldBe(existing.Name);
         saved.Email.ShouldBe(existing.Email);
@@ -57,7 +57,7 @@ public class RegisterPolicyholderRepositoryTests(PostgreSqlInfrastructureFixture
 
         var result = await repository.RegisterOrReactivateAsync(other);
 
-        result.ShouldBe(PolicyholderRegistrationResult.ActiveEmailAlreadyExists);
+        result.Result.ShouldBe(PolicyholderRegistrationResult.ActiveEmailAlreadyExists);
     }
 
     [Fact(DisplayName = nameof(Deve_ReativarEAtualizarDados_Quando_CpfEstiverInativo))]
@@ -75,7 +75,7 @@ public class RegisterPolicyholderRepositoryTests(PostgreSqlInfrastructureFixture
         await using var verificationContext = Fixture.CreateDbContext();
         var saved = await verificationContext.Policyholders.IgnoreQueryFilters().SingleAsync(item => item.Id == original.Id);
 
-        result.ShouldBe(PolicyholderRegistrationResult.RegisteredOrReactivated);
+        result.Result.ShouldBe(PolicyholderRegistrationResult.RegisteredOrReactivated);
         saved.Active.ShouldBeTrue();
         saved.Name.ShouldBe(reactivation.Name);
         saved.Email.ShouldBe(reactivation.Email);

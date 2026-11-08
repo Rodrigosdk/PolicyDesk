@@ -26,13 +26,13 @@ public class ListPolicyholdersUseCaseTests
         page.TotalPaginas.ShouldBe(1);
         var result = page.Itens.ShouldHaveSingleItem();
         result.Id.ShouldBe(policyholder.Id);
-        result.Name.ShouldBe(policyholder.Name);
+        result.Nome.ShouldBe(policyholder.Name);
         result.Cpf.ShouldBe(policyholder.Cpf);
-        result.BirthDate.ShouldBe(policyholder.BirthDate);
+        result.DataNascimento.ShouldBe(policyholder.BirthDate);
         result.Email.ShouldBe(policyholder.Email);
-        result.Phone.ShouldBe(policyholder.Phone);
-        result.CreatedAt.ShouldBe(policyholder.CreatedAt);
-        result.UpdatedAt.ShouldBe(policyholder.UpdatedAt);
+        result.Telefone.ShouldBe(policyholder.Phone);
+        result.CriadoEm.ShouldBe(policyholder.CreatedAt);
+        result.AtualizadoEm.ShouldBe(policyholder.UpdatedAt);
     }
 
     [Fact(DisplayName = nameof(Deve_EncaminharPagina_Quando_Listar))]

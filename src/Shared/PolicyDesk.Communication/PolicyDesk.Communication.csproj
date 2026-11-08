@@ -4,8 +4,4 @@
         <RootNamespace>PolicyDesk.Communication</RootNamespace>
     </PropertyGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\..\Backend\PolicyDesk.Domain\PolicyDesk.Domain.csproj" />
-    </ItemGroup>
-
 </Project>

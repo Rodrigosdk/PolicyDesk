@@ -1,3 +1,4 @@
+using PolicyDesk.Application.Common;
 using PolicyDesk.Communication.Responses;
 using PolicyDesk.Domain.Repositories.Claims;
 using PolicyDesk.Domain.Repositories.Policies;
@@ -33,11 +34,11 @@ internal class ListClaimsUseCase(
         Descricao = claim.Description,
         Valor = claim.Amount,
         DataOcorrencia = claim.OccurredOn,
-        Status = claim.Status.ToString(),
+        Status = claim.Status.ToContract(),
         MotivoNegacao = claim.DenialReason,
         DataAprovacao = claim.ApprovedAt,
         DataPagamento = claim.PaidAt,
-        CreatedAt = claim.CreatedAt,
-        UpdatedAt = claim.UpdatedAt
+        CriadoEm = claim.CreatedAt,
+        AtualizadoEm = claim.UpdatedAt
     };
 }

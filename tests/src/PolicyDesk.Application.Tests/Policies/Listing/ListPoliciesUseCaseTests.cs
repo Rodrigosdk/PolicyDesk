@@ -2,6 +2,7 @@ using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
 using Moq;
 using PolicyDesk.Application.Policies.Listing;
+using PolicyDesk.Communication.Enums;
 using PolicyDesk.Communication.Requests;
 using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Enums;
@@ -31,9 +32,9 @@ public class ListPoliciesUseCaseTests
         result.ValorPremio.ShouldBe(policy.PremiumAmount);
         result.InicioVigencia.ShouldBe(policy.StartDate);
         result.FimVigencia.ShouldBe(policy.EndDate);
-        result.Status.ShouldBe(PolicyStatus.Active);
-        result.CreatedAt.ShouldBe(policy.CreatedAt);
-        result.UpdatedAt.ShouldBe(policy.UpdatedAt);
+        result.Status.ShouldBe(StatusApolice.Ativa);
+        result.CriadoEm.ShouldBe(policy.CreatedAt);
+        result.AtualizadoEm.ShouldBe(policy.UpdatedAt);
     }
 
     [Fact(DisplayName = nameof(Deve_EncaminharFiltrosEPagina_Quando_Listar))]
@@ -44,7 +45,7 @@ public class ListPoliciesUseCaseTests
         var builder = new PoliciesReadOnlyRepositoryBuilder().GetPage([]);
         var useCase = new ListPoliciesUseCase(builder.Build());
 
-        await useCase.ListAsync(policyholderId, PolicyStatus.Cancelled, new RequestPaginationJson { Pagina = 3, TamanhoPagina = 15 });
+        await useCase.ListAsync(policyholderId, StatusApolice.Cancelada, new RequestPaginationJson { Pagina = 3, TamanhoPagina = 15 });
 
         builder.Mock.Verify(
             repository => repository.GetPageAsync(policyholderId, PolicyStatus.Cancelled, 3, 15, It.IsAny<CancellationToken>()),
@@ -76,7 +77,7 @@ public class ListPoliciesUseCaseTests
         var useCase = new ListPoliciesUseCase(builder.Build());
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.ListAsync(null, (PolicyStatus)999, FirstPage));
+            () => useCase.ListAsync(null, (StatusApolice)999, FirstPage));
 
         exception.GetErrors().ShouldBe([ResourcesMessageException.INVALID_POLICY_STATUS]);
         VerifyNoQuery(builder);
@@ -113,7 +114,7 @@ public class ListPoliciesUseCaseTests
 
         result.Id.ShouldBe(policy.Id);
         result.Descricao.ShouldBe(policy.Description);
-        result.Status.ShouldBe(PolicyStatus.Cancelled);
+        result.Status.ShouldBe(StatusApolice.Cancelada);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarNaoEncontrado_Quando_BuscarApoliceInexistente))]

@@ -1,7 +1,8 @@
 using PolicyDesk.Application.Common;
+using PolicyDesk.Communication.Enums;
 using PolicyDesk.Communication.Requests;
 using PolicyDesk.Communication.Responses;
-using PolicyDesk.Domain.Enums;
+using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Repositories.Policies;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
@@ -12,7 +13,7 @@ internal class ListPoliciesUseCase(IPoliciesReadOnlyRepository policiesReadOnlyR
 {
     public async Task<ResponsePagedJson<ResponsePolicyJson>> ListAsync(
         Guid? policyholderId,
-        PolicyStatus? status,
+        StatusApolice? status,
         RequestPaginationJson pagination,
         CancellationToken cancellationToken = default)
     {
@@ -25,7 +26,7 @@ internal class ListPoliciesUseCase(IPoliciesReadOnlyRepository policiesReadOnlyR
 
         var page = await policiesReadOnlyRepository.GetPageAsync(
             policyholderId,
-            status,
+            status?.ToDomain(),
             pagination.Pagina,
             pagination.TamanhoPagina,
             cancellationToken);
@@ -39,7 +40,7 @@ internal class ListPoliciesUseCase(IPoliciesReadOnlyRepository policiesReadOnlyR
         return MapToResponse(policy);
     }
 
-    private static ResponsePolicyJson MapToResponse(Domain.Entities.Policy policy) => new()
+    private static ResponsePolicyJson MapToResponse(Policy policy) => new()
     {
         Id = policy.Id,
         SeguradoId = policy.PolicyholderId,
@@ -48,8 +49,8 @@ internal class ListPoliciesUseCase(IPoliciesReadOnlyRepository policiesReadOnlyR
         ValorPremio = policy.PremiumAmount,
         InicioVigencia = policy.StartDate,
         FimVigencia = policy.EndDate,
-        Status = policy.Status,
-        CreatedAt = policy.CreatedAt,
-        UpdatedAt = policy.UpdatedAt
+        Status = policy.Status.ToContract(),
+        CriadoEm = policy.CreatedAt,
+        AtualizadoEm = policy.UpdatedAt
     };
 }

@@ -13,9 +13,9 @@ public static class RequestClaimJsonBuilder
         var faker = new Faker();
         return new RequestClaimJson
         {
-            Description = description ?? faker.Lorem.Sentence(),
-            Amount = amount ?? faker.Finance.Amount(1, 10000),
-            OccurredOn = occurredOn ?? DateTime.UtcNow.Date
+            Descricao = description ?? faker.Lorem.Sentence(),
+            Valor = amount ?? faker.Finance.Amount(1, 10000),
+            DataOcorrencia = occurredOn ?? DateTime.UtcNow.Date
         };
     }
 }

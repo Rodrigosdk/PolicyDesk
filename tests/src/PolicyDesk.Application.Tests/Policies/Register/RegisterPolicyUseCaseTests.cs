@@ -36,10 +36,10 @@ public class RegisterPolicyUseCaseTests
         writeRepository.Verify(repository => repository.AddAsync(It.Is<Policy>(policy =>
             policy.PolicyholderId == policyholder.Id &&
             policy.Description == "Home policy" &&
-            policy.CoverageAmount == request.CoverageAmount &&
-            policy.PremiumAmount == request.PremiumAmount &&
-            policy.StartDate == request.StartDate.Date &&
-            policy.EndDate == request.EndDate.Date)), Times.Once);
+            policy.CoverageAmount == request.ValorCobertura &&
+            policy.PremiumAmount == request.ValorPremio &&
+            policy.StartDate == request.InicioVigencia.Date &&
+            policy.EndDate == request.FimVigencia.Date)), Times.Once);
         unitOfWork.Verify(work => work.CommitAsync(), Times.Once);
         // O segurado é alterado junto para que uma inativação concorrente seja detectada como conflito
         policyholder.UpdatedAt.ShouldNotBeNull();

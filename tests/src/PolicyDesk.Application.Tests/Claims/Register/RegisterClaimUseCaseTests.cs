@@ -31,7 +31,7 @@ public class RegisterClaimUseCaseTests
             claim.PolicyId == policy.Id &&
             claim.Description == "Broken window" &&
             claim.Amount == 500 &&
-            claim.OccurredOn == request.OccurredOn.Date)), Times.Once);
+            claim.OccurredOn == request.DataOcorrencia.Date)), Times.Once);
         unitOfWork.Verify(work => work.CommitAsync(), Times.Once);
     }
 

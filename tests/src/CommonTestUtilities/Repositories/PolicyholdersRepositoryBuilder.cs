@@ -70,7 +70,10 @@ public static class PolicyholdersWriteOnlyRepositoryBuilder
         PolicyholderRegistrationResult result = PolicyholderRegistrationResult.RegisteredOrReactivated)
     {
         var mock = new Mock<IPolicyholdersWriteOnlyRepository>();
-        mock.Setup(r => r.RegisterOrReactivateAsync(It.IsAny<Policyholder>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
+        mock.Setup(r => r.RegisterOrReactivateAsync(It.IsAny<Policyholder>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Policyholder policyholder, CancellationToken _) => new PolicyholderRegistration(
+                result,
+                result == PolicyholderRegistrationResult.RegisteredOrReactivated ? policyholder.Id : null));
         return mock;
     }
 }

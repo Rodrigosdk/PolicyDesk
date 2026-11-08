@@ -18,7 +18,7 @@ public class ListPolicyholdersTests(PolicyDeskApplicationFactory factory) : Poli
         var response = await Get($"{RequestUri}?tamanhoPagina=100");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var items = await response.Content.ReadFromJsonAsync<ResponsePagedJson<ResponsePolicyholdersListingJson>>();
+        var items = await response.Content.ReadFromJsonAsync<ResponsePagedJson<ResponsePolicyholderJson>>(TestJson.Options);
         items.ShouldNotBeNull();
         items.Itens.ShouldContain(item => item.Id == active.Id);
         items.Itens.ShouldNotContain(item => item.Id == inactive.Id);
@@ -33,7 +33,7 @@ public class ListPolicyholdersTests(PolicyDeskApplicationFactory factory) : Poli
         var response = await Get($"{RequestUri}/{policyholder.Id}");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var item = await response.Content.ReadFromJsonAsync<ResponsePolicyholdersListingJson>();
+        var item = await response.Content.ReadFromJsonAsync<ResponsePolicyholderJson>(TestJson.Options);
         item.ShouldNotBeNull();
         item.Cpf.ShouldBe(policyholder.Cpf);
         item.Email.ShouldBe(policyholder.Email);

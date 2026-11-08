@@ -15,7 +15,10 @@ namespace PolicyDesk.Api.Controllers;
 public class ClaimsController : ControllerBase
 {
     [HttpPost("apolices/{id:guid}/sinistros")]
-    [ProducesResponseType(typeof(ResponseCreatedJson), StatusCodes.Status201Created)]
+    [ProducesResponseType<ResponseCreatedJson>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, ProblemJson.ContentType)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, ProblemJson.ContentType)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, ProblemJson.ContentType)]
     public async Task<IActionResult> Register(
         [FromRoute] Guid id,
         [FromBody] RequestClaimJson request,
@@ -24,11 +27,12 @@ public class ClaimsController : ControllerBase
     {
         var result = await useCase.ExecuteAsync(id, request, cancellationToken);
 
-        return StatusCode(StatusCodes.Status201Created, result);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpGet("apolices/{id:guid}/sinistros")]
-    [ProducesResponseType(typeof(IEnumerable<ResponseClaimJson>), StatusCodes.Status200OK)]
+    [ProducesResponseType<IEnumerable<ResponseClaimJson>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, ProblemJson.ContentType)]
     public async Task<ActionResult<IEnumerable<ResponseClaimJson>>> GetByPolicy(
         [FromRoute] Guid id,
         [FromServices] IListClaimsUseCase useCase,
@@ -38,7 +42,8 @@ public class ClaimsController : ControllerBase
     }
 
     [HttpGet("sinistros/{id:guid}")]
-    [ProducesResponseType(typeof(ResponseClaimJson), StatusCodes.Status200OK)]
+    [ProducesResponseType<ResponseClaimJson>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, ProblemJson.ContentType)]
     public async Task<ActionResult<ResponseClaimJson>> GetById(
         [FromRoute] Guid id,
         [FromServices] IListClaimsUseCase useCase,
@@ -49,6 +54,9 @@ public class ClaimsController : ControllerBase
 
     [HttpPost("sinistros/{id:guid}/analise")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, ProblemJson.ContentType)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, ProblemJson.ContentType)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, ProblemJson.ContentType)]
     public async Task<IActionResult> StartAnalysis(
         [FromRoute] Guid id,
         [FromServices] IAnalyzeClaimUseCase useCase,
@@ -60,6 +68,9 @@ public class ClaimsController : ControllerBase
 
     [HttpPost("sinistros/{id:guid}/aprovacao")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, ProblemJson.ContentType)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, ProblemJson.ContentType)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, ProblemJson.ContentType)]
     public async Task<IActionResult> Approve(
         [FromRoute] Guid id,
         [FromServices] IApproveClaimUseCase useCase,
@@ -72,6 +83,9 @@ public class ClaimsController : ControllerBase
 
     [HttpPost("sinistros/{id:guid}/negacao")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, ProblemJson.ContentType)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, ProblemJson.ContentType)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, ProblemJson.ContentType)]
     public async Task<IActionResult> Deny(
         [FromRoute] Guid id,
         [FromBody] RequestDenyClaimJson request,
@@ -84,6 +98,9 @@ public class ClaimsController : ControllerBase
 
     [HttpPost("sinistros/{id:guid}/pagamento")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, ProblemJson.ContentType)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, ProblemJson.ContentType)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, ProblemJson.ContentType)]
     public async Task<IActionResult> RegisterPayment(
         [FromRoute] Guid id,
         [FromServices] IPayClaimUseCase useCase,

@@ -223,13 +223,31 @@ A API ficará disponível em http://localhost:5045, com o Swagger em http://loca
 curl -X POST http://localhost:8080/api/apolices \
   -H "Content-Type: application/json" \
   -d '{
-        "policyholderId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-        "description": "Seguro residencial",
-        "coverageAmount": 250000.00,
-        "premiumAmount": 1200.00,
-        "startDate": "2026-01-01",
-        "endDate": "2026-12-31"
+        "seguradoId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        "descricao": "Seguro residencial",
+        "valorCobertura": 250000.00,
+        "valorPremio": 1200.00,
+        "inicioVigencia": "2026-01-01",
+        "fimVigencia": "2026-12-31"
       }'
+```
+
+### Convenções do contrato
+
+- Campos do JSON em português e em camelCase (`seguradoId`, `valorCobertura`, `dataOcorrencia`, `criadoEm`).
+- Status serializados como texto: apólice `Ativa` ou `Cancelada`; sinistro `Pendente`, `EmAnalise`, `Aprovado`, `Negado` ou `Pago`. O filtro `status` da listagem de apólices aceita os mesmos nomes.
+- Cadastros respondem `201 Created` com `{ "id": ... }` e o cabeçalho `Location` apontando para o recurso criado.
+- Valores monetários aceitam no máximo 2 casas decimais e 16 dígitos inteiros.
+- Listagens paginadas usam `pagina` (a partir de 1) e `tamanhoPagina` (padrão 20, máximo 100), ordenadas pela data de cadastro:
+
+```json
+{
+  "itens": [ ... ],
+  "pagina": 1,
+  "tamanhoPagina": 20,
+  "totalItens": 42,
+  "totalPaginas": 3
+}
 ```
 
 ### Formato de erro

@@ -16,28 +16,28 @@ internal class UpdatePolicyholderUseCase(
     ILogger<UpdatePolicyholderUseCase> logger)
     : IUpdatePolicyholderUseCase
 {
-    public async Task ExecuteAsync(Guid policyholderId, RequestPolicyholdersUpdateJson request, CancellationToken cancellationToken = default)
+    public async Task ExecuteAsync(Guid policyholderId, RequestUpdatePolicyholderJson request, CancellationToken cancellationToken = default)
     {
         var policyholder = await ValidateAndThrowOnFailuresAsync(policyholderId, request, cancellationToken);
         
         policyholder.Update(
-            request.Name,
-            request.BirthDate,
+            request.Nome,
+            request.DataNascimento,
             request.Email,
-            request.PhoneNumber
+            request.Telefone
         );
         
         await unitOfWork.CommitAsync(cancellationToken);
         logger.PolicyholderUpdated(policyholder.Id);
     }
     private async Task<Domain.Entities.Policyholder> ValidateAndThrowOnFailuresAsync(
-        Guid policyholderId, RequestPolicyholdersUpdateJson request, CancellationToken cancellationToken)
+        Guid policyholderId, RequestUpdatePolicyholderJson request, CancellationToken cancellationToken)
     {
         var errors = PolicyholderDataValidator.Validate(
-            request.Name,
-            request.BirthDate,
+            request.Nome,
+            request.DataNascimento,
             request.Email,
-            request.PhoneNumber);
+            request.Telefone);
 
         if (errors.Count > 0)
         {

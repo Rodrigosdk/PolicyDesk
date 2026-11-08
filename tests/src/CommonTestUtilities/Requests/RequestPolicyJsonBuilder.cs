@@ -17,12 +17,12 @@ public static class RequestPolicyJsonBuilder
         var today = DateTime.UtcNow.Date;
         return new RequestPolicyJson
         {
-            PolicyholderId = policyholderId ?? Guid.NewGuid(),
-            Description = description ?? faker.Commerce.ProductName(),
-            CoverageAmount = coverageAmount ?? faker.Finance.Amount(1000, 100000),
-            PremiumAmount = premiumAmount ?? faker.Finance.Amount(10, 1000),
-            StartDate = startDate ?? today.AddDays(-1),
-            EndDate = endDate ?? today.AddDays(30)
+            SeguradoId = policyholderId ?? Guid.NewGuid(),
+            Descricao = description ?? faker.Commerce.ProductName(),
+            ValorCobertura = coverageAmount ?? faker.Finance.Amount(1000, 100000),
+            ValorPremio = premiumAmount ?? faker.Finance.Amount(10, 1000),
+            InicioVigencia = startDate ?? today.AddDays(-1),
+            FimVigencia = endDate ?? today.AddDays(30)
         };
     }
 }

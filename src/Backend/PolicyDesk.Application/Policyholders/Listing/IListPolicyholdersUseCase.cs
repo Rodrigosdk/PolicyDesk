@@ -5,6 +5,6 @@ namespace PolicyDesk.Application.Policyholders.Listing;
 
 public interface IListPolicyholdersUseCase
 {
-    Task<ResponsePagedJson<ResponsePolicyholdersListingJson>> ListAsync(RequestPaginationJson pagination, CancellationToken cancellationToken = default);
-    Task<ResponsePolicyholdersListingJson> GetByIdAsync(Guid policyholderId, CancellationToken cancellationToken = default);
+    Task<ResponsePagedJson<ResponsePolicyholderJson>> ListAsync(RequestPaginationJson pagination, CancellationToken cancellationToken = default);
+    Task<ResponsePolicyholderJson> GetByIdAsync(Guid policyholderId, CancellationToken cancellationToken = default);
 }

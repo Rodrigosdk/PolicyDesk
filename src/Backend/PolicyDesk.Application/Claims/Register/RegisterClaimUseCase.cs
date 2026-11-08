@@ -31,15 +31,15 @@ internal class RegisterClaimUseCase(
             throw new ErrorOnValidationException(ResourcesMessageException.POLICY_CANCELLED_CANNOT_REGISTER_CLAIM);
         }
 
-        if (!policy.IsInForce(request.OccurredOn))
+        if (!policy.IsInForce(request.DataOcorrencia))
         {
             throw new ErrorOnValidationException(ResourcesMessageException.CLAIM_DATE_OUTSIDE_POLICY_PERIOD);
         }
 
         var committedAmount = await claimsReadOnlyRepository.SumCommittedAmountAsync(policy.Id, cancellationToken);
-        policy.RegisterClaim(request.Amount, committedAmount);
+        policy.RegisterClaim(request.Valor, committedAmount);
 
-        var claim = new Claim(policy.Id, request.Description, request.Amount, request.OccurredOn);
+        var claim = new Claim(policy.Id, request.Descricao, request.Valor, request.DataOcorrencia);
 
         await claimsWriteOnlyRepository.AddAsync(claim);
         await unitOfWork.CommitAsync(cancellationToken);
@@ -52,19 +52,19 @@ internal class RegisterClaimUseCase(
     {
         var errors = new List<string>();
 
-        if (string.IsNullOrWhiteSpace(request.Description))
+        if (string.IsNullOrWhiteSpace(request.Descricao))
             errors.Add(ResourcesMessageException.DESCRIPTION_REQUIRED);
-        else if (FieldLimits.Exceeds(request.Description, FieldLimits.Description))
+        else if (FieldLimits.Exceeds(request.Descricao, FieldLimits.Description))
             errors.Add(FieldLimits.DescriptionTooLong);
 
-        if (request.Amount <= 0)
+        if (request.Valor <= 0)
             errors.Add(ResourcesMessageException.CLAIM_AMOUNT_MUST_BE_POSITIVE);
-        else if (!MoneyLimits.IsValid(request.Amount))
+        else if (!MoneyLimits.IsValid(request.Valor))
             errors.Add(MoneyLimits.ClaimAmountInvalidPrecision);
 
-        if (request.OccurredOn == default)
+        if (request.DataOcorrencia == default)
             errors.Add(ResourcesMessageException.CLAIM_OCCURRENCE_DATE_REQUIRED);
-        else if (request.OccurredOn.Date > DateTime.UtcNow.Date)
+        else if (request.DataOcorrencia.Date > DateTime.UtcNow.Date)
             errors.Add(ResourcesMessageException.CLAIM_OCCURRENCE_DATE_IN_FUTURE);
 
         if (errors.Count > 0)

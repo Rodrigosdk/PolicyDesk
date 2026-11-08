@@ -1,8 +1,9 @@
 using PolicyDesk.Communication.Requests;
+using PolicyDesk.Communication.Responses;
 
 namespace PolicyDesk.Application.Policyholders.Register;
 
 public interface IRegisterPolicyholderUseCase
 {
-    public Task ExecuteAsync(RequestPolicyholdersJson request, CancellationToken cancellationToken = default);
+    public Task<ResponseCreatedJson> ExecuteAsync(RequestPolicyholderJson request, CancellationToken cancellationToken = default);
 }

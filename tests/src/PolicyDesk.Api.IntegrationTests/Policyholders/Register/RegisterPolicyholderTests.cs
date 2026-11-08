@@ -1,6 +1,8 @@
 using System.Net;
+using System.Net.Http.Json;
 using CommonTestUtilities.Requests;
 using Microsoft.EntityFrameworkCore;
+using PolicyDesk.Communication.Responses;
 using PolicyDesk.Exception;
 using Shouldly;
 
@@ -12,14 +14,19 @@ public class RegisterPolicyholderTests(PolicyDeskApplicationFactory factory) : P
     [Trait("Integration", "Policyholders - Cadastro")]
     public async Task Deve_Cadastrar_Quando_RequisicaoForValida()
     {
-        var request = RequestPolicyholdersJsonBuilder.Build();
+        var request = RequestPolicyholderJsonBuilder.Build();
 
         var response = await Post(RequestUri, request);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
         var saved = await FindByCpf(request.Cpf);
+        var created = await response.Content.ReadFromJsonAsync<ResponseCreatedJson>(TestJson.Options);
+        created.ShouldNotBeNull();
+        created.Id.ShouldBe(saved.Id);
+        response.Headers.Location.ShouldNotBeNull();
+        response.Headers.Location.AbsolutePath.ShouldBe($"{RequestUri}/{saved.Id}");
         saved.Active.ShouldBeTrue();
-        saved.Name.ShouldBe(request.Name.Trim());
+        saved.Name.ShouldBe(request.Nome.Trim());
         saved.Email.ShouldBe(request.Email.ToLowerInvariant());
     }
 
@@ -29,8 +36,8 @@ public class RegisterPolicyholderTests(PolicyDeskApplicationFactory factory) : P
     [InlineData("+44 20 7946 0958", "+442079460958")]
     public async Task Deve_Cadastrar_Quando_TelefoneTiverCodigoDePais(string phone, string expectedPhone)
     {
-        var request = RequestPolicyholdersJsonBuilder.Build();
-        request.PhoneNumber = phone;
+        var request = RequestPolicyholderJsonBuilder.Build();
+        request.Telefone = phone;
 
         var response = await Post(RequestUri, request);
 
@@ -42,7 +49,7 @@ public class RegisterPolicyholderTests(PolicyDeskApplicationFactory factory) : P
     [Trait("Integration", "Policyholders - Cadastro")]
     public async Task Deve_RetornarBadRequest_Quando_CpfForInvalido()
     {
-        var request = RequestPolicyholdersJsonBuilder.Build(cpf: "111.111.111-11");
+        var request = RequestPolicyholderJsonBuilder.Build(cpf: "111.111.111-11");
 
         var response = await Post(RequestUri, request);
 
@@ -54,8 +61,8 @@ public class RegisterPolicyholderTests(PolicyDeskApplicationFactory factory) : P
     [Trait("Integration", "Policyholders - Cadastro")]
     public async Task Deve_RetornarBadRequestSemGravar_Quando_NomeForEmBranco()
     {
-        var request = RequestPolicyholdersJsonBuilder.Build();
-        request.Name = "   ";
+        var request = RequestPolicyholderJsonBuilder.Build();
+        request.Nome = "   ";
 
         var response = await Post(RequestUri, request);
 
@@ -86,7 +93,7 @@ public class RegisterPolicyholderTests(PolicyDeskApplicationFactory factory) : P
     {
         var existing = await RegisterPolicyholder();
 
-        var response = await Post(RequestUri, RequestPolicyholdersJsonBuilder.Build(cpf: existing.Cpf));
+        var response = await Post(RequestUri, RequestPolicyholderJsonBuilder.Build(cpf: existing.Cpf));
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -97,7 +104,7 @@ public class RegisterPolicyholderTests(PolicyDeskApplicationFactory factory) : P
     {
         var existing = await RegisterPolicyholder();
 
-        var response = await Post(RequestUri, RequestPolicyholdersJsonBuilder.Build(email: existing.Email));
+        var response = await Post(RequestUri, RequestPolicyholderJsonBuilder.Build(email: existing.Email));
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -108,11 +115,12 @@ public class RegisterPolicyholderTests(PolicyDeskApplicationFactory factory) : P
     {
         var original = await RegisterPolicyholder();
         (await Delete($"{RequestUri}/{original.Id}")).StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        var request = RequestPolicyholdersJsonBuilder.Build(cpf: original.Cpf);
+        var request = RequestPolicyholderJsonBuilder.Build(cpf: original.Cpf);
 
         var response = await Post(RequestUri, request);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await response.Content.ReadFromJsonAsync<ResponseCreatedJson>(TestJson.Options))!.Id.ShouldBe(original.Id);
         var reactivated = await FindById(original.Id);
         reactivated.Active.ShouldBeTrue();
         reactivated.Email.ShouldBe(request.Email.ToLowerInvariant());
@@ -126,7 +134,7 @@ public class RegisterPolicyholderTests(PolicyDeskApplicationFactory factory) : P
         (await Delete($"{RequestUri}/{inactive.Id}")).StatusCode.ShouldBe(HttpStatusCode.NoContent);
         var other = await RegisterPolicyholder();
 
-        var response = await Post(RequestUri, RequestPolicyholdersJsonBuilder.Build(cpf: inactive.Cpf, email: other.Email));
+        var response = await Post(RequestUri, RequestPolicyholderJsonBuilder.Build(cpf: inactive.Cpf, email: other.Email));
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await FindById(inactive.Id)).Active.ShouldBeFalse();

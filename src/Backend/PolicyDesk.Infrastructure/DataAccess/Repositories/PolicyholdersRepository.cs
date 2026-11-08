@@ -13,12 +13,12 @@ internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) :
     IPolicyholdersReadOnlyRepository,
     IPolicyholdersUpdateOnlyRepository
 {
-    public async Task<PolicyholderRegistrationResult> RegisterOrReactivateAsync(Policyholder policyholder, CancellationToken cancellationToken = default)
+    public async Task<PolicyholderRegistration> RegisterOrReactivateAsync(Policyholder policyholder, CancellationToken cancellationToken = default)
     {
-        int affectedRows;
+        List<Guid> savedIds;
         try
         {
-            affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
+            savedIds = await dbContext.Database.SqlQuery<Guid>($"""
                 INSERT INTO policyholders
                     (id, name, cpf, birth_date, email, phone, created_at, updated_at, active)
                 VALUES
@@ -33,7 +33,8 @@ internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) :
                     active = TRUE,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE policyholders.active = FALSE
-                """, cancellationToken);
+                RETURNING id AS "Value"
+                """).ToListAsync(cancellationToken);
         }
         catch (PostgresException exception) when (
             exception is { 
@@ -41,12 +42,12 @@ internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) :
                 ConstraintName: "IX_policyholders_email_active" 
             })
         {
-            return PolicyholderRegistrationResult.ActiveEmailAlreadyExists;
+            return new PolicyholderRegistration(PolicyholderRegistrationResult.ActiveEmailAlreadyExists);
         }
 
-        return affectedRows == 0
-            ? PolicyholderRegistrationResult.ActiveCpfAlreadyExists
-            : PolicyholderRegistrationResult.RegisteredOrReactivated;
+        return savedIds.Count == 0
+            ? new PolicyholderRegistration(PolicyholderRegistrationResult.ActiveCpfAlreadyExists)
+            : new PolicyholderRegistration(PolicyholderRegistrationResult.RegisteredOrReactivated, savedIds[0]);
     }
 
     public async Task<PagedResult<Policyholder>> GetPageAsync(int page, int pageSize, CancellationToken cancellationToken = default)

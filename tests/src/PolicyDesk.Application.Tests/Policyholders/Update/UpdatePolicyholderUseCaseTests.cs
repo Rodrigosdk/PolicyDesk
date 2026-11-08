@@ -21,14 +21,14 @@ public class UpdatePolicyholderUseCaseTests
     {
         var policyholder = PolicyholderBuilder.Build();
         var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand(policyholder);
-        var request = RequestPolicyholdersUpdateJsonBuilder.Build(email: "Jane.Updated@Example.com");
-        request.PhoneNumber = "(83) 9 1234-5678";
+        var request = RequestUpdatePolicyholderJsonBuilder.Build(email: "Jane.Updated@Example.com");
+        request.Telefone = "(83) 9 1234-5678";
 
         await command.ExecuteAsync(policyholder.Id, request);
 
-        policyholder.Name.ShouldBe(request.Name.Trim());
+        policyholder.Name.ShouldBe(request.Nome.Trim());
         policyholder.Email.ShouldBe("jane.updated@example.com");
-        policyholder.BirthDate.ShouldBe(request.BirthDate);
+        policyholder.BirthDate.ShouldBe(request.DataNascimento);
         policyholder.Phone.ShouldBe("+5583912345678");
         unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
         readBuilder.Mock.Verify(
@@ -43,7 +43,7 @@ public class UpdatePolicyholderUseCaseTests
         var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand();
 
         await Should.ThrowAsync<ErrorOnValidationException>(
-            () => command.ExecuteAsync(Guid.NewGuid(), RequestPolicyholdersUpdateJsonBuilder.Build(email: "invalid")));
+            () => command.ExecuteAsync(Guid.NewGuid(), RequestUpdatePolicyholderJsonBuilder.Build(email: "invalid")));
 
         updateBuilder.Mock.Verify(r => r.GetByIdForUpdateAsync(It.IsAny<Guid>()), Times.Never);
         unitOfWork.Verify(u => u.CommitAsync(), Times.Never);
@@ -56,8 +56,8 @@ public class UpdatePolicyholderUseCaseTests
     [InlineData("   ")]
     public async Task Deve_LancarExcecaoAntesDaBusca_Quando_NomeForVazio(string? name)
     {
-        var request = RequestPolicyholdersUpdateJsonBuilder.Build();
-        request.Name = name!;
+        var request = RequestUpdatePolicyholderJsonBuilder.Build();
+        request.Nome = name!;
 
         await ShouldFailBeforeSearching(request, ResourcesMessageException.POLICYHOLDER_NAME_REQUIRED);
     }
@@ -66,8 +66,8 @@ public class UpdatePolicyholderUseCaseTests
     [Trait("Application", "Policyholders - Update")]
     public async Task Deve_LancarExcecaoAntesDaBusca_Quando_DataDeNascimentoNaoForInformada()
     {
-        var request = RequestPolicyholdersUpdateJsonBuilder.Build();
-        request.BirthDate = default;
+        var request = RequestUpdatePolicyholderJsonBuilder.Build();
+        request.DataNascimento = default;
 
         await ShouldFailBeforeSearching(request, ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_REQUIRED);
     }
@@ -76,8 +76,8 @@ public class UpdatePolicyholderUseCaseTests
     [Trait("Application", "Policyholders - Update")]
     public async Task Deve_LancarExcecaoAntesDaBusca_Quando_DataDeNascimentoForFutura()
     {
-        var request = RequestPolicyholdersUpdateJsonBuilder.Build();
-        request.BirthDate = DateTime.UtcNow.Date.AddDays(1);
+        var request = RequestUpdatePolicyholderJsonBuilder.Build();
+        request.DataNascimento = DateTime.UtcNow.Date.AddDays(1);
 
         await ShouldFailBeforeSearching(request, ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_IN_FUTURE);
     }
@@ -88,8 +88,8 @@ public class UpdatePolicyholderUseCaseTests
     [InlineData("")]
     public async Task Deve_LancarExcecaoAntesDaBusca_Quando_TelefoneForVazio(string? phone)
     {
-        var request = RequestPolicyholdersUpdateJsonBuilder.Build();
-        request.PhoneNumber = phone!;
+        var request = RequestUpdatePolicyholderJsonBuilder.Build();
+        request.Telefone = phone!;
 
         await ShouldFailBeforeSearching(request, ResourcesMessageException.POLICYHOLDER_PHONE_REQUIRED);
     }
@@ -100,8 +100,8 @@ public class UpdatePolicyholderUseCaseTests
     [InlineData("(83) 9 8647-16871")]
     public async Task Deve_LancarExcecaoAntesDaBusca_Quando_TelefoneForInvalido(string phone)
     {
-        var request = RequestPolicyholdersUpdateJsonBuilder.Build();
-        request.PhoneNumber = phone;
+        var request = RequestUpdatePolicyholderJsonBuilder.Build();
+        request.Telefone = phone;
 
         await ShouldFailBeforeSearching(request, ResourcesMessageException.INVALID_PHONE);
     }
@@ -113,7 +113,7 @@ public class UpdatePolicyholderUseCaseTests
         var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand();
 
         await Should.ThrowAsync<NotFoundException>(
-            () => command.ExecuteAsync(Guid.NewGuid(), RequestPolicyholdersUpdateJsonBuilder.Build()));
+            () => command.ExecuteAsync(Guid.NewGuid(), RequestUpdatePolicyholderJsonBuilder.Build()));
 
         readBuilder.Mock.Verify(
             r => r.ExistActivePolicyholdersWithEmailAsync(It.IsAny<string>(), It.IsAny<Guid?>()),
@@ -132,7 +132,7 @@ public class UpdatePolicyholderUseCaseTests
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
             () => command.ExecuteAsync(
                 policyholder.Id,
-                RequestPolicyholdersUpdateJsonBuilder.Build(email: "TAKEN@EXAMPLE.COM")));
+                RequestUpdatePolicyholderJsonBuilder.Build(email: "TAKEN@EXAMPLE.COM")));
 
         policyholder.Email.ShouldBe(originalEmail);
         exception.GetErrors().ShouldContain(ResourcesMessageException.POLICYHOLDER_ACTIVE_EMAIL_EXISTS);
@@ -142,7 +142,7 @@ public class UpdatePolicyholderUseCaseTests
             Times.Once);
     }
 
-    private static async Task ShouldFailBeforeSearching(RequestPolicyholdersUpdateJson request, string expectedError)
+    private static async Task ShouldFailBeforeSearching(RequestUpdatePolicyholderJson request, string expectedError)
     {
         var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand();
 
