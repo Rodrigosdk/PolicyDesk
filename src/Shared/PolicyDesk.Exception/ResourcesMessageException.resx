@@ -153,4 +153,7 @@
     <data name="INVALID_PAGE_SIZE" xml:space="preserve">
         <value>O tamanho da página deve estar entre 1 e {0}.</value>
     </data>
+    <data name="INVALID_BUSINESS_TIME_ZONE" xml:space="preserve">
+        <value>Business:TimeZone inválido. Informe um identificador de fuso horário IANA, como "America/Sao_Paulo".</value>
+    </data>
 </root>

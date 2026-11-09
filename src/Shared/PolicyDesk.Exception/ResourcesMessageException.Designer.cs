@@ -314,5 +314,11 @@ namespace PolicyDesk.Exception {
                 return ResourceManager.GetString("INVALID_PAGE_SIZE", resourceCulture);
             }
         }
+
+        public static string INVALID_BUSINESS_TIME_ZONE {
+            get {
+                return ResourceManager.GetString("INVALID_BUSINESS_TIME_ZONE", resourceCulture);
+            }
+        }
     }
 }
