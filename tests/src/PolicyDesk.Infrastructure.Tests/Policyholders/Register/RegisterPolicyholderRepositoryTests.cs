@@ -16,10 +16,10 @@ public class RegisterPolicyholderRepositoryTests(PostgreSqlInfrastructureFixture
         var repository = CreateRepository(dbContext);
         var policyholder = PolicyholderBuilder.Build();
 
-        var result = await repository.RegisterOrReactivate(policyholder);
-        var saved = await repository.GetById(policyholder.Id);
+        var result = await repository.RegisterOrReactivateAsync(policyholder);
+        var saved = await repository.GetByIdAsync(policyholder.Id);
 
-        result.ShouldBe(PolicyholderRegistrationResult.RegisteredOrReactivated);
+        result.Result.ShouldBe(PolicyholderRegistrationResult.RegisteredOrReactivated);
         saved.ShouldNotBeNull();
         saved.Cpf.ShouldBe(policyholder.Cpf);
         saved.Email.ShouldBe(policyholder.Email);
@@ -33,13 +33,13 @@ public class RegisterPolicyholderRepositoryTests(PostgreSqlInfrastructureFixture
         await using var dbContext = await Fixture.CreateCleanDbContextAsync();
         var repository = CreateRepository(dbContext);
         var existing = PolicyholderBuilder.Build();
-        await repository.RegisterOrReactivate(existing);
+        await repository.RegisterOrReactivateAsync(existing);
         var duplicate = PolicyholderBuilder.Build(cpf: existing.Cpf);
 
-        var result = await repository.RegisterOrReactivate(duplicate);
-        var saved = await repository.GetById(existing.Id);
+        var result = await repository.RegisterOrReactivateAsync(duplicate);
+        var saved = await repository.GetByIdAsync(existing.Id);
 
-        result.ShouldBe(PolicyholderRegistrationResult.ActiveCpfAlreadyExists);
+        result.Result.ShouldBe(PolicyholderRegistrationResult.ActiveCpfAlreadyExists);
         saved.ShouldNotBeNull();
         saved.Name.ShouldBe(existing.Name);
         saved.Email.ShouldBe(existing.Email);
@@ -52,12 +52,12 @@ public class RegisterPolicyholderRepositoryTests(PostgreSqlInfrastructureFixture
         await using var dbContext = await Fixture.CreateCleanDbContextAsync();
         var repository = CreateRepository(dbContext);
         var existing = PolicyholderBuilder.Build();
-        await repository.RegisterOrReactivate(existing);
+        await repository.RegisterOrReactivateAsync(existing);
         var other = PolicyholderBuilder.Build(email: existing.Email);
 
-        var result = await repository.RegisterOrReactivate(other);
+        var result = await repository.RegisterOrReactivateAsync(other);
 
-        result.ShouldBe(PolicyholderRegistrationResult.ActiveEmailAlreadyExists);
+        result.Result.ShouldBe(PolicyholderRegistrationResult.ActiveEmailAlreadyExists);
     }
 
     [Fact(DisplayName = nameof(Deve_ReativarEAtualizarDados_Quando_CpfEstiverInativo))]
@@ -67,15 +67,15 @@ public class RegisterPolicyholderRepositoryTests(PostgreSqlInfrastructureFixture
         await using var dbContext = await Fixture.CreateCleanDbContextAsync();
         var repository = CreateRepository(dbContext);
         var original = PolicyholderBuilder.Build();
-        await repository.RegisterOrReactivate(original);
+        await repository.RegisterOrReactivateAsync(original);
         await DeactivateAndCommit(dbContext, original);
         var reactivation = PolicyholderBuilder.Build(cpf: original.Cpf);
 
-        var result = await repository.RegisterOrReactivate(reactivation);
+        var result = await repository.RegisterOrReactivateAsync(reactivation);
         await using var verificationContext = Fixture.CreateDbContext();
         var saved = await verificationContext.Policyholders.IgnoreQueryFilters().SingleAsync(item => item.Id == original.Id);
 
-        result.ShouldBe(PolicyholderRegistrationResult.RegisteredOrReactivated);
+        result.Result.ShouldBe(PolicyholderRegistrationResult.RegisteredOrReactivated);
         saved.Active.ShouldBeTrue();
         saved.Name.ShouldBe(reactivation.Name);
         saved.Email.ShouldBe(reactivation.Email);

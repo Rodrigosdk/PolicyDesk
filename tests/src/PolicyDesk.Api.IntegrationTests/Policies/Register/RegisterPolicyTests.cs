@@ -25,14 +25,52 @@ public class RegisterPolicyTests(PolicyDeskApplicationFactory factory) : Policie
         var response = await Post("/api/apolices", request);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
-        var created = await response.Content.ReadFromJsonAsync<ResponseCreatedJson>();
+        var created = await response.Content.ReadFromJsonAsync<ResponseCreatedJson>(TestJson.Options);
         created.ShouldNotBeNull();
+        response.Headers.Location.ShouldNotBeNull();
+        response.Headers.Location.AbsolutePath.ShouldBe($"/api/apolices/{created.Id}");
         var saved = await DbContext.Policies.FindAsync(created.Id);
         saved.ShouldNotBeNull();
         saved.PolicyholderId.ShouldBe(policyholder.Id);
         saved.Description.ShouldBe("Home coverage");
-        saved.CoverageAmount.ShouldBe(request.CoverageAmount);
-        saved.PremiumAmount.ShouldBe(request.PremiumAmount);
+        saved.CoverageAmount.ShouldBe(request.ValorCobertura);
+        saved.PremiumAmount.ShouldBe(request.ValorPremio);
+    }
+
+    [Fact(DisplayName = nameof(Deve_Cadastrar_Quando_CorpoUsarOsNomesDoContrato))]
+    [Trait("Integration", "Policies - Cadastro")]
+    public async Task Deve_Cadastrar_Quando_CorpoUsarOsNomesDoContrato()
+    {
+        var policyholder = await RegisterPolicyholder();
+        var today = DateTime.UtcNow.Date;
+
+        var response = await Post("/api/apolices", new Dictionary<string, object>
+        {
+            ["seguradoId"] = policyholder.Id,
+            ["descricao"] = "Seguro residencial",
+            ["valorCobertura"] = 15000.50m,
+            ["valorPremio"] = 120.75m,
+            ["inicioVigencia"] = today,
+            ["fimVigencia"] = today.AddDays(365)
+        });
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
+    }
+
+    [Theory(DisplayName = nameof(Deve_RetornarBadRequestSemGravar_Quando_ValorTiverMaisDeDuasCasasDecimais))]
+    [Trait("Integration", "Policies - Cadastro")]
+    [InlineData(1000.001, 100)]
+    [InlineData(1000, 99.999)]
+    public async Task Deve_RetornarBadRequestSemGravar_Quando_ValorTiverMaisDeDuasCasasDecimais(decimal coverageAmount, decimal premiumAmount)
+    {
+        var policyholder = await RegisterPolicyholder();
+
+        var response = await Post(
+            "/api/apolices",
+            RequestPolicyJsonBuilder.Build(policyholder.Id, coverageAmount: coverageAmount, premiumAmount: premiumAmount));
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await DbContext.Policies.CountAsync(policy => policy.PolicyholderId == policyholder.Id)).ShouldBe(0);
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarBadRequest_Quando_ValorCoberturaForInvalido))]

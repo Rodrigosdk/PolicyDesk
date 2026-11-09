@@ -1,6 +1,6 @@
 using Bogus;
 using CommonTestUtilities.Requests;
-using Policyholder = PolicyDesk.Domain.Entities.Policyholders;
+using PolicyDesk.Domain.Entities;
 
 namespace CommonTestUtilities.Entities;
 

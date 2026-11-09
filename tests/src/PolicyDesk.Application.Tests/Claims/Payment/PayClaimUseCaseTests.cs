@@ -22,11 +22,11 @@ public class PayClaimUseCaseTests
         claim.Approve();
         var (useCase, unitOfWork) = CreateUseCase(claim);
 
-        await useCase.Execute(claim.Id);
+        await useCase.ExecuteAsync(claim.Id);
 
         claim.Status.ShouldBe(ClaimStatus.Paid);
         claim.PaidAt.ShouldNotBeNull();
-        unitOfWork.Verify(work => work.Commit(), Times.Once);
+        unitOfWork.Verify(work => work.CommitAsync(), Times.Once);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarNaoEncontradoSemConfirmar_Quando_SinistroNaoExistir))]
@@ -35,9 +35,9 @@ public class PayClaimUseCaseTests
     {
         var (useCase, unitOfWork) = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.Execute(Guid.NewGuid()));
+        await Should.ThrowAsync<NotFoundException>(() => useCase.ExecuteAsync(Guid.NewGuid()));
 
-        unitOfWork.Verify(work => work.Commit(), Times.Never);
+        unitOfWork.Verify(work => work.CommitAsync(), Times.Never);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarValidacaoSemConfirmar_Quando_SinistroNaoEstiverAprovado))]
@@ -48,11 +48,11 @@ public class PayClaimUseCaseTests
         claim.StartAnalysis();
         var (useCase, unitOfWork) = CreateUseCase(claim);
 
-        await Should.ThrowAsync<DomainRuleException>(() => useCase.Execute(claim.Id));
+        await Should.ThrowAsync<DomainRuleException>(() => useCase.ExecuteAsync(claim.Id));
 
         claim.Status.ShouldBe(ClaimStatus.InAnalysis);
         claim.PaidAt.ShouldBeNull();
-        unitOfWork.Verify(work => work.Commit(), Times.Never);
+        unitOfWork.Verify(work => work.CommitAsync(), Times.Never);
     }
 
     private static (PayClaimUseCase UseCase, Mock<IUnitOfWork> UnitOfWork) CreateUseCase(Claim? claim = null)

@@ -146,12 +146,12 @@ PolicyDesk
 
 ### Opção 1 — Docker Compose (recomendado)
 
-Sobe a API, o PostgreSQL e o Aspire Dashboard com um único comando:
+Sobe a API e o PostgreSQL com um único comando:
 
 ```bash
 git clone https://github.com/Rodrigosdk/PolicyDesk.git
 cd PolicyDesk
-docker compose up --build
+docker compose -f docker/compose.yml up --build
 ```
 
 | Serviço | Endereço |
@@ -159,17 +159,31 @@ docker compose up --build
 | API | http://localhost:8080 |
 | Swagger UI | http://localhost:8080/swagger |
 | Health check | http://localhost:8080/health |
-| Aspire Dashboard (logs, traces e métricas) | http://localhost:18888 |
 
 As migrations são aplicadas automaticamente na inicialização, fora do ambiente de produção.
 
 > A senha do banco pode ser definida pela variável `POSTGRES_PASSWORD`. Sem ela, é usado um valor padrão para desenvolvimento local.
 
+#### Ferramentas de desenvolvimento (Aspire Dashboard e pgAdmin)
+
+O `docker/compose.dev.yml` complementa o `docker/compose.yml` com as ferramentas de desenvolvimento: o Aspire Dashboard, para onde a API passa a exportar logs, traces e métricas, e o pgAdmin, já apontando para o banco do projeto. Elas só sobem quando os dois arquivos são informados:
+
+```bash
+docker compose -f docker/compose.yml -f docker/compose.dev.yml up -d --build
+```
+
+| Serviço | Endereço |
+| --- | --- |
+| Aspire Dashboard (logs, traces e métricas) | http://localhost:18888 |
+| pgAdmin | http://localhost:5050 |
+
+O servidor **PolicyDesk (local)** já aparece cadastrado; na primeira conexão, informe a senha do banco (`policy-desk-local`, ou o valor de `POSTGRES_PASSWORD`). Para derrubar tudo, use os mesmos `-f` com `down`.
+
 ### Opção 2 — Execução local com `dotnet run`
 
 ```bash
-# 1. Suba apenas o banco e o dashboard
-docker compose up -d db dashboard
+# 1. Suba o banco e as ferramentas de desenvolvimento
+docker compose -f docker/compose.yml -f docker/compose.dev.yml up -d db dashboard pgadmin
 
 # 2. Configure a connection string via User Secrets
 dotnet user-secrets set "ConnectionStrings:DbConnection" \
@@ -190,9 +204,9 @@ A API ficará disponível em http://localhost:5045, com o Swagger em http://loca
 
 | Método | Rota | Descrição |
 | :---: | --- | --- |
-| `GET` | `/api/segurados` | Lista os segurados ativos |
+| `GET` | `/api/segurados?pagina=&tamanhoPagina=` | Lista os segurados ativos, paginado |
 | `GET` | `/api/segurados/{id}` | Busca um segurado |
-| `POST` | `/api/segurados` | Cadastra um segurado |
+| `POST` | `/api/segurados` | Cadastra (ou reativa) um segurado |
 | `PUT` | `/api/segurados/{id}` | Atualiza os dados de um segurado |
 | `DELETE` | `/api/segurados/{id}` | Inativa um segurado |
 
@@ -200,7 +214,7 @@ A API ficará disponível em http://localhost:5045, com o Swagger em http://loca
 
 | Método | Rota | Descrição |
 | :---: | --- | --- |
-| `GET` | `/api/apolices?seguradoId=&status=` | Lista apólices, com filtros opcionais |
+| `GET` | `/api/apolices?seguradoId=&status=&pagina=&tamanhoPagina=` | Lista apólices, com filtros opcionais e paginado |
 | `GET` | `/api/apolices/{id}` | Busca uma apólice |
 | `POST` | `/api/apolices` | Emite uma apólice |
 | `POST` | `/api/apolices/{id}/cancelamento` | Cancela uma apólice |
@@ -223,13 +237,31 @@ A API ficará disponível em http://localhost:5045, com o Swagger em http://loca
 curl -X POST http://localhost:8080/api/apolices \
   -H "Content-Type: application/json" \
   -d '{
-        "policyholderId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-        "description": "Seguro residencial",
-        "coverageAmount": 250000.00,
-        "premiumAmount": 1200.00,
-        "startDate": "2026-01-01",
-        "endDate": "2026-12-31"
+        "seguradoId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        "descricao": "Seguro residencial",
+        "valorCobertura": 250000.00,
+        "valorPremio": 1200.00,
+        "inicioVigencia": "2026-01-01",
+        "fimVigencia": "2026-12-31"
       }'
+```
+
+### Convenções do contrato
+
+- Campos do JSON em português e em camelCase (`seguradoId`, `valorCobertura`, `dataOcorrencia`, `criadoEm`).
+- Status serializados como texto: apólice `Ativa` ou `Cancelada`; sinistro `Pendente`, `EmAnalise`, `Aprovado`, `Negado` ou `Pago`. O filtro `status` da listagem de apólices aceita os mesmos nomes.
+- Cadastros respondem `201 Created` com `{ "id": ... }` e o cabeçalho `Location` apontando para o recurso criado.
+- Valores monetários aceitam no máximo 2 casas decimais e 16 dígitos inteiros.
+- Listagens paginadas usam `pagina` (a partir de 1) e `tamanhoPagina` (padrão 20, máximo 100), ordenadas pela data de cadastro:
+
+```json
+{
+  "itens": [ ... ],
+  "pagina": 1,
+  "tamanhoPagina": 20,
+  "totalItens": 42,
+  "totalPaginas": 3
+}
 ```
 
 ### Formato de erro
@@ -260,7 +292,7 @@ O mesmo `traceId` volta no cabeçalho `X-Trace-Id` de toda resposta e aparece no
 - **Logs estruturados** (JSON em produção) com uma linha por requisição, sem corpo nem query string, para não expor dados pessoais (**LGPD**)
 - **Health check** em `/health`, incluindo a verificação de conectividade com o banco
 
-A exportação OTLP só é ativada quando `OTEL_EXPORTER_OTLP_ENDPOINT` está definida. No Docker Compose, os dados chegam automaticamente ao Aspire Dashboard.
+A exportação OTLP só é ativada quando `OTEL_EXPORTER_OTLP_ENDPOINT` está definida. Com o `compose.dev.yml`, os dados chegam automaticamente ao Aspire Dashboard; só com o `compose.yml`, a exportação fica desligada.
 
 ---
 

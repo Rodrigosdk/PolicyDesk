@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Infrastructure.DataAccess;
 using PolicyDesk.Infrastructure.DataAccess.Repositories;
-using Policyholder = PolicyDesk.Domain.Entities.Policyholders;
+using PolicyDesk.Domain.Entities;
 
 namespace PolicyDesk.Infrastructure.Tests.Policyholders;
 
@@ -17,6 +17,6 @@ public abstract class PolicyholdersRepositoryTestBase(PostgreSqlInfrastructureFi
     {
         var tracked = await dbContext.Policyholders.SingleAsync(item => item.Id == policyholder.Id);
         tracked.Deactivate();
-        await new UnitOfWork(dbContext).Commit();
+        await new UnitOfWork(dbContext).CommitAsync();
     }
 }

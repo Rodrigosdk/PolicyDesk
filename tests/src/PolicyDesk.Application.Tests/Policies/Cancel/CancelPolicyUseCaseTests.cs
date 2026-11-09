@@ -20,11 +20,11 @@ public class CancelPolicyUseCaseTests
         var policy = PolicyBuilder.Build();
         var (useCase, unitOfWork) = CreateUseCase(policy);
 
-        await useCase.Execute(policy.Id);
+        await useCase.ExecuteAsync(policy.Id);
 
         policy.Status.ShouldBe(PolicyStatus.Cancelled);
         policy.CancelledAt.ShouldNotBeNull();
-        unitOfWork.Verify(work => work.Commit(), Times.Once);
+        unitOfWork.Verify(work => work.CommitAsync(), Times.Once);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarNaoEncontradoSemConfirmar_Quando_ApoliceNaoExistir))]
@@ -33,9 +33,9 @@ public class CancelPolicyUseCaseTests
     {
         var (useCase, unitOfWork) = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.Execute(Guid.NewGuid()));
+        await Should.ThrowAsync<NotFoundException>(() => useCase.ExecuteAsync(Guid.NewGuid()));
 
-        unitOfWork.Verify(work => work.Commit(), Times.Never);
+        unitOfWork.Verify(work => work.CommitAsync(), Times.Never);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarValidacaoSemConfirmar_Quando_ApoliceJaEstiverCancelada))]
@@ -46,10 +46,10 @@ public class CancelPolicyUseCaseTests
         policy.Cancel();
         var (useCase, unitOfWork) = CreateUseCase(policy);
 
-        await Should.ThrowAsync<DomainRuleException>(() => useCase.Execute(policy.Id));
+        await Should.ThrowAsync<DomainRuleException>(() => useCase.ExecuteAsync(policy.Id));
 
         policy.Status.ShouldBe(PolicyStatus.Cancelled);
-        unitOfWork.Verify(work => work.Commit(), Times.Never);
+        unitOfWork.Verify(work => work.CommitAsync(), Times.Never);
     }
 
     private static (CancelPolicyUseCase UseCase, Mock<IUnitOfWork> UnitOfWork) CreateUseCase(Policy? policy = null)

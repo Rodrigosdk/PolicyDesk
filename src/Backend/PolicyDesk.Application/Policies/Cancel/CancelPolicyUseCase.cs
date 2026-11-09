@@ -12,13 +12,13 @@ internal class CancelPolicyUseCase(
     IUnitOfWork unitOfWork,
     ILogger<CancelPolicyUseCase> logger) : ICancelPolicyUseCase
 {
-    public async Task Execute(Guid policyId, CancellationToken cancellationToken = default)
+    public async Task ExecuteAsync(Guid policyId, CancellationToken cancellationToken = default)
     {
-        var policy = await policiesUpdateOnlyRepository.GetByIdForUpdate(policyId, cancellationToken)
+        var policy = await policiesUpdateOnlyRepository.GetByIdForUpdateAsync(policyId, cancellationToken)
                      ?? throw new NotFoundException(ResourcesMessageException.POLICY_NOT_FOUND);
 
         policy.Cancel();
-        await unitOfWork.Commit(cancellationToken);
+        await unitOfWork.CommitAsync(cancellationToken);
         logger.PolicyCancelled(policy.Id);
     }
 }

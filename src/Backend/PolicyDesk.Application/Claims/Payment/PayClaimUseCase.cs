@@ -12,13 +12,13 @@ internal class PayClaimUseCase(
     IUnitOfWork unitOfWork,
     ILogger<PayClaimUseCase> logger) : IPayClaimUseCase
 {
-    public async Task Execute(Guid claimId, CancellationToken cancellationToken = default)
+    public async Task ExecuteAsync(Guid claimId, CancellationToken cancellationToken = default)
     {
-        var claim = await claimsUpdateOnlyRepository.GetByIdForUpdate(claimId, cancellationToken)
+        var claim = await claimsUpdateOnlyRepository.GetByIdForUpdateAsync(claimId, cancellationToken)
                     ?? throw new NotFoundException(ResourcesMessageException.CLAIM_NOT_FOUND);
 
         claim.RegisterPayment();
-        await unitOfWork.Commit(cancellationToken);
+        await unitOfWork.CommitAsync(cancellationToken);
         logger.ClaimPaid(claim.Id, claim.Amount);
     }
 }

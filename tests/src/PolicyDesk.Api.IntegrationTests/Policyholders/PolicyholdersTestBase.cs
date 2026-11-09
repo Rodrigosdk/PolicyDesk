@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using CommonTestUtilities.Requests;
 using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Communication.Requests;
-using Policyholder = PolicyDesk.Domain.Entities.Policyholders;
+using PolicyDesk.Domain.Entities;
 
 namespace PolicyDesk.Api.IntegrationTests.Policyholders;
 
@@ -13,7 +13,7 @@ public abstract class PolicyholdersTestBase(PolicyDeskApplicationFactory factory
 
     protected async Task<Policyholder> RegisterPolicyholder(string? cpf = null, string? email = null)
     {
-        var request = RequestPolicyholdersJsonBuilder.Build(cpf, email);
+        var request = RequestPolicyholderJsonBuilder.Build(cpf, email);
 
         var response = await Post(RequestUri, request);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -32,12 +32,12 @@ public abstract class PolicyholdersTestBase(PolicyDeskApplicationFactory factory
         var today = DateTime.UtcNow.Date;
         return await Post("/api/apolices", new RequestPolicyJson
         {
-            PolicyholderId = policyholderId,
-            Description = "Active integration-test policy",
-            CoverageAmount = 10000,
-            PremiumAmount = 100,
-            StartDate = today.AddDays(-1),
-            EndDate = today.AddDays(1)
+            SeguradoId = policyholderId,
+            Descricao = "Active integration-test policy",
+            ValorCobertura = 10000,
+            ValorPremio = 100,
+            InicioVigencia = today.AddDays(-1),
+            FimVigencia = today.AddDays(1)
         });
     }
 }

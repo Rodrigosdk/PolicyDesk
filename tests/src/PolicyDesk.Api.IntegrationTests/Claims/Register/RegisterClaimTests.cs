@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Communication.Requests;
 using PolicyDesk.Communication.Responses;
 using PolicyDesk.Domain.Enums;
+using PolicyDesk.Domain.Validations;
 using PolicyDesk.Exception;
 using Shouldly;
 using Policy = PolicyDesk.Domain.Entities.Policy;
@@ -23,13 +24,15 @@ public class RegisterClaimTests(PolicyDeskApplicationFactory factory) : ClaimsTe
         var response = await Post($"/api/apolices/{policy.Id}/sinistros", request);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
-        var created = await response.Content.ReadFromJsonAsync<ResponseCreatedJson>();
+        var created = await response.Content.ReadFromJsonAsync<ResponseCreatedJson>(TestJson.Options);
         created.ShouldNotBeNull();
+        response.Headers.Location.ShouldNotBeNull();
+        response.Headers.Location.AbsolutePath.ShouldBe($"/api/sinistros/{created.Id}");
         var saved = await FindClaim(created.Id);
         saved.PolicyId.ShouldBe(policy.Id);
         saved.Description.ShouldBe("Broken window");
         saved.Amount.ShouldBe(250);
-        saved.OccurredOn.ShouldBe(request.OccurredOn.Date);
+        saved.OccurredOn.ShouldBe(request.DataOcorrencia.Date);
         saved.Status.ShouldBe(ClaimStatus.Pending);
     }
 
@@ -119,6 +122,21 @@ public class RegisterClaimTests(PolicyDeskApplicationFactory factory) : ClaimsTe
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await response.Content.ReadAsStringAsync())
             .ShouldContain(ResourcesMessageException.POLICY_CANCELLED_CANNOT_REGISTER_CLAIM);
+    }
+
+    [Fact(DisplayName = nameof(Deve_RetornarBadRequestSemGravar_Quando_ValorTiverMaisDeDuasCasasDecimais))]
+    [Trait("Integration", "Claims - Cadastro")]
+    public async Task Deve_RetornarBadRequestSemGravar_Quando_ValorTiverMaisDeDuasCasasDecimais()
+    {
+        var policy = await RegisterPolicyWithCoverage(10000);
+
+        var response = await Post(
+            $"/api/apolices/{policy.Id}/sinistros",
+            RequestClaimJsonBuilder.Build(amount: 100.123456789m));
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).ShouldContain(MoneyLimits.ClaimAmountInvalidPrecision);
+        (await DbContext.Claims.CountAsync(claim => claim.PolicyId == policy.Id)).ShouldBe(0);
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarBadRequestSemGravar_Quando_SomaDosSinistrosExcederCobertura))]

@@ -16,7 +16,7 @@ public class PolicyholdersTests
     private const string ValidPhoneE164 = "+5583986471687";
     private static readonly DateTime ValidBirthDate = new(1990, 1, 1);
 
-    private static Policyholders CreatePolicyholder(
+    private static Policyholder CreatePolicyholder(
         string? name = null,
         string? cpf = null,
         DateTime? birthDate = null,
@@ -60,7 +60,7 @@ public class PolicyholdersTests
     [InlineData("   ")]
     public void Deve_LancarExcecao_Quando_NomeForVazio(string? name)
     {
-        Should.Throw<DomainRuleException>(() => new Policyholders(name!, ValidCpf, ValidBirthDate, ValidEmail, ValidPhone));
+        Should.Throw<DomainRuleException>(() => new Policyholder(name!, ValidCpf, ValidBirthDate, ValidEmail, ValidPhone));
     }
 
     [Theory(DisplayName = nameof(Deve_ArmazenarSomenteDigitos_Quando_CpfTiverMascara))]
@@ -185,7 +185,7 @@ public class PolicyholdersTests
     public void Deve_LancarExcecao_Quando_InstanciarSemDataDeNascimento()
     {
         var exception = Should.Throw<DomainRuleException>(
-            () => new Policyholders(ValidName, ValidCpf, default, ValidEmail, ValidPhone));
+            () => new Policyholder(ValidName, ValidCpf, default, ValidEmail, ValidPhone));
 
         exception.Message.ShouldBe(ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_REQUIRED);
     }
@@ -195,7 +195,7 @@ public class PolicyholdersTests
     public void Deve_LancarExcecao_Quando_InstanciarComDataDeNascimentoFutura()
     {
         var exception = Should.Throw<DomainRuleException>(
-            () => new Policyholders(ValidName, ValidCpf, DateTime.UtcNow.Date.AddDays(1), ValidEmail, ValidPhone));
+            () => new Policyholder(ValidName, ValidCpf, DateTime.UtcNow.Date.AddDays(1), ValidEmail, ValidPhone));
 
         exception.Message.ShouldBe(ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_IN_FUTURE);
     }
@@ -208,7 +208,7 @@ public class PolicyholdersTests
     public void Deve_LancarExcecao_Quando_InstanciarSemTelefone(string? phone)
     {
         var exception = Should.Throw<DomainRuleException>(
-            () => new Policyholders(ValidName, ValidCpf, ValidBirthDate, ValidEmail, phone!));
+            () => new Policyholder(ValidName, ValidCpf, ValidBirthDate, ValidEmail, phone!));
 
         exception.Message.ShouldBe(ResourcesMessageException.POLICYHOLDER_PHONE_REQUIRED);
     }
@@ -221,7 +221,7 @@ public class PolicyholdersTests
     public void Deve_LancarExcecao_Quando_InstanciarComTelefoneInvalido(string phone)
     {
         var exception = Should.Throw<DomainRuleException>(
-            () => new Policyholders(ValidName, ValidCpf, ValidBirthDate, ValidEmail, phone));
+            () => new Policyholder(ValidName, ValidCpf, ValidBirthDate, ValidEmail, phone));
 
         exception.Message.ShouldBe(ResourcesMessageException.INVALID_PHONE);
     }

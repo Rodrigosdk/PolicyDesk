@@ -1,10 +1,11 @@
+using PolicyDesk.Communication.Enums;
+using PolicyDesk.Communication.Requests;
 using PolicyDesk.Communication.Responses;
-using PolicyDesk.Domain.Enums;
 
 namespace PolicyDesk.Application.Policies.Listing;
 
 public interface IListPoliciesUseCase
 {
-    Task<IEnumerable<ResponsePolicyJson>> List(Guid? policyholderId, PolicyStatus? status, CancellationToken cancellationToken = default);
-    Task<ResponsePolicyJson> GetById(Guid policyId, CancellationToken cancellationToken = default);
+    Task<ResponsePagedJson<ResponsePolicyJson>> ListAsync(Guid? policyholderId, StatusApolice? status, RequestPaginationJson pagination, CancellationToken cancellationToken = default);
+    Task<ResponsePolicyJson> GetByIdAsync(Guid policyId, CancellationToken cancellationToken = default);
 }

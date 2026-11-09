@@ -5,9 +5,9 @@ using PolicyDesk.Exception.Exception;
 
 namespace PolicyDesk.Domain.Entities;
 
-public class Policyholders : Entity
+public class Policyholder : Entity
 {
-    public Policyholders(string name, string cpf, DateTime birthDate, string email, string phone)
+    public Policyholder(string name, string cpf, DateTime birthDate, string email, string phone)
     {
         Name = NormalizeNameOrThrow(name);
         Cpf = CpfValidator.NormalizeOrThrow(cpf);
@@ -18,7 +18,7 @@ public class Policyholders : Entity
 
     // Usado pelo EF Core ao carregar do banco: não reaplica as regras de criação,
     // para que registros gravados antes de uma regra nova continuem legíveis
-    private Policyholders()
+    private Policyholder()
     {
     }
 

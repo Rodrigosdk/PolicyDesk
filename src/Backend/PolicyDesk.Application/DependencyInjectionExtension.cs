@@ -24,7 +24,7 @@ public static class DependencyInjectionExtension
     {
         // Policyholders
         services.AddScoped<IRegisterPolicyholderUseCase, RegisterPolicyholderUseCase>();
-        services.AddScoped<IUpdatePolicyholderCommand, UpdatePolicyholderCommand>();
+        services.AddScoped<IUpdatePolicyholderUseCase, UpdatePolicyholderUseCase>();
         services.AddScoped<IDeactivatePolicyholderUseCase, DeactivatePolicyholderUseCase>();
         services.AddScoped<IListPolicyholdersUseCase, ListPolicyholdersUseCase>();
         

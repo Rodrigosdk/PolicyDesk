@@ -138,4 +138,19 @@
     <data name="CLAIM_DENIAL_REASON_TOO_LONG" xml:space="preserve">
         <value>O motivo da negação deve ter no máximo {0} caracteres.</value>
     </data>
+    <data name="COVERAGE_AMOUNT_INVALID_PRECISION" xml:space="preserve">
+        <value>O valor da cobertura deve ter no máximo {0} dígitos inteiros e {1} casas decimais.</value>
+    </data>
+    <data name="PREMIUM_AMOUNT_INVALID_PRECISION" xml:space="preserve">
+        <value>O valor do prêmio deve ter no máximo {0} dígitos inteiros e {1} casas decimais.</value>
+    </data>
+    <data name="CLAIM_AMOUNT_INVALID_PRECISION" xml:space="preserve">
+        <value>O valor do sinistro deve ter no máximo {0} dígitos inteiros e {1} casas decimais.</value>
+    </data>
+    <data name="INVALID_PAGE" xml:space="preserve">
+        <value>A página deve ser maior ou igual a 1.</value>
+    </data>
+    <data name="INVALID_PAGE_SIZE" xml:space="preserve">
+        <value>O tamanho da página deve estar entre 1 e {0}.</value>
+    </data>
 </root>

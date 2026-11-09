@@ -15,13 +15,13 @@ public class ListPolicyholdersTests(PolicyDeskApplicationFactory factory) : Poli
         var inactive = await RegisterPolicyholder();
         await Delete($"{RequestUri}/{inactive.Id}");
 
-        var response = await Get(RequestUri);
+        var response = await Get($"{RequestUri}?tamanhoPagina=100");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var items = await response.Content.ReadFromJsonAsync<List<ResponsePolicyholdersListingJson>>();
+        var items = await response.Content.ReadFromJsonAsync<ResponsePagedJson<ResponsePolicyholderJson>>(TestJson.Options);
         items.ShouldNotBeNull();
-        items.ShouldContain(item => item.Id == active.Id);
-        items.ShouldNotContain(item => item.Id == inactive.Id);
+        items.Itens.ShouldContain(item => item.Id == active.Id);
+        items.Itens.ShouldNotContain(item => item.Id == inactive.Id);
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarSegurado_Quando_BuscarPorId))]
@@ -33,7 +33,7 @@ public class ListPolicyholdersTests(PolicyDeskApplicationFactory factory) : Poli
         var response = await Get($"{RequestUri}/{policyholder.Id}");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var item = await response.Content.ReadFromJsonAsync<ResponsePolicyholdersListingJson>();
+        var item = await response.Content.ReadFromJsonAsync<ResponsePolicyholderJson>(TestJson.Options);
         item.ShouldNotBeNull();
         item.Cpf.ShouldBe(policyholder.Cpf);
         item.Email.ShouldBe(policyholder.Email);

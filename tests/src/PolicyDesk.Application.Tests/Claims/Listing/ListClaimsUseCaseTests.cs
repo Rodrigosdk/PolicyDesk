@@ -1,6 +1,7 @@
 using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
 using Moq;
+using PolicyDesk.Communication.Enums;
 using PolicyDesk.Application.Claims.Listing;
 using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Enums;
@@ -24,11 +25,11 @@ public class ListClaimsUseCaseTests
         claims[1].StartAnalysis();
         var useCase = CreateUseCase(policy, claims);
 
-        var result = (await useCase.ListByPolicy(policy.Id)).ToList();
+        var result = (await useCase.ListByPolicyAsync(policy.Id)).ToList();
 
         result.Select(claim => claim.Id).ShouldBe(claims.Select(claim => claim.Id));
         result.ShouldAllBe(claim => claim.ApoliceId == policy.Id);
-        result[1].Status.ShouldBe(ClaimStatus.InAnalysis.ToString());
+        result[1].Status.ShouldBe(StatusSinistro.EmAnalise);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarNaoEncontrado_Quando_ListarDeApoliceInexistente))]
@@ -37,7 +38,7 @@ public class ListClaimsUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.ListByPolicy(Guid.NewGuid()));
+        await Should.ThrowAsync<NotFoundException>(() => useCase.ListByPolicyAsync(Guid.NewGuid()));
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarSinistroMapeado_Quando_BuscarPorId))]
@@ -49,19 +50,19 @@ public class ListClaimsUseCaseTests
         claim.Deny("No coverage");
         var useCase = CreateUseCase(claim: claim);
 
-        var result = await useCase.GetById(claim.Id);
+        var result = await useCase.GetByIdAsync(claim.Id);
 
         result.Id.ShouldBe(claim.Id);
         result.ApoliceId.ShouldBe(claim.PolicyId);
         result.Descricao.ShouldBe("Fire");
         result.Valor.ShouldBe(2000);
         result.DataOcorrencia.ShouldBe(claim.OccurredOn);
-        result.Status.ShouldBe(ClaimStatus.Denied.ToString());
+        result.Status.ShouldBe(StatusSinistro.Negado);
         result.MotivoNegacao.ShouldBe("No coverage");
         result.DataAprovacao.ShouldBeNull();
         result.DataPagamento.ShouldBeNull();
-        result.CreatedAt.ShouldBe(claim.CreatedAt);
-        result.UpdatedAt.ShouldBe(claim.UpdatedAt);
+        result.CriadoEm.ShouldBe(claim.CreatedAt);
+        result.AtualizadoEm.ShouldBe(claim.UpdatedAt);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarNaoEncontrado_Quando_BuscarSinistroInexistente))]
@@ -70,7 +71,7 @@ public class ListClaimsUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.GetById(Guid.NewGuid()));
+        await Should.ThrowAsync<NotFoundException>(() => useCase.GetByIdAsync(Guid.NewGuid()));
     }
 
     private static ListClaimsUseCase CreateUseCase(

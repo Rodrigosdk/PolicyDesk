@@ -2,5 +2,5 @@ namespace PolicyDesk.Application.Policies.Cancel;
 
 public interface ICancelPolicyUseCase
 {
-    Task Execute(Guid policyId, CancellationToken cancellationToken = default);
+    Task ExecuteAsync(Guid policyId, CancellationToken cancellationToken = default);
 }

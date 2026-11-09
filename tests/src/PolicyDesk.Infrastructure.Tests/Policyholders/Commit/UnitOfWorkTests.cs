@@ -18,11 +18,11 @@ public class UnitOfWorkTests(PostgreSqlInfrastructureFixture fixture) : Policyho
         await using var dbContext = await Fixture.CreateCleanDbContextAsync();
         var repository = CreateRepository(dbContext);
         var policyholder = PolicyholderBuilder.Build();
-        await repository.RegisterOrReactivate(policyholder);
+        await repository.RegisterOrReactivateAsync(policyholder);
         var tracked = await dbContext.Policyholders.SingleAsync(item => item.Id == policyholder.Id);
         tracked.Deactivate();
 
-        await new UnitOfWork(dbContext).Commit();
+        await new UnitOfWork(dbContext).CommitAsync();
 
         await using var verificationContext = Fixture.CreateDbContext();
         var saved = await verificationContext.Policyholders.IgnoreQueryFilters().SingleAsync(item => item.Id == policyholder.Id);
@@ -42,10 +42,10 @@ public class UnitOfWorkTests(PostgreSqlInfrastructureFixture fixture) : Policyho
         var claimInSecond = await secondRequest.Claims.SingleAsync(claim => claim.Id == claimId);
 
         claimInFirst.Approve();
-        await new UnitOfWork(firstRequest).Commit();
+        await new UnitOfWork(firstRequest).CommitAsync();
 
         claimInSecond.Deny("Not covered");
-        var exception = await Should.ThrowAsync<ConflictException>(() => new UnitOfWork(secondRequest).Commit());
+        var exception = await Should.ThrowAsync<ConflictException>(() => new UnitOfWork(secondRequest).CommitAsync());
 
         exception.Message.ShouldBe(ResourcesMessageException.CONCURRENCY_CONFLICT);
         await using var verificationContext = Fixture.CreateDbContext();
@@ -63,7 +63,7 @@ public class UnitOfWorkTests(PostgreSqlInfrastructureFixture fixture) : Policyho
         await using (var approval = Fixture.CreateDbContext())
         {
             (await approval.Claims.SingleAsync(claim => claim.Id == claimId)).Approve();
-            await new UnitOfWork(approval).Commit();
+            await new UnitOfWork(approval).CommitAsync();
         }
 
         await using var firstRequest = Fixture.CreateDbContext();
@@ -72,10 +72,10 @@ public class UnitOfWorkTests(PostgreSqlInfrastructureFixture fixture) : Policyho
         var claimInSecond = await secondRequest.Claims.SingleAsync(claim => claim.Id == claimId);
 
         claimInFirst.RegisterPayment();
-        await new UnitOfWork(firstRequest).Commit();
+        await new UnitOfWork(firstRequest).CommitAsync();
 
         claimInSecond.RegisterPayment();
-        await Should.ThrowAsync<ConflictException>(() => new UnitOfWork(secondRequest).Commit());
+        await Should.ThrowAsync<ConflictException>(() => new UnitOfWork(secondRequest).CommitAsync());
     }
 
     [Fact(DisplayName = nameof(Deve_PermitirGravacoesSeguidas_Quando_UsarOMesmoContexto))]
@@ -89,9 +89,9 @@ public class UnitOfWorkTests(PostgreSqlInfrastructureFixture fixture) : Policyho
 
         // Depois de cada gravação o EF lê o xmin novo; a gravação seguinte não pode ser vista como conflito
         claim.Approve();
-        await unitOfWork.Commit();
+        await unitOfWork.CommitAsync();
         claim.RegisterPayment();
-        await unitOfWork.Commit();
+        await unitOfWork.CommitAsync();
 
         await using var verificationContext = Fixture.CreateDbContext();
         (await verificationContext.Claims.AsNoTracking().SingleAsync(item => item.Id == claimId))
@@ -106,8 +106,8 @@ public class UnitOfWorkTests(PostgreSqlInfrastructureFixture fixture) : Policyho
         var repository = CreateRepository(setupContext);
         var first = PolicyholderBuilder.Build();
         var second = PolicyholderBuilder.Build();
-        await repository.RegisterOrReactivate(first);
-        await repository.RegisterOrReactivate(second);
+        await repository.RegisterOrReactivateAsync(first);
+        await repository.RegisterOrReactivateAsync(second);
         const string sharedEmail = "shared.email@example.com";
 
         // Cada "requisição" já verificou que o e-mail estava livre antes de gravar
@@ -116,8 +116,8 @@ public class UnitOfWorkTests(PostgreSqlInfrastructureFixture fixture) : Policyho
         await UpdateEmail(firstRequest, first.Id, sharedEmail);
         await UpdateEmail(secondRequest, second.Id, sharedEmail);
 
-        await new UnitOfWork(firstRequest).Commit();
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => new UnitOfWork(secondRequest).Commit());
+        await new UnitOfWork(firstRequest).CommitAsync();
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => new UnitOfWork(secondRequest).CommitAsync());
 
         exception.GetErrors().ShouldBe([ResourcesMessageException.POLICYHOLDER_ACTIVE_EMAIL_EXISTS]);
         await using var verificationContext = Fixture.CreateDbContext();
@@ -135,17 +135,17 @@ public class UnitOfWorkTests(PostgreSqlInfrastructureFixture fixture) : Policyho
 
         // Inativação: lê o segurado e confirma que não há apólice
         var holderInDeactivation = await deactivation.Policyholders.SingleAsync(p => p.Id == policyholderId);
-        (await CreateRepository(deactivation).HasActiveOrFuturePolicy(policyholderId)).ShouldBeFalse();
+        (await CreateRepository(deactivation).HasActiveOrFuturePolicyAsync(policyholderId)).ShouldBeFalse();
 
         // Cadastro de apólice: lê o segurado ativo, cadastra e grava primeiro
         var holderInRegistration = await registration.Policyholders.SingleAsync(p => p.Id == policyholderId);
         holderInRegistration.RegisterPolicy();
         registration.Policies.Add(PolicyBuilder.Build(policyholderId));
-        await new UnitOfWork(registration).Commit();
+        await new UnitOfWork(registration).CommitAsync();
 
         // A inativação grava com a versão antiga do segurado
         holderInDeactivation.Deactivate();
-        await Should.ThrowAsync<ConflictException>(() => new UnitOfWork(deactivation).Commit());
+        await Should.ThrowAsync<ConflictException>(() => new UnitOfWork(deactivation).CommitAsync());
 
         await using var verificationContext = Fixture.CreateDbContext();
         (await verificationContext.Policyholders.IgnoreQueryFilters().AsNoTracking().SingleAsync(p => p.Id == policyholderId))
@@ -167,13 +167,13 @@ public class UnitOfWorkTests(PostgreSqlInfrastructureFixture fixture) : Policyho
 
         // A inativação grava primeiro
         holderInDeactivation.Deactivate();
-        await new UnitOfWork(deactivation).Commit();
+        await new UnitOfWork(deactivation).CommitAsync();
 
         // O cadastro de apólice grava com a versão antiga: a apólice e a alteração do segurado
         // estão no mesmo SaveChanges (mesma transação), então nenhuma das duas é gravada
         holderInRegistration.RegisterPolicy();
         registration.Policies.Add(PolicyBuilder.Build(policyholderId));
-        await Should.ThrowAsync<ConflictException>(() => new UnitOfWork(registration).Commit());
+        await Should.ThrowAsync<ConflictException>(() => new UnitOfWork(registration).CommitAsync());
 
         await using var verificationContext = Fixture.CreateDbContext();
         (await verificationContext.Policyholders.IgnoreQueryFilters().AsNoTracking().SingleAsync(p => p.Id == policyholderId))
@@ -185,7 +185,7 @@ public class UnitOfWorkTests(PostgreSqlInfrastructureFixture fixture) : Policyho
     {
         await using var dbContext = Fixture.CreateDbContext();
         var policyholder = PolicyholderBuilder.Build();
-        await CreateRepository(dbContext).RegisterOrReactivate(policyholder);
+        await CreateRepository(dbContext).RegisterOrReactivateAsync(policyholder);
         return policyholder.Id;
     }
 

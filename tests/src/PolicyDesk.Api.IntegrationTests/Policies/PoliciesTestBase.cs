@@ -6,7 +6,7 @@ using PolicyDesk.Api.IntegrationTests.Policyholders;
 using PolicyDesk.Communication.Requests;
 using PolicyDesk.Communication.Responses;
 using Policy = PolicyDesk.Domain.Entities.Policy;
-using Policyholder = PolicyDesk.Domain.Entities.Policyholders;
+using PolicyDesk.Domain.Entities;
 
 namespace PolicyDesk.Api.IntegrationTests.Policies;
 
@@ -18,7 +18,7 @@ public abstract class PoliciesTestBase(PolicyDeskApplicationFactory factory) : P
             "/api/apolices",
             request ?? RequestPolicyJsonBuilder.Build(policyholder.Id));
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var created = await response.Content.ReadFromJsonAsync<ResponseCreatedJson>();
+        var created = await response.Content.ReadFromJsonAsync<ResponseCreatedJson>(TestJson.Options);
         Assert.NotNull(created);
         return await DbContext.Policies.AsNoTracking().SingleAsync(policy => policy.Id == created.Id);
     }

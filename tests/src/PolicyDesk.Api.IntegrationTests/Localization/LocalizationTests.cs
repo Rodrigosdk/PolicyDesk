@@ -36,8 +36,8 @@ public class LocalizationTests(PolicyDeskApplicationFactory factory) : IClassFix
     [Trait("Integration", "Localização")]
     public async Task Deve_FormatarMensagemComLimiteEmIngles_Quando_AcceptLanguageForIngles()
     {
-        var request = RequestPolicyholdersJsonBuilder.Build();
-        request.Name = new string('a', 151);
+        var request = RequestPolicyholderJsonBuilder.Build();
+        request.Nome = new string('a', 151);
 
         var body = await Send(request, "en");
 
@@ -45,7 +45,7 @@ public class LocalizationTests(PolicyDeskApplicationFactory factory) : IClassFix
     }
 
     private async Task<string> RegisterWithInvalidCpf(string? language) =>
-        await Send(RequestPolicyholdersJsonBuilder.Build(cpf: "111.111.111-11"), language);
+        await Send(RequestPolicyholderJsonBuilder.Build(cpf: "111.111.111-11"), language);
 
     private async Task<string> Send(object request, string? language)
     {

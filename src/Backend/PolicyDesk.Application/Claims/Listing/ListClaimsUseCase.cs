@@ -1,3 +1,4 @@
+using PolicyDesk.Application.Common;
 using PolicyDesk.Communication.Responses;
 using PolicyDesk.Domain.Repositories.Claims;
 using PolicyDesk.Domain.Repositories.Policies;
@@ -10,18 +11,18 @@ internal class ListClaimsUseCase(
     IClaimsReadOnlyRepository claimsReadOnlyRepository,
     IPoliciesReadOnlyRepository policiesReadOnlyRepository) : IListClaimsUseCase
 {
-    public async Task<IEnumerable<ResponseClaimJson>> ListByPolicy(Guid policyId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ResponseClaimJson>> ListByPolicyAsync(Guid policyId, CancellationToken cancellationToken = default)
     {
-        if (await policiesReadOnlyRepository.GetById(policyId, cancellationToken) is null)
+        if (await policiesReadOnlyRepository.GetByIdAsync(policyId, cancellationToken) is null)
             throw new NotFoundException(ResourcesMessageException.POLICY_NOT_FOUND);
 
-        var claims = await claimsReadOnlyRepository.GetByPolicyId(policyId, cancellationToken);
+        var claims = await claimsReadOnlyRepository.GetByPolicyIdAsync(policyId, cancellationToken);
         return claims.Select(MapToResponse);
     }
 
-    public async Task<ResponseClaimJson> GetById(Guid claimId, CancellationToken cancellationToken = default)
+    public async Task<ResponseClaimJson> GetByIdAsync(Guid claimId, CancellationToken cancellationToken = default)
     {
-        var claim = await claimsReadOnlyRepository.GetById(claimId, cancellationToken)
+        var claim = await claimsReadOnlyRepository.GetByIdAsync(claimId, cancellationToken)
                     ?? throw new NotFoundException(ResourcesMessageException.CLAIM_NOT_FOUND);
         return MapToResponse(claim);
     }
@@ -33,11 +34,11 @@ internal class ListClaimsUseCase(
         Descricao = claim.Description,
         Valor = claim.Amount,
         DataOcorrencia = claim.OccurredOn,
-        Status = claim.Status.ToString(),
+        Status = claim.Status.ToContract(),
         MotivoNegacao = claim.DenialReason,
         DataAprovacao = claim.ApprovedAt,
         DataPagamento = claim.PaidAt,
-        CreatedAt = claim.CreatedAt,
-        UpdatedAt = claim.UpdatedAt
+        CriadoEm = claim.CreatedAt,
+        AtualizadoEm = claim.UpdatedAt
     };
 }

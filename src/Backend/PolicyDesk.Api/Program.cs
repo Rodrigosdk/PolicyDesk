@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Localization;
 using PolicyDesk.Api.Errors;
 using PolicyDesk.Api.Filters;
@@ -16,7 +17,11 @@ builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 
 builder.AddObservability();
 builder.Services.AddErrorHandling();
 
-builder.Services.AddControllers(options => options.Filters.Add<ExceptionFilter>()).AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new StringConverter()));
+builder.Services.AddControllers(options => options.Filters.Add<ExceptionFilter>()).AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new StringConverter());
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 builder.Services.AddOpenApi();
 
 builder.Services.AddInfrastructure(builder.Configuration);

@@ -1,5 +1,8 @@
+using PolicyDesk.Application.Common;
+using PolicyDesk.Communication.Enums;
+using PolicyDesk.Communication.Requests;
 using PolicyDesk.Communication.Responses;
-using PolicyDesk.Domain.Enums;
+using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Repositories.Policies;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
@@ -8,25 +11,36 @@ namespace PolicyDesk.Application.Policies.Listing;
 
 internal class ListPoliciesUseCase(IPoliciesReadOnlyRepository policiesReadOnlyRepository) : IListPoliciesUseCase
 {
-    public async Task<IEnumerable<ResponsePolicyJson>> List(Guid? policyholderId, PolicyStatus? status, CancellationToken cancellationToken = default)
+    public async Task<ResponsePagedJson<ResponsePolicyJson>> ListAsync(
+        Guid? policyholderId,
+        StatusApolice? status,
+        RequestPaginationJson pagination,
+        CancellationToken cancellationToken = default)
     {
+        var errors = Pagination.Validate(pagination);
         if (status.HasValue && !Enum.IsDefined(status.Value))
-        {
-            throw new ErrorOnValidationException(ResourcesMessageException.INVALID_POLICY_STATUS);
-        }
+            errors.Insert(0, ResourcesMessageException.INVALID_POLICY_STATUS);
 
-        var policies = await policiesReadOnlyRepository.GetAll(policyholderId, status, cancellationToken);
-        return policies.Select(MapToResponse);
+        if (errors.Count > 0)
+            throw new ErrorOnValidationException(errors);
+
+        var page = await policiesReadOnlyRepository.GetPageAsync(
+            policyholderId,
+            status?.ToDomain(),
+            pagination.Pagina,
+            pagination.TamanhoPagina,
+            cancellationToken);
+        return Pagination.ToResponse(page, pagination, MapToResponse);
     }
 
-    public async Task<ResponsePolicyJson> GetById(Guid policyId, CancellationToken cancellationToken = default)
+    public async Task<ResponsePolicyJson> GetByIdAsync(Guid policyId, CancellationToken cancellationToken = default)
     {
-        var policy = await policiesReadOnlyRepository.GetById(policyId, cancellationToken)
+        var policy = await policiesReadOnlyRepository.GetByIdAsync(policyId, cancellationToken)
                      ?? throw new NotFoundException(ResourcesMessageException.POLICY_NOT_FOUND);
         return MapToResponse(policy);
     }
 
-    private static ResponsePolicyJson MapToResponse(Domain.Entities.Policy policy) => new()
+    private static ResponsePolicyJson MapToResponse(Policy policy) => new()
     {
         Id = policy.Id,
         SeguradoId = policy.PolicyholderId,
@@ -35,8 +49,8 @@ internal class ListPoliciesUseCase(IPoliciesReadOnlyRepository policiesReadOnlyR
         ValorPremio = policy.PremiumAmount,
         InicioVigencia = policy.StartDate,
         FimVigencia = policy.EndDate,
-        Status = policy.Status,
-        CreatedAt = policy.CreatedAt,
-        UpdatedAt = policy.UpdatedAt
+        Status = policy.Status.ToContract(),
+        CriadoEm = policy.CreatedAt,
+        AtualizadoEm = policy.UpdatedAt
     };
 }

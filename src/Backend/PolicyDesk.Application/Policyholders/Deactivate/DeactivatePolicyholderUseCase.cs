@@ -13,22 +13,22 @@ internal class DeactivatePolicyholderUseCase(
     IUnitOfWork unitOfWork,
     ILogger<DeactivatePolicyholderUseCase> logger) : IDeactivatePolicyholderUseCase
 {
-    public async Task Execute(Guid policyholderId, CancellationToken cancellationToken = default)
+    public async Task ExecuteAsync(Guid policyholderId, CancellationToken cancellationToken = default)
     {
-        var policyholder = await policyholdersUpdateOnlyRepository.GetByIdForUpdate(policyholderId, cancellationToken);
+        var policyholder = await policyholdersUpdateOnlyRepository.GetByIdForUpdateAsync(policyholderId, cancellationToken);
         if (policyholder == null)
         {
             throw new NotFoundException(ResourcesMessageException.POLICYHOLDER_NOT_FOUND);
         }
 
-        if (await policyholdersReadOnlyRepository.HasActiveOrFuturePolicy(policyholderId, cancellationToken))
+        if (await policyholdersReadOnlyRepository.HasActiveOrFuturePolicyAsync(policyholderId, cancellationToken))
         {
             throw new ErrorOnValidationException(ResourcesMessageException.POLICYHOLDER_HAS_ACTIVE_POLICY);
         }
         
         policyholder.Deactivate();
         
-        await unitOfWork.Commit(cancellationToken);
+        await unitOfWork.CommitAsync(cancellationToken);
         logger.PolicyholderDeactivated(policyholder.Id);
     }
 }
