@@ -7,11 +7,11 @@ namespace PolicyDesk.Domain.Entities;
 
 public class Policyholder : Entity
 {
-    public Policyholder(string name, string cpf, DateTime birthDate, string email, string phone)
+    public Policyholder(string name, string cpf, DateOnly birthDate, string email, string phone, DateOnly today)
     {
         Name = NormalizeNameOrThrow(name);
         Cpf = CpfValidator.NormalizeOrThrow(cpf);
-        BirthDate = EnsureValidBirthDate(birthDate);
+        BirthDate = EnsureValidBirthDate(birthDate, today);
         Email = EmailValidator.NormalizeOrThrow(email);
         Phone = EnsureValidPhone(phone);
     }
@@ -24,16 +24,16 @@ public class Policyholder : Entity
 
     public string Name { get; private set; } = string.Empty;
     public string Cpf { get; private set; } = string.Empty;
-    public DateTime BirthDate { get; private set; }
+    public DateOnly BirthDate { get; private set; }
     public string Email { get; private set; } = string.Empty;
     public string Phone { get; private set; } = string.Empty;
     public bool Active { get; private set; } = true;
 
-    public void Update(string name, DateTime birthDate, string email, string phone)
+    public void Update(string name, DateOnly birthDate, string email, string phone, DateOnly today)
     {
         // Valida tudo antes de alterar qualquer campo
         var normalizedName = NormalizeNameOrThrow(name);
-        var validBirthDate = EnsureValidBirthDate(birthDate);
+        var validBirthDate = EnsureValidBirthDate(birthDate, today);
         var normalizedEmail = EmailValidator.NormalizeOrThrow(email);
         var validPhone = EnsureValidPhone(phone);
 
@@ -67,12 +67,12 @@ public class Policyholder : Entity
             : name.Trim();
     }
 
-    private static DateTime EnsureValidBirthDate(DateTime birthDate)
+    private static DateOnly EnsureValidBirthDate(DateOnly birthDate, DateOnly today)
     {
         if (birthDate == default)
             throw new DomainRuleException(ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_REQUIRED);
 
-        return birthDate.Date > DateTime.UtcNow.Date
+        return birthDate > today
             ? throw new DomainRuleException(ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_IN_FUTURE)
             : birthDate;
     }

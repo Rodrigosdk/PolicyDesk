@@ -6,5 +6,5 @@ public interface IPolicyholdersReadOnlyRepository
     Task<Entities.Policyholder?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<bool> ExistActivePolicyholdersWithEmailAsync(string email, Guid? exceptPolicyholderId = null, CancellationToken cancellationToken = default);
     // Apólice não cancelada que ainda não terminou: vigente hoje ou com vigência futura
-    Task<bool> HasActiveOrFuturePolicyAsync(Guid policyholderId, CancellationToken cancellationToken = default);
+    Task<bool> HasActiveOrFuturePolicyAsync(Guid policyholderId, DateOnly today, CancellationToken cancellationToken = default);
 }

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using CommonTestUtilities.Requests;
+using CommonTestUtilities.Time;
 using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Communication.Requests;
 using PolicyDesk.Communication.Responses;
@@ -32,7 +33,7 @@ public class RegisterClaimTests(PolicyDeskApplicationFactory factory) : ClaimsTe
         saved.PolicyId.ShouldBe(policy.Id);
         saved.Description.ShouldBe("Broken window");
         saved.Amount.ShouldBe(250);
-        saved.OccurredOn.ShouldBe(request.DataOcorrencia.Date);
+        saved.OccurredOn.ShouldBe(request.DataOcorrencia);
         saved.Status.ShouldBe(ClaimStatus.Pending);
     }
 
@@ -86,7 +87,7 @@ public class RegisterClaimTests(PolicyDeskApplicationFactory factory) : ClaimsTe
 
         var response = await Post(
             $"/api/apolices/{policy.Id}/sinistros",
-            RequestClaimJsonBuilder.Build(occurredOn: DateTime.UtcNow.Date.AddDays(-30)));
+            RequestClaimJsonBuilder.Build(occurredOn: BusinessClockBuilder.DefaultToday.AddDays(-30)));
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await response.Content.ReadAsStringAsync())
@@ -101,11 +102,28 @@ public class RegisterClaimTests(PolicyDeskApplicationFactory factory) : ClaimsTe
 
         var response = await Post(
             $"/api/apolices/{policy.Id}/sinistros",
-            RequestClaimJsonBuilder.Build(amount: 100, occurredOn: DateTime.UtcNow.Date.AddDays(1)));
+            RequestClaimJsonBuilder.Build(amount: 100, occurredOn: BusinessClockBuilder.DefaultToday.AddDays(1)));
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await response.Content.ReadAsStringAsync())
             .ShouldContain(ResourcesMessageException.CLAIM_OCCURRENCE_DATE_IN_FUTURE);
+        (await DbContext.Claims.AnyAsync(claim => claim.PolicyId == policy.Id)).ShouldBeFalse();
+    }
+
+    [Fact(DisplayName = nameof(Deve_RetornarBadRequestSemGravar_Quando_DataDeOcorrenciaVierComHorario))]
+    [Trait("Integration", "Claims - Cadastro")]
+    public async Task Deve_RetornarBadRequestSemGravar_Quando_DataDeOcorrenciaVierComHorario()
+    {
+        var policy = await RegisterPolicyForNewHolder();
+
+        var response = await Post($"/api/apolices/{policy.Id}/sinistros", new Dictionary<string, object>
+        {
+            ["descricao"] = "Broken window",
+            ["valor"] = 100m,
+            ["dataOcorrencia"] = "2026-03-10T22:00:00-03:00"
+        });
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await DbContext.Claims.AnyAsync(claim => claim.PolicyId == policy.Id)).ShouldBeFalse();
     }
 

@@ -1,4 +1,5 @@
 using CommonTestUtilities.Entities;
+using CommonTestUtilities.Time;
 using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Infrastructure.DataAccess;
 using Shouldly;
@@ -116,12 +117,12 @@ public class QueryPolicyholdersRepositoryTests(PostgreSqlInfrastructureFixture f
         var repository = CreateRepository(dbContext);
         var policyholder = PolicyholderBuilder.Build();
         await repository.RegisterOrReactivateAsync(policyholder);
-        var today = DateTime.UtcNow.Date;
+        var today = BusinessClockBuilder.DefaultToday;
         dbContext.Policies.Add(PolicyBuilder.Build(
             policyholder.Id, startDate: today.AddDays(startOffset), endDate: today.AddDays(endOffset)));
         await dbContext.SaveChangesAsync();
 
-        (await repository.HasActiveOrFuturePolicyAsync(policyholder.Id)).ShouldBe(expected);
+        (await repository.HasActiveOrFuturePolicyAsync(policyholder.Id, BusinessClockBuilder.DefaultToday)).ShouldBe(expected);
     }
 
     [Fact(DisplayName = nameof(Deve_IgnorarApoliceCancelada_Quando_VerificarApoliceAtivaOuFutura))]
@@ -132,13 +133,13 @@ public class QueryPolicyholdersRepositoryTests(PostgreSqlInfrastructureFixture f
         var repository = CreateRepository(dbContext);
         var policyholder = PolicyholderBuilder.Build();
         await repository.RegisterOrReactivateAsync(policyholder);
-        var today = DateTime.UtcNow.Date;
+        var today = BusinessClockBuilder.DefaultToday;
         var futurePolicy = PolicyBuilder.Build(policyholder.Id, startDate: today.AddDays(10), endDate: today.AddDays(40));
         futurePolicy.Cancel();
         dbContext.Policies.Add(futurePolicy);
         await dbContext.SaveChangesAsync();
 
-        (await repository.HasActiveOrFuturePolicyAsync(policyholder.Id)).ShouldBeFalse();
+        (await repository.HasActiveOrFuturePolicyAsync(policyholder.Id, BusinessClockBuilder.DefaultToday)).ShouldBeFalse();
     }
 
 

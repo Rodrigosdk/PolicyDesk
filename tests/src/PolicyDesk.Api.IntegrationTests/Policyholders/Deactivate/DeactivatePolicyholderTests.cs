@@ -1,5 +1,6 @@
 using System.Net;
 using CommonTestUtilities.Requests;
+using CommonTestUtilities.Time;
 using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Exception;
 using Shouldly;
@@ -39,7 +40,7 @@ public class DeactivatePolicyholderTests(PolicyDeskApplicationFactory factory) :
     public async Task Deve_RetornarBadRequest_Quando_HouverApoliceComVigenciaFutura()
     {
         var policyholder = await RegisterPolicyholder();
-        var today = DateTime.UtcNow.Date;
+        var today = BusinessClockBuilder.DefaultToday;
         (await Post("/api/apolices", RequestPolicyJsonBuilder.Build(
                 policyholder.Id, startDate: today.AddDays(10), endDate: today.AddDays(40))))
             .StatusCode.ShouldBe(HttpStatusCode.Created);
@@ -49,6 +50,32 @@ public class DeactivatePolicyholderTests(PolicyDeskApplicationFactory factory) :
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await response.Content.ReadAsStringAsync()).ShouldContain(ResourcesMessageException.POLICYHOLDER_HAS_ACTIVE_POLICY);
         (await FindById(policyholder.Id)).Active.ShouldBeTrue();
+    }
+
+    [Fact(DisplayName = nameof(Deve_RetornarBadRequest_Quando_ApoliceTerminarHojeNoBrasilMasJaForAmanhaEmUtc))]
+    [Trait("Integration", "Policyholders - Inativação")]
+    public async Task Deve_RetornarBadRequest_Quando_ApoliceTerminarHojeNoBrasilMasJaForAmanhaEmUtc()
+    {
+        var policyholder = await RegisterPolicyholder();
+        var today = BusinessClockBuilder.DefaultToday;
+        (await Post("/api/apolices", RequestPolicyJsonBuilder.Build(
+                policyholder.Id, startDate: today.AddDays(-30), endDate: today)))
+            .StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        var previousUtcNow = Factory.Clock.GetUtcNow();
+        Factory.Clock.AdjustTime(BusinessClockBuilder.LateEveningUtcNow);
+        try
+        {
+            var response = await Delete($"{RequestUri}/{policyholder.Id}");
+
+            response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+            (await response.Content.ReadAsStringAsync()).ShouldContain(ResourcesMessageException.POLICYHOLDER_HAS_ACTIVE_POLICY);
+            (await FindById(policyholder.Id)).Active.ShouldBeTrue();
+        }
+        finally
+        {
+            Factory.Clock.AdjustTime(previousUtcNow);
+        }
     }
 
     [Fact(DisplayName = nameof(Deve_ManterConsistencia_Quando_InativarECadastrarApoliceAoMesmoTempo))]

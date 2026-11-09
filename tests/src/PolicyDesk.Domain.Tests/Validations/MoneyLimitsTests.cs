@@ -1,4 +1,5 @@
 using CommonTestUtilities.Entities;
+using CommonTestUtilities.Time;
 using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Validations;
 using PolicyDesk.Exception.Exception;
@@ -35,7 +36,7 @@ public class MoneyLimitsTests
     public void Deve_LancarExcecao_Quando_CriarSinistroComMaisDeDuasCasasDecimais()
     {
         var exception = Should.Throw<DomainRuleException>(
-            () => new Claim(Guid.NewGuid(), "Description", 10.005m, DateTime.UtcNow.Date));
+            () => new Claim(Guid.NewGuid(), "Description", 10.005m, BusinessClockBuilder.DefaultToday));
 
         exception.Message.ShouldBe(MoneyLimits.ClaimAmountInvalidPrecision);
     }

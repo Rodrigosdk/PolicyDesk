@@ -13,8 +13,8 @@ public class Policy : Entity
         string description,
         decimal coverageAmount,
         decimal premiumAmount,
-        DateTime startDate,
-        DateTime endDate)
+        DateOnly startDate,
+        DateOnly endDate)
     {
         if (policyholderId == Guid.Empty)
             throw new DomainRuleException(ResourcesMessageException.POLICYHOLDER_REQUIRED);
@@ -32,15 +32,15 @@ public class Policy : Entity
             throw new DomainRuleException(MoneyLimits.PremiumAmountInvalidPrecision);
         if (startDate == default || endDate == default)
             throw new DomainRuleException(ResourcesMessageException.POLICY_DATES_REQUIRED);
-        if (endDate.Date <= startDate.Date)
+        if (endDate <= startDate)
             throw new DomainRuleException(ResourcesMessageException.POLICY_END_DATE_MUST_BE_AFTER_START_DATE);
 
         PolicyholderId = policyholderId;
         Description = description.Trim();
         CoverageAmount = coverageAmount;
         PremiumAmount = premiumAmount;
-        StartDate = startDate.Date;
-        EndDate = endDate.Date;
+        StartDate = startDate;
+        EndDate = endDate;
     }
 
     // Usado pelo EF Core ao carregar do banco: não reaplica as regras de criação
@@ -52,14 +52,14 @@ public class Policy : Entity
     public string Description { get; private set; } = string.Empty;
     public decimal CoverageAmount { get; private set; }
     public decimal PremiumAmount { get; private set; }
-    public DateTime StartDate { get; private set; }
-    public DateTime EndDate { get; private set; }
+    public DateOnly StartDate { get; private set; }
+    public DateOnly EndDate { get; private set; }
     public PolicyStatus Status { get; private set; } = PolicyStatus.Active;
     public DateTime? CancelledAt { get; private set; }
 
     public bool IsCancelled => Status == PolicyStatus.Cancelled;
 
-    public bool IsInForce(DateTime date) => !IsCancelled && date.Date >= StartDate && date.Date <= EndDate;
+    public bool IsInForce(DateOnly date) => !IsCancelled && date >= StartDate && date <= EndDate;
 
     public void RegisterClaim(decimal amount, decimal committedAmount)
     {

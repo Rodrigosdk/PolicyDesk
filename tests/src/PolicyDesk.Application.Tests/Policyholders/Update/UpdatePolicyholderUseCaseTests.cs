@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Requests;
+using CommonTestUtilities.Time;
 using Moq;
 using PolicyDesk.Application.Policyholders.Update;
 using PolicyDesk.Communication.Requests;
@@ -77,7 +78,7 @@ public class UpdatePolicyholderUseCaseTests
     public async Task Deve_LancarExcecaoAntesDaBusca_Quando_DataDeNascimentoForFutura()
     {
         var request = RequestUpdatePolicyholderJsonBuilder.Build();
-        request.DataNascimento = DateTime.UtcNow.Date.AddDays(1);
+        request.DataNascimento = BusinessClockBuilder.DefaultToday.AddDays(1);
 
         await ShouldFailBeforeSearching(request, ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_IN_FUTURE);
     }
@@ -167,6 +168,6 @@ public class UpdatePolicyholderUseCaseTests
 
         var unitOfWork = UnitOfWorkBuilder.Build();
 
-        return (new UpdatePolicyholderUseCase(readBuilder.Build(), updateBuilder.Build(), unitOfWork.Object, NullLogger<UpdatePolicyholderUseCase>.Instance), readBuilder, updateBuilder, unitOfWork);
+        return (new UpdatePolicyholderUseCase(readBuilder.Build(), updateBuilder.Build(), unitOfWork.Object, BusinessClockBuilder.Build(), NullLogger<UpdatePolicyholderUseCase>.Instance), readBuilder, updateBuilder, unitOfWork);
     }
 }

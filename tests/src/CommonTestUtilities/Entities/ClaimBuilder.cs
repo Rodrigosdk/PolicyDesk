@@ -1,4 +1,5 @@
 using Bogus;
+using CommonTestUtilities.Time;
 using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Enums;
 
@@ -10,14 +11,14 @@ public static class ClaimBuilder
         Guid? policyId = null,
         string? description = null,
         decimal? amount = null,
-        DateTime? occurredOn = null)
+        DateOnly? occurredOn = null)
     {
         var faker = new Faker();
         return new Claim(
             policyId ?? Guid.NewGuid(),
             description ?? faker.Lorem.Sentence(),
             amount ?? faker.Finance.Amount(1, 10000),
-            occurredOn ?? DateTime.UtcNow.Date);
+            occurredOn ?? BusinessClockBuilder.DefaultToday);
     }
 
     // Leva o sinistro até o status pedido passando apenas por transições válidas

@@ -1,4 +1,5 @@
 using CommonTestUtilities.Entities;
+using CommonTestUtilities.Time;
 using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Enums;
@@ -135,7 +136,7 @@ public class UnitOfWorkTests(PostgreSqlInfrastructureFixture fixture) : Policyho
 
         // Inativação: lê o segurado e confirma que não há apólice
         var holderInDeactivation = await deactivation.Policyholders.SingleAsync(p => p.Id == policyholderId);
-        (await CreateRepository(deactivation).HasActiveOrFuturePolicyAsync(policyholderId)).ShouldBeFalse();
+        (await CreateRepository(deactivation).HasActiveOrFuturePolicyAsync(policyholderId, BusinessClockBuilder.DefaultToday)).ShouldBeFalse();
 
         // Cadastro de apólice: lê o segurado ativo, cadastra e grava primeiro
         var holderInRegistration = await registration.Policyholders.SingleAsync(p => p.Id == policyholderId);
@@ -205,6 +206,6 @@ public class UnitOfWorkTests(PostgreSqlInfrastructureFixture fixture) : Policyho
     private static async Task UpdateEmail(PolicyDeskDbContext dbContext, Guid policyholderId, string email)
     {
         var policyholder = await dbContext.Policyholders.SingleAsync(p => p.Id == policyholderId);
-        policyholder.Update(policyholder.Name, policyholder.BirthDate, email, policyholder.Phone);
+        policyholder.Update(policyholder.Name, policyholder.BirthDate, email, policyholder.Phone, BusinessClockBuilder.DefaultToday);
     }
 }

@@ -22,7 +22,7 @@ internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) :
                 INSERT INTO policyholders
                     (id, name, cpf, birth_date, email, phone, created_at, updated_at, active)
                 VALUES
-                    ({policyholder.Id}, {policyholder.Name}, {policyholder.Cpf}, {DateOnly.FromDateTime(policyholder.BirthDate)},
+                    ({policyholder.Id}, {policyholder.Name}, {policyholder.Cpf}, {policyholder.BirthDate},
                      {policyholder.Email}, {policyholder.Phone}, {policyholder.CreatedAt}, {policyholder.UpdatedAt},
                      {policyholder.Active})
                 ON CONFLICT (cpf) DO UPDATE
@@ -90,9 +90,8 @@ internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) :
             (exceptPolicyholderId == null || policyholder.Id != exceptPolicyholderId), cancellationToken);
     }
 
-    public Task<bool> HasActiveOrFuturePolicyAsync(Guid policyholderId, CancellationToken cancellationToken = default)
+    public Task<bool> HasActiveOrFuturePolicyAsync(Guid policyholderId, DateOnly today, CancellationToken cancellationToken = default)
     {
-        var today = DateTime.UtcNow.Date;
         return dbContext.Policies.AnyAsync(policy =>
             policy.PolicyholderId == policyholderId &&
             policy.Status == PolicyStatus.Active &&

@@ -4,6 +4,7 @@ using PolicyDesk.Communication.Requests;
 using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Policyholders;
 using PolicyDesk.Domain.Validations;
+using PolicyDesk.Domain.SeedWorks;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 
@@ -13,31 +14,35 @@ internal class UpdatePolicyholderUseCase(
     IPolicyholdersReadOnlyRepository policyholdersReadOnlyRepository,
     IPolicyholdersUpdateOnlyRepository policyholdersUpdateOnlyRepository,
     IUnitOfWork unitOfWork,
+    BusinessClock clock,
     ILogger<UpdatePolicyholderUseCase> logger)
     : IUpdatePolicyholderUseCase
 {
     public async Task ExecuteAsync(Guid policyholderId, RequestUpdatePolicyholderJson request, CancellationToken cancellationToken = default)
     {
-        var policyholder = await ValidateAndThrowOnFailuresAsync(policyholderId, request, cancellationToken);
+        var today = clock.Today;
+        var policyholder = await ValidateAndThrowOnFailuresAsync(policyholderId, request, today, cancellationToken);
         
         policyholder.Update(
             request.Nome,
             request.DataNascimento,
             request.Email,
-            request.Telefone
+            request.Telefone,
+            today
         );
         
         await unitOfWork.CommitAsync(cancellationToken);
         logger.PolicyholderUpdated(policyholder.Id);
     }
     private async Task<Domain.Entities.Policyholder> ValidateAndThrowOnFailuresAsync(
-        Guid policyholderId, RequestUpdatePolicyholderJson request, CancellationToken cancellationToken)
+        Guid policyholderId, RequestUpdatePolicyholderJson request, DateOnly today, CancellationToken cancellationToken)
     {
         var errors = PolicyholderDataValidator.Validate(
             request.Nome,
             request.DataNascimento,
             request.Email,
-            request.Telefone);
+            request.Telefone,
+            today);
 
         if (errors.Count > 0)
         {

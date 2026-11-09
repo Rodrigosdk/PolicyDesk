@@ -34,9 +34,14 @@ public class PolicyholdersReadOnlyRepositoryBuilder
         return this;
     }
 
-    public PolicyholdersReadOnlyRepositoryBuilder HasActiveOrFuturePolicy(Guid policyholderId, bool value = true)
+    public PolicyholdersReadOnlyRepositoryBuilder HasActiveOrFuturePolicy(Guid policyholderId, bool value = true, DateOnly? today = null)
     {
-        _repository.Setup(r => r.HasActiveOrFuturePolicyAsync(policyholderId, It.IsAny<CancellationToken>())).ReturnsAsync(value);
+        _repository
+            .Setup(r => r.HasActiveOrFuturePolicyAsync(
+                policyholderId,
+                It.Is<DateOnly>(date => today == null || date == today),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(value);
         return this;
     }
 

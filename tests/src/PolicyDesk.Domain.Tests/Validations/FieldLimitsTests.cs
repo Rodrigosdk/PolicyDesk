@@ -1,5 +1,6 @@
 using System.Globalization;
 using CommonTestUtilities.Entities;
+using CommonTestUtilities.Time;
 using PolicyDesk.Domain.Enums;
 using PolicyDesk.Domain.Validations;
 using PolicyDesk.Exception.Exception;
@@ -42,7 +43,8 @@ public class FieldLimitsTests
             new string('a', FieldLimits.PolicyholderName + 1),
             policyholder.BirthDate,
             policyholder.Email,
-            policyholder.Phone));
+            policyholder.Phone,
+            BusinessClockBuilder.DefaultToday));
 
         exception.Message.ShouldBe(FieldLimits.PolicyholderNameTooLong);
         policyholder.Name.ShouldBe(originalName);

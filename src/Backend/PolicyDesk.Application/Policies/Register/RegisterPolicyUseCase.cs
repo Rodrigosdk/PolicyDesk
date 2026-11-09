@@ -71,7 +71,7 @@ internal class RegisterPolicyUseCase(
 
         if (request.InicioVigencia == default || request.FimVigencia == default)
             errors.Add(ResourcesMessageException.POLICY_DATES_REQUIRED);
-        else if (request.FimVigencia.Date <= request.InicioVigencia.Date)
+        else if (request.FimVigencia <= request.InicioVigencia)
             errors.Add(ResourcesMessageException.POLICY_END_DATE_MUST_BE_AFTER_START_DATE);
 
         if (errors.Count > 0)

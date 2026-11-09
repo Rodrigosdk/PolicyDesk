@@ -5,6 +5,7 @@ using PolicyDesk.Communication.Requests;
 using PolicyDesk.Communication.Responses;
 using PolicyDesk.Domain.Repositories.Policyholders;
 using PolicyDesk.Domain.Validations;
+using PolicyDesk.Domain.SeedWorks;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 
@@ -12,19 +13,22 @@ namespace PolicyDesk.Application.Policyholders.Register;
 
 internal class RegisterPolicyholderUseCase(
     IPolicyholdersWriteOnlyRepository policyholdersWriteOnlyRepository,
+    BusinessClock clock,
     ILogger<RegisterPolicyholderUseCase> logger) : IRegisterPolicyholderUseCase
 {
     
     public async Task<ResponseCreatedJson> ExecuteAsync(RequestPolicyholderJson request, CancellationToken cancellationToken = default)
     {
-        ValidateAndThrowOnFailures(request);
+        var today = clock.Today;
+        ValidateAndThrowOnFailures(request, today);
 
         var policyholder = new Domain.Entities.Policyholder(
             request.Nome,
             request.Cpf,
             request.DataNascimento,
             request.Email,
-            request.Telefone
+            request.Telefone,
+            today
         );
 
         var registration = await policyholdersWriteOnlyRepository.RegisterOrReactivateAsync(policyholder, cancellationToken);
@@ -42,13 +46,14 @@ internal class RegisterPolicyholderUseCase(
         }
     }
     
-    private static void ValidateAndThrowOnFailures(RequestPolicyholderJson request)
+    private static void ValidateAndThrowOnFailures(RequestPolicyholderJson request, DateOnly today)
     {
         var errors = PolicyholderDataValidator.Validate(
             request.Nome,
             request.DataNascimento,
             request.Email,
-            request.Telefone);
+            request.Telefone,
+            today);
 
         if (!CpfValidator.IsValid(request.Cpf))
             errors.Insert(0, ResourcesMessageException.INVALID_CPF);

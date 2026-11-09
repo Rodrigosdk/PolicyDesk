@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Requests;
+using CommonTestUtilities.Time;
 using Moq;
 using PolicyDesk.Application.Policies.Register;
 using PolicyDesk.Domain.Entities;
@@ -38,8 +39,8 @@ public class RegisterPolicyUseCaseTests
             policy.Description == "Home policy" &&
             policy.CoverageAmount == request.ValorCobertura &&
             policy.PremiumAmount == request.ValorPremio &&
-            policy.StartDate == request.InicioVigencia.Date &&
-            policy.EndDate == request.FimVigencia.Date)), Times.Once);
+            policy.StartDate == request.InicioVigencia &&
+            policy.EndDate == request.FimVigencia)), Times.Once);
         unitOfWork.Verify(work => work.CommitAsync(), Times.Once);
         // O segurado é alterado junto para que uma inativação concorrente seja detectada como conflito
         policyholder.UpdatedAt.ShouldNotBeNull();
@@ -92,8 +93,8 @@ public class RegisterPolicyUseCaseTests
             description,
             coverage,
             premium,
-            missingDates ? default : DateTime.UtcNow.Date,
-            missingDates ? default : DateTime.UtcNow.Date.AddDays(1));
+            missingDates ? default : BusinessClockBuilder.DefaultToday,
+            missingDates ? default : BusinessClockBuilder.DefaultToday.AddDays(1));
 
         await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(request));
 
@@ -106,7 +107,7 @@ public class RegisterPolicyUseCaseTests
     [Trait("Application", "Policies - Register")]
     public async Task Deve_LancarValidacao_Quando_DataFinalNaoForPosteriorAInicial()
     {
-        var today = DateTime.UtcNow.Date;
+        var today = BusinessClockBuilder.DefaultToday;
         var (useCase, writeRepository, unitOfWork, _) = CreateUseCase();
         var request = RequestPolicyJsonBuilder.Build(startDate: today, endDate: today);
 

@@ -7,6 +7,7 @@ using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Claims;
 using PolicyDesk.Domain.Repositories.Policies;
 using PolicyDesk.Domain.Validations;
+using PolicyDesk.Domain.SeedWorks;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 
@@ -17,11 +18,12 @@ internal class RegisterClaimUseCase(
     IClaimsReadOnlyRepository claimsReadOnlyRepository,
     IPoliciesUpdateOnlyRepository policiesUpdateOnlyRepository,
     IUnitOfWork unitOfWork,
+    BusinessClock clock,
     ILogger<RegisterClaimUseCase> logger) : IRegisterClaimUseCase
 {
     public async Task<ResponseCreatedJson> ExecuteAsync(Guid policyId, RequestClaimJson request, CancellationToken cancellationToken = default)
     {
-        Validate(request);
+        Validate(request, clock.Today);
 
         var policy = await policiesUpdateOnlyRepository.GetByIdForUpdateAsync(policyId, cancellationToken)
                      ?? throw new NotFoundException(ResourcesMessageException.POLICY_NOT_FOUND);
@@ -48,7 +50,7 @@ internal class RegisterClaimUseCase(
         return new ResponseCreatedJson { Id = claim.Id };
     }
 
-    private static void Validate(RequestClaimJson request)
+    private static void Validate(RequestClaimJson request, DateOnly today)
     {
         var errors = new List<string>();
 
@@ -64,7 +66,7 @@ internal class RegisterClaimUseCase(
 
         if (request.DataOcorrencia == default)
             errors.Add(ResourcesMessageException.CLAIM_OCCURRENCE_DATE_REQUIRED);
-        else if (request.DataOcorrencia.Date > DateTime.UtcNow.Date)
+        else if (request.DataOcorrencia > today)
             errors.Add(ResourcesMessageException.CLAIM_OCCURRENCE_DATE_IN_FUTURE);
 
         if (errors.Count > 0)

@@ -2,6 +2,7 @@ using PolicyDesk.Domain.Validations;
 using System.Net;
 using System.Net.Http.Json;
 using CommonTestUtilities.Requests;
+using CommonTestUtilities.Time;
 using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Communication.Responses;
 using PolicyDesk.Exception;
@@ -42,7 +43,7 @@ public class RegisterPolicyTests(PolicyDeskApplicationFactory factory) : Policie
     public async Task Deve_Cadastrar_Quando_CorpoUsarOsNomesDoContrato()
     {
         var policyholder = await RegisterPolicyholder();
-        var today = DateTime.UtcNow.Date;
+        var today = BusinessClockBuilder.DefaultToday;
 
         var response = await Post("/api/apolices", new Dictionary<string, object>
         {
@@ -116,7 +117,7 @@ public class RegisterPolicyTests(PolicyDeskApplicationFactory factory) : Policie
     public async Task Deve_RetornarBadRequest_Quando_DataFinalNaoForPosteriorAInicial()
     {
         var policyholder = await RegisterPolicyholder();
-        var today = DateTime.UtcNow.Date;
+        var today = BusinessClockBuilder.DefaultToday;
 
         var response = await Post(
             "/api/apolices",
