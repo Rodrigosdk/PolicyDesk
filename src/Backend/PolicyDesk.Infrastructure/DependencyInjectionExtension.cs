@@ -32,7 +32,7 @@ public static class DependencyInjectionExtension
         services.AddOptions<DatabaseOptions>()
             .Bind(configuration.GetSection(DatabaseOptions.SectionName))
             .Validate(options => !string.IsNullOrWhiteSpace(options.DbConnection),
-                DatabaseOptions.MissingConnectionStringMessage)
+                ResourcesMessageException.MISSING_CONNECTION_STRING)
             .ValidateOnStart();
 
         services.AddOptions<BusinessOptions>()

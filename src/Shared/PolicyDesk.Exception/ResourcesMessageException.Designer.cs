@@ -320,5 +320,11 @@ namespace PolicyDesk.Exception {
                 return ResourceManager.GetString("INVALID_BUSINESS_TIME_ZONE", resourceCulture);
             }
         }
+
+        public static string MISSING_CONNECTION_STRING {
+            get {
+                return ResourceManager.GetString("MISSING_CONNECTION_STRING", resourceCulture);
+            }
+        }
     }
 }

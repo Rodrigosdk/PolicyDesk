@@ -156,4 +156,7 @@
     <data name="INVALID_BUSINESS_TIME_ZONE" xml:space="preserve">
         <value>Invalid Business:TimeZone. Provide an IANA time zone identifier, such as "America/Sao_Paulo".</value>
     </data>
+    <data name="MISSING_CONNECTION_STRING" xml:space="preserve">
+        <value>ConnectionStrings:DbConnection is not configured. Provide it via User Secrets (dotnet user-secrets set "ConnectionStrings:DbConnection" "...") or the ConnectionStrings__DbConnection environment variable.</value>
+    </data>
 </root>
