@@ -1,4 +1,5 @@
 using CommonTestUtilities.Entities;
+using CommonTestUtilities.Time;
 using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Enums;
 using PolicyDesk.Exception;
@@ -14,7 +15,7 @@ public class ClaimsTests
     public void Deve_InstanciarSinistroPendente_Quando_DadosForemValidos()
     {
         var policyId = Guid.NewGuid();
-        var occurredOn = new DateTime(2026, 3, 4, 15, 45, 0, DateTimeKind.Utc);
+        var occurredOn = new DateOnly(2026, 3, 4);
         var beforeCreation = DateTime.UtcNow;
 
         var claim = ClaimBuilder.Build(policyId, "  Water damage  ", 1500, occurredOn);
@@ -24,7 +25,7 @@ public class ClaimsTests
         claim.PolicyId.ShouldBe(policyId);
         claim.Description.ShouldBe("Water damage");
         claim.Amount.ShouldBe(1500);
-        claim.OccurredOn.ShouldBe(occurredOn.Date);
+        claim.OccurredOn.ShouldBe(occurredOn);
         claim.Status.ShouldBe(ClaimStatus.Pending);
         claim.CreatedAt.ShouldBeInRange(beforeCreation, afterCreation);
         claim.UpdatedAt.ShouldBeNull();
@@ -167,7 +168,7 @@ public class ClaimsTests
     public void Deve_LancarExcecao_Quando_InstanciarComDescricaoVazia(string? description)
     {
         var exception = Should.Throw<DomainRuleException>(
-            () => new Claim(Guid.NewGuid(), description!, 100, DateTime.UtcNow.Date));
+            () => new Claim(Guid.NewGuid(), description!, 100, BusinessClockBuilder.DefaultToday));
 
         exception.Message.ShouldBe(ResourcesMessageException.DESCRIPTION_REQUIRED);
     }
@@ -179,7 +180,7 @@ public class ClaimsTests
     public void Deve_LancarExcecao_Quando_InstanciarComValorNaoPositivo(decimal amount)
     {
         var exception = Should.Throw<DomainRuleException>(
-            () => new Claim(Guid.NewGuid(), "Description", amount, DateTime.UtcNow.Date));
+            () => new Claim(Guid.NewGuid(), "Description", amount, BusinessClockBuilder.DefaultToday));
 
         exception.Message.ShouldBe(ResourcesMessageException.CLAIM_AMOUNT_MUST_BE_POSITIVE);
     }
@@ -189,7 +190,7 @@ public class ClaimsTests
     public void Deve_LancarExcecao_Quando_InstanciarSemApolice()
     {
         var exception = Should.Throw<DomainRuleException>(
-            () => new Claim(Guid.Empty, "Description", 100, DateTime.UtcNow.Date));
+            () => new Claim(Guid.Empty, "Description", 100, BusinessClockBuilder.DefaultToday));
 
         exception.Message.ShouldBe(ResourcesMessageException.POLICY_REQUIRED);
     }

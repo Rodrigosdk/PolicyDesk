@@ -5,11 +5,11 @@ using PolicyDesk.Domain.Validations;
 
 namespace PolicyDesk.Infrastructure.DataAccess.Mappings;
 
-internal class PolicyholdersMap : IEntityTypeConfiguration<Policyholders>
+internal class PolicyholderMap : IEntityTypeConfiguration<Policyholder>
 {
     public const string ActiveFilter = "ActivePolicyholders";
 
-    public void Configure(EntityTypeBuilder<Policyholders> builder)
+    public void Configure(EntityTypeBuilder<Policyholder> builder)
     {
         builder.ToTable("policyholders");
 

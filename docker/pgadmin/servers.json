@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "PolicyDesk (local)",
+      "Group": "PolicyDesk",
+      "Host": "db",
+      "Port": 5432,
+      "MaintenanceDB": "PolicyDesk",
+      "Username": "admin",
+      "SSLMode": "prefer"
+    }
+  }
+}

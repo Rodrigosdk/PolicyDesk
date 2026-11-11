@@ -12,20 +12,20 @@ public class ClaimsReadOnlyRepositoryBuilder
 
     public ClaimsReadOnlyRepositoryBuilder GetById(Claim claim)
     {
-        _repository.Setup(repository => repository.GetById(claim.Id, It.IsAny<CancellationToken>())).ReturnsAsync(claim);
+        _repository.Setup(repository => repository.GetByIdAsync(claim.Id, It.IsAny<CancellationToken>())).ReturnsAsync(claim);
         return this;
     }
 
     public ClaimsReadOnlyRepositoryBuilder GetByPolicyId(IEnumerable<Claim> claims)
     {
-        _repository.Setup(repository => repository.GetByPolicyId(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(claims);
+        _repository.Setup(repository => repository.GetByPolicyIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(claims);
         return this;
     }
 
     public ClaimsReadOnlyRepositoryBuilder SumCommittedAmount(decimal amount)
     {
         _repository
-            .Setup(repository => repository.SumCommittedAmount(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.SumCommittedAmountAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(amount);
         return this;
     }
@@ -41,7 +41,7 @@ public class ClaimsUpdateOnlyRepositoryBuilder
 
     public ClaimsUpdateOnlyRepositoryBuilder GetByIdForUpdate(Claim claim)
     {
-        _repository.Setup(repository => repository.GetByIdForUpdate(claim.Id, It.IsAny<CancellationToken>())).ReturnsAsync(claim);
+        _repository.Setup(repository => repository.GetByIdForUpdateAsync(claim.Id, It.IsAny<CancellationToken>())).ReturnsAsync(claim);
         return this;
     }
 
@@ -53,7 +53,7 @@ public static class ClaimsWriteOnlyRepositoryBuilder
     public static Mock<IClaimsWriteOnlyRepository> Build()
     {
         var mock = new Mock<IClaimsWriteOnlyRepository>();
-        mock.Setup(repository => repository.Add(It.IsAny<Claim>())).Returns(Task.CompletedTask);
+        mock.Setup(repository => repository.AddAsync(It.IsAny<Claim>())).Returns(Task.CompletedTask);
         return mock;
     }
 }

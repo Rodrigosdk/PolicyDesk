@@ -1,5 +1,6 @@
 using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Enums;
+using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Policyholders;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -12,16 +13,16 @@ internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) :
     IPolicyholdersReadOnlyRepository,
     IPolicyholdersUpdateOnlyRepository
 {
-    public async Task<PolicyholderRegistrationResult> RegisterOrReactivate(Policyholders policyholder, CancellationToken cancellationToken = default)
+    public async Task<PolicyholderRegistration> RegisterOrReactivateAsync(Policyholder policyholder, CancellationToken cancellationToken = default)
     {
-        int affectedRows;
+        List<Guid> savedIds;
         try
         {
-            affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
+            savedIds = await dbContext.Database.SqlQuery<Guid>($"""
                 INSERT INTO policyholders
                     (id, name, cpf, birth_date, email, phone, created_at, updated_at, active)
                 VALUES
-                    ({policyholder.Id}, {policyholder.Name}, {policyholder.Cpf}, {DateOnly.FromDateTime(policyholder.BirthDate)},
+                    ({policyholder.Id}, {policyholder.Name}, {policyholder.Cpf}, {policyholder.BirthDate},
                      {policyholder.Email}, {policyholder.Phone}, {policyholder.CreatedAt}, {policyholder.UpdatedAt},
                      {policyholder.Active})
                 ON CONFLICT (cpf) DO UPDATE
@@ -32,7 +33,8 @@ internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) :
                     active = TRUE,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE policyholders.active = FALSE
-                """, cancellationToken);
+                RETURNING id AS "Value"
+                """).ToListAsync(cancellationToken);
         }
         catch (PostgresException exception) when (
             exception is { 
@@ -40,50 +42,56 @@ internal sealed class PolicyholdersRepository(PolicyDeskDbContext dbContext) :
                 ConstraintName: "IX_policyholders_email_active" 
             })
         {
-            return PolicyholderRegistrationResult.ActiveEmailAlreadyExists;
+            return new PolicyholderRegistration(PolicyholderRegistrationResult.ActiveEmailAlreadyExists);
         }
 
-        return affectedRows == 0
-            ? PolicyholderRegistrationResult.ActiveCpfAlreadyExists
-            : PolicyholderRegistrationResult.RegisteredOrReactivated;
+        return savedIds.Count == 0
+            ? new PolicyholderRegistration(PolicyholderRegistrationResult.ActiveCpfAlreadyExists)
+            : new PolicyholderRegistration(PolicyholderRegistrationResult.RegisteredOrReactivated, savedIds[0]);
     }
 
-    public async Task<IEnumerable<Policyholders>> GetAll(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Policyholder>> GetPageAsync(int page, int pageSize, CancellationToken cancellationToken = default)
     {
-        return await dbContext.Policyholders
-            .AsNoTracking()
+        var query = dbContext.Policyholders.AsNoTracking();
+        var totalCount = await query.CountAsync(cancellationToken);
+        var items = await query
+            .OrderBy(policyholder => policyholder.CreatedAt)
+            .ThenBy(policyholder => policyholder.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellationToken);
+
+        return new PagedResult<Policyholder>(items, totalCount);
     }
 
-    public Task<Policyholders?> GetById(Guid id, CancellationToken cancellationToken = default)
+    public Task<Policyholder?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return dbContext.Policyholders.AsNoTracking().FirstOrDefaultAsync(policyholder => policyholder.Id == id, cancellationToken);
     }
 
-    public Task<Policyholders?> GetByIdForUpdate(Guid id, CancellationToken cancellationToken = default)
+    public Task<Policyholder?> GetByIdForUpdateAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return dbContext.Policyholders.FirstOrDefaultAsync(policyholder => policyholder.Id == id, cancellationToken);
     }
 
     // Consulta rastreada de propósito: o cadastro de apólice altera o segurado retornado
     // (RegisterPolicy), e é essa gravação que detecta a inativação concorrente
-    public Task<Policyholders?> GetByIdIncludingInactive(Guid id, CancellationToken cancellationToken = default)
+    public Task<Policyholder?> GetByIdIncludingInactiveAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return dbContext.Policyholders
-            .IgnoreQueryFilters([PolicyholdersMap.ActiveFilter])
+            .IgnoreQueryFilters([PolicyholderMap.ActiveFilter])
             .FirstOrDefaultAsync(policyholder => policyholder.Id == id, cancellationToken);
     }
     
-    public Task<bool> ExistActivePolicyholdersWithEmail(string email, Guid? exceptPolicyholderId = null, CancellationToken cancellationToken = default)
+    public Task<bool> ExistActivePolicyholdersWithEmailAsync(string email, Guid? exceptPolicyholderId = null, CancellationToken cancellationToken = default)
     {
         return dbContext.Policyholders.AnyAsync(policyholder =>
             policyholder.Email == email &&
             (exceptPolicyholderId == null || policyholder.Id != exceptPolicyholderId), cancellationToken);
     }
 
-    public Task<bool> HasActiveOrFuturePolicy(Guid policyholderId, CancellationToken cancellationToken = default)
+    public Task<bool> HasActiveOrFuturePolicyAsync(Guid policyholderId, DateOnly today, CancellationToken cancellationToken = default)
     {
-        var today = DateTime.UtcNow.Date;
         return dbContext.Policies.AnyAsync(policy =>
             policy.PolicyholderId == policyholderId &&
             policy.Status == PolicyStatus.Active &&

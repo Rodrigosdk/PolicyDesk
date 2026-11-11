@@ -6,7 +6,7 @@ namespace PolicyDesk.Application.Policyholders;
 // Regras comuns ao cadastro e à atualização de segurado
 internal static class PolicyholderDataValidator
 {
-    public static List<string> Validate(string? name, DateTime birthDate, string? email, string? phone)
+    public static List<string> Validate(string? name, DateOnly birthDate, string? email, string? phone, DateOnly today)
     {
         var errors = new List<string>();
 
@@ -17,7 +17,7 @@ internal static class PolicyholderDataValidator
 
         if (birthDate == default)
             errors.Add(ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_REQUIRED);
-        else if (birthDate.Date > DateTime.UtcNow.Date)
+        else if (birthDate > today)
             errors.Add(ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_IN_FUTURE);
 
         if (!EmailValidator.IsValid(email))

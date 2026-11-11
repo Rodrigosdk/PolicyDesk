@@ -2,8 +2,10 @@ using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using PolicyDesk.Application.Logging;
 using PolicyDesk.Communication.Requests;
+using PolicyDesk.Communication.Responses;
 using PolicyDesk.Domain.Repositories.Policyholders;
 using PolicyDesk.Domain.Validations;
+using PolicyDesk.Domain.SeedWorks;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 
@@ -11,23 +13,26 @@ namespace PolicyDesk.Application.Policyholders.Register;
 
 internal class RegisterPolicyholderUseCase(
     IPolicyholdersWriteOnlyRepository policyholdersWriteOnlyRepository,
+    BusinessClock clock,
     ILogger<RegisterPolicyholderUseCase> logger) : IRegisterPolicyholderUseCase
 {
     
-    public async Task Execute(RequestPolicyholdersJson request, CancellationToken cancellationToken = default)
+    public async Task<ResponseCreatedJson> ExecuteAsync(RequestPolicyholderJson request, CancellationToken cancellationToken = default)
     {
-        ValidateAndThrowOnFailures(request);
+        var today = clock.Today;
+        ValidateAndThrowOnFailures(request, today);
 
-        var policyholder = new Domain.Entities.Policyholders(
-            request.Name,
+        var policyholder = new Domain.Entities.Policyholder(
+            request.Nome,
             request.Cpf,
-            request.BirthDate,
+            request.DataNascimento,
             request.Email,
-            request.PhoneNumber
+            request.Telefone,
+            today
         );
 
-        var result = await policyholdersWriteOnlyRepository.RegisterOrReactivate(policyholder, cancellationToken);
-        switch (result)
+        var registration = await policyholdersWriteOnlyRepository.RegisterOrReactivateAsync(policyholder, cancellationToken);
+        switch (registration.Result)
         {
             case PolicyholderRegistrationResult.ActiveCpfAlreadyExists:
                 throw new ErrorOnValidationException(ResourcesMessageException.POLICYHOLDER_ACTIVE_CPF_EXISTS);
@@ -35,19 +40,20 @@ internal class RegisterPolicyholderUseCase(
                 throw new ErrorOnValidationException(ResourcesMessageException.POLICYHOLDER_ACTIVE_EMAIL_EXISTS);
             case PolicyholderRegistrationResult.RegisteredOrReactivated:
                 logger.PolicyholderRegisteredOrReactivated();
-                break;
+                return new ResponseCreatedJson { Id = registration.PolicyholderId ?? policyholder.Id };
             default:
-                throw new UnreachableException($"Resultado de cadastro inesperado: {result}");
+                throw new UnreachableException($"Resultado de cadastro inesperado: {registration.Result}");
         }
     }
     
-    private static void ValidateAndThrowOnFailures(RequestPolicyholdersJson request)
+    private static void ValidateAndThrowOnFailures(RequestPolicyholderJson request, DateOnly today)
     {
         var errors = PolicyholderDataValidator.Validate(
-            request.Name,
-            request.BirthDate,
+            request.Nome,
+            request.DataNascimento,
             request.Email,
-            request.PhoneNumber);
+            request.Telefone,
+            today);
 
         if (!CpfValidator.IsValid(request.Cpf))
             errors.Insert(0, ResourcesMessageException.INVALID_CPF);

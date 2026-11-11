@@ -284,5 +284,47 @@ namespace PolicyDesk.Exception {
                 return ResourceManager.GetString("CLAIM_DENIAL_REASON_TOO_LONG", resourceCulture);
             }
         }
+
+        public static string COVERAGE_AMOUNT_INVALID_PRECISION {
+            get {
+                return ResourceManager.GetString("COVERAGE_AMOUNT_INVALID_PRECISION", resourceCulture);
+            }
+        }
+
+        public static string PREMIUM_AMOUNT_INVALID_PRECISION {
+            get {
+                return ResourceManager.GetString("PREMIUM_AMOUNT_INVALID_PRECISION", resourceCulture);
+            }
+        }
+
+        public static string CLAIM_AMOUNT_INVALID_PRECISION {
+            get {
+                return ResourceManager.GetString("CLAIM_AMOUNT_INVALID_PRECISION", resourceCulture);
+            }
+        }
+
+        public static string INVALID_PAGE {
+            get {
+                return ResourceManager.GetString("INVALID_PAGE", resourceCulture);
+            }
+        }
+
+        public static string INVALID_PAGE_SIZE {
+            get {
+                return ResourceManager.GetString("INVALID_PAGE_SIZE", resourceCulture);
+            }
+        }
+
+        public static string INVALID_BUSINESS_TIME_ZONE {
+            get {
+                return ResourceManager.GetString("INVALID_BUSINESS_TIME_ZONE", resourceCulture);
+            }
+        }
+
+        public static string MISSING_CONNECTION_STRING {
+            get {
+                return ResourceManager.GetString("MISSING_CONNECTION_STRING", resourceCulture);
+            }
+        }
     }
 }

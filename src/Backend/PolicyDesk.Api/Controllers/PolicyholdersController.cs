@@ -13,61 +13,67 @@ namespace PolicyDesk.Api.Controllers;
 public class PolicyholdersController : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<ResponsePolicyholdersListingJson>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<ResponsePolicyholdersListingJson>>> GetAll(
+    [ProducesResponseType<ResponsePagedJson<ResponsePolicyholderJson>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, ProblemJson.ContentType)]
+    public async Task<ActionResult<ResponsePagedJson<ResponsePolicyholderJson>>> GetAll(
+        [FromQuery] RequestPaginationJson pagination,
         [FromServices] IListPolicyholdersUseCase useCase,
         CancellationToken cancellationToken)
     {
-        var result = await useCase.Listing(cancellationToken);
-
-        return Ok(result);
+        return Ok(await useCase.ListAsync(pagination, cancellationToken));
     }
 
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(ResponsePolicyholdersListingJson), StatusCodes.Status200OK)]
-    public async Task<ActionResult<ResponsePolicyholdersListingJson>> GetById(
+    [ProducesResponseType<ResponsePolicyholderJson>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, ProblemJson.ContentType)]
+    public async Task<ActionResult<ResponsePolicyholderJson>> GetById(
         [FromRoute] Guid id,
         [FromServices] IListPolicyholdersUseCase useCase,
         CancellationToken cancellationToken)
     {
-        var result = await useCase.GetById(id, cancellationToken);
-
-        return Ok(result);
+        return Ok(await useCase.GetByIdAsync(id, cancellationToken));
     }
 
     [HttpPost]
-    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType<ResponseCreatedJson>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, ProblemJson.ContentType)]
     public async Task<IActionResult> Register(
-        [FromBody] RequestPolicyholdersJson request,
+        [FromBody] RequestPolicyholderJson request,
         [FromServices] IRegisterPolicyholderUseCase useCase,
         CancellationToken cancellationToken)
     {
-        await useCase.Execute(request, cancellationToken);
+        var result = await useCase.ExecuteAsync(request, cancellationToken);
 
-        return StatusCode(StatusCodes.Status201Created);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, ProblemJson.ContentType)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, ProblemJson.ContentType)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, ProblemJson.ContentType)]
     public async Task<IActionResult> Update(
         [FromRoute] Guid id,
-        [FromBody] RequestPolicyholdersUpdateJson request,
-        [FromServices] IUpdatePolicyholderCommand useCase,
+        [FromBody] RequestUpdatePolicyholderJson request,
+        [FromServices] IUpdatePolicyholderUseCase useCase,
         CancellationToken cancellationToken)
     {
-        await useCase.Execute(id, request, cancellationToken);
+        await useCase.ExecuteAsync(id, request, cancellationToken);
 
         return NoContent();
     }
 
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, ProblemJson.ContentType)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, ProblemJson.ContentType)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, ProblemJson.ContentType)]
     public async Task<IActionResult> Remove(
         [FromRoute] Guid id,
         [FromServices] IDeactivatePolicyholderUseCase useCase,
         CancellationToken cancellationToken)
     {
-        await useCase.Execute(id, cancellationToken);
+        await useCase.ExecuteAsync(id, cancellationToken);
 
         return NoContent();
     }

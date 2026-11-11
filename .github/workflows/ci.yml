@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [developer]
+    paths-ignore: ['**.md', 'docs/**', 'LICENSE']
+  pull_request:
+    branches: [main, developer]
+    paths-ignore: ['**.md', 'docs/**', 'LICENSE']
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+jobs:
+  build-and-test:
+    name: Build e testes
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Instalar o .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache de pacotes NuGet
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('global.json', 'Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restaurar dependências
+        run: dotnet restore PolicyDesk.sln
+
+      - name: Verificar pacotes vulneráveis
+        run: |
+          dotnet list PolicyDesk.sln package --vulnerable --include-transitive 2>&1 | tee vulnerable.txt
+          if grep -q "has the following vulnerable packages\|tem os seguintes pacotes vulneráveis" vulnerable.txt; then
+            echo "::error::Foram encontrados pacotes NuGet com vulnerabilidades conhecidas."
+            exit 1
+          fi
+
+      - name: Build
+        run: dotnet build PolicyDesk.sln --configuration Release --no-restore
+
+      - name: Testes (unitários e de integração)
+        run: >
+          dotnet test PolicyDesk.sln
+          --configuration Release
+          --no-build
+          --logger "trx;LogFilePrefix=results"
+          --collect "XPlat Code Coverage"
+          --results-directory TestResults
+
+      - name: Relatório de cobertura
+        if: ${{ !cancelled() }}
+        uses: danielpalme/ReportGenerator-GitHub-Action@v5
+        with:
+          reports: TestResults/**/coverage.cobertura.xml
+          targetdir: CoverageReport
+          reporttypes: MarkdownSummaryGithub;HtmlInline
+          assemblyfilters: -CommonTestUtilities
+          classfilters: -PolicyDesk.Infrastructure.DataAccess.Migrations.*
+
+      - name: Publicar resumo da cobertura
+        if: ${{ !cancelled() && hashFiles('CoverageReport/SummaryGithub.md') != '' }}
+        run: cat CoverageReport/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Anexar resultados dos testes
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            TestResults/**/*.trx
+            CoverageReport
+          retention-days: 14

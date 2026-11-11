@@ -1,5 +1,4 @@
-using System.Text.Json.Serialization;
-using PolicyDesk.Domain.Enums;
+using PolicyDesk.Communication.Enums;
 
 namespace PolicyDesk.Communication.Responses;
 
@@ -10,10 +9,9 @@ public class ResponsePolicyJson
     public string Descricao { get; set; } = string.Empty;
     public decimal ValorCobertura { get; set; }
     public decimal ValorPremio { get; set; }
-    public DateTime InicioVigencia { get; set; }
-    public DateTime FimVigencia { get; set; }
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public PolicyStatus Status { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime? UpdatedAt { get; set; }
+    public DateOnly InicioVigencia { get; set; }
+    public DateOnly FimVigencia { get; set; }
+    public StatusApolice Status { get; set; }
+    public DateTime CriadoEm { get; set; }
+    public DateTime? AtualizadoEm { get; set; }
 }

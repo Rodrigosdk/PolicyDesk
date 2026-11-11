@@ -1,7 +1,12 @@
 using System.Globalization;
+using CommonTestUtilities.Time;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Time.Testing;
 using Testcontainers.PostgreSql;
 
 namespace PolicyDesk.Api.IntegrationTests;
@@ -20,6 +25,8 @@ public class PolicyDeskApplicationFactory : WebApplicationFactory<Program>, IAsy
         .WithPassword("test-password")
         .Build();
 
+    public FakeTimeProvider Clock { get; } = new(BusinessClockBuilder.DefaultUtcNow);
+
     public async Task InitializeAsync() => await _database.StartAsync();
 
     async Task IAsyncLifetime.DisposeAsync()
@@ -36,5 +43,10 @@ public class PolicyDeskApplicationFactory : WebApplicationFactory<Program>, IAsy
             {
                 ["ConnectionStrings:DbConnection"] = _database.GetConnectionString()
             }));
+        builder.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<TimeProvider>();
+            services.AddSingleton<TimeProvider>(Clock);
+        });
     }
 }

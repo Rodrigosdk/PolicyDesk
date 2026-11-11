@@ -1,6 +1,7 @@
 using Bogus;
 using CommonTestUtilities.Requests;
-using Policyholder = PolicyDesk.Domain.Entities.Policyholders;
+using CommonTestUtilities.Time;
+using PolicyDesk.Domain.Entities;
 
 namespace CommonTestUtilities.Entities;
 
@@ -9,9 +10,10 @@ public static class PolicyholderBuilder
     public static Policyholder Build(
         string? name = null,
         string? cpf = null,
-        DateTime? birthDate = null,
+        DateOnly? birthDate = null,
         string? email = null,
-        string? phone = null)
+        string? phone = null,
+        DateOnly? today = null)
     {
         var faker = new Faker();
         return new Policyholder(
@@ -19,7 +21,8 @@ public static class PolicyholderBuilder
             cpf ?? CpfGenerator.Generate(),
             birthDate ?? BirthDateGenerator.Generate(faker),
             email ?? faker.Internet.Email(),
-            phone ?? PhoneGenerator.Generate(faker));
+            phone ?? PhoneGenerator.Generate(faker),
+            today ?? BusinessClockBuilder.DefaultToday);
     }
 
     public static IList<Policyholder> Collection(int count = 2) =>

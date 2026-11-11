@@ -1,13 +1,15 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
+using CommonTestUtilities.Time;
 using Moq;
 using PolicyDesk.Application.Policyholders.Deactivate;
 using PolicyDesk.Domain.Repositories;
+using PolicyDesk.Domain.SeedWorks;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 using Shouldly;
-using Policyholder = PolicyDesk.Domain.Entities.Policyholders;
+using PolicyDesk.Domain.Entities;
 
 namespace PolicyDesk.Application.Tests.Policyholders.Deactivate;
 
@@ -20,10 +22,10 @@ public class DeactivatePolicyholderUseCaseTests
         var policyholder = PolicyholderBuilder.Build();
         var (useCase, unitOfWork) = CreateUseCase(policyholder);
 
-        await useCase.Execute(policyholder.Id);
+        await useCase.ExecuteAsync(policyholder.Id);
 
         policyholder.Active.ShouldBeFalse();
-        unitOfWork.Verify(u => u.Commit(), Times.Once);
+        unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarNaoEncontradoSemConfirmar_Quando_SeguradoNaoExistir))]
@@ -32,9 +34,9 @@ public class DeactivatePolicyholderUseCaseTests
     {
         var (useCase, unitOfWork) = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.Execute(Guid.NewGuid()));
+        await Should.ThrowAsync<NotFoundException>(() => useCase.ExecuteAsync(Guid.NewGuid()));
 
-        unitOfWork.Verify(u => u.Commit(), Times.Never);
+        unitOfWork.Verify(u => u.CommitAsync(), Times.Never);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarExcecaoSemInativarNemConfirmar_Quando_HouverApoliceAtiva))]
@@ -45,27 +47,46 @@ public class DeactivatePolicyholderUseCaseTests
         var (useCase, unitOfWork) = CreateUseCase(policyholder, hasActivePolicy: true);
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.Execute(policyholder.Id));
+            () => useCase.ExecuteAsync(policyholder.Id));
 
         policyholder.Active.ShouldBeTrue();
         exception.GetErrors().ShouldContain(ResourcesMessageException.POLICYHOLDER_HAS_ACTIVE_POLICY);
-        unitOfWork.Verify(u => u.Commit(), Times.Never);
+        unitOfWork.Verify(u => u.CommitAsync(), Times.Never);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarExcecaoSemInativar_Quando_ApoliceTerminarHojeNoBrasilMasJaForAmanhaEmUtc))]
+    [Trait("Application", "Policyholders - Deactivate")]
+    public async Task Deve_LancarExcecaoSemInativar_Quando_ApoliceTerminarHojeNoBrasilMasJaForAmanhaEmUtc()
+    {
+        var policyholder = PolicyholderBuilder.Build();
+        var clock = BusinessClockBuilder.Build(BusinessClockBuilder.LateEveningUtcNow);
+        var (useCase, unitOfWork) = CreateUseCase(
+            policyholder, hasActivePolicy: true, today: BusinessClockBuilder.DefaultToday, clock: clock);
+
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(
+            () => useCase.ExecuteAsync(policyholder.Id));
+
+        policyholder.Active.ShouldBeTrue();
+        exception.GetErrors().ShouldContain(ResourcesMessageException.POLICYHOLDER_HAS_ACTIVE_POLICY);
+        unitOfWork.Verify(u => u.CommitAsync(), Times.Never);
     }
 
     private static (DeactivatePolicyholderUseCase UseCase, Mock<IUnitOfWork> UnitOfWork) CreateUseCase(
         Policyholder? policyholder = null,
-        bool hasActivePolicy = false)
+        bool hasActivePolicy = false,
+        DateOnly? today = null,
+        BusinessClock? clock = null)
     {
         var readBuilder = new PolicyholdersReadOnlyRepositoryBuilder();
         var updateBuilder = new PolicyholdersUpdateOnlyRepositoryBuilder();
         if (policyholder is not null)
         {
-            readBuilder.HasActiveOrFuturePolicy(policyholder.Id, hasActivePolicy);
+            readBuilder.HasActiveOrFuturePolicy(policyholder.Id, hasActivePolicy, today);
             updateBuilder.GetByIdForUpdate(policyholder);
         }
 
         var unitOfWork = UnitOfWorkBuilder.Build();
 
-        return (new DeactivatePolicyholderUseCase(readBuilder.Build(), updateBuilder.Build(), unitOfWork.Object, NullLogger<DeactivatePolicyholderUseCase>.Instance), unitOfWork);
+        return (new DeactivatePolicyholderUseCase(readBuilder.Build(), updateBuilder.Build(), unitOfWork.Object, clock ?? BusinessClockBuilder.Build(), NullLogger<DeactivatePolicyholderUseCase>.Instance), unitOfWork);
     }
 }

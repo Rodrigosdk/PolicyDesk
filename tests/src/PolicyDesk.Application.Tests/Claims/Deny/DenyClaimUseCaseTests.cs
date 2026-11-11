@@ -23,11 +23,11 @@ public class DenyClaimUseCaseTests
         claim.StartAnalysis();
         var (useCase, unitOfWork) = CreateUseCase(claim);
 
-        await useCase.Execute(claim.Id, new RequestDenyClaimJson { Motivo = "  Not covered  " });
+        await useCase.ExecuteAsync(claim.Id, new RequestDenyClaimJson { Motivo = "  Not covered  " });
 
         claim.Status.ShouldBe(ClaimStatus.Denied);
         claim.DenialReason.ShouldBe("Not covered");
-        unitOfWork.Verify(work => work.Commit(), Times.Once);
+        unitOfWork.Verify(work => work.CommitAsync(), Times.Once);
     }
 
     [Theory(DisplayName = nameof(Deve_LancarValidacaoAntesDaBusca_Quando_MotivoForVazio))]
@@ -41,10 +41,10 @@ public class DenyClaimUseCaseTests
         var useCase = new DenyClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<DenyClaimUseCase>.Instance);
 
         await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.Execute(Guid.NewGuid(), new RequestDenyClaimJson { Motivo = reason }));
+            () => useCase.ExecuteAsync(Guid.NewGuid(), new RequestDenyClaimJson { Motivo = reason }));
 
-        repository.Mock.Verify(item => item.GetByIdForUpdate(It.IsAny<Guid>()), Times.Never);
-        unitOfWork.Verify(work => work.Commit(), Times.Never);
+        repository.Mock.Verify(item => item.GetByIdForUpdateAsync(It.IsAny<Guid>()), Times.Never);
+        unitOfWork.Verify(work => work.CommitAsync(), Times.Never);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarNaoEncontradoSemConfirmar_Quando_SinistroNaoExistir))]
@@ -54,9 +54,9 @@ public class DenyClaimUseCaseTests
         var (useCase, unitOfWork) = CreateUseCase();
 
         await Should.ThrowAsync<NotFoundException>(
-            () => useCase.Execute(Guid.NewGuid(), new RequestDenyClaimJson { Motivo = "Reason" }));
+            () => useCase.ExecuteAsync(Guid.NewGuid(), new RequestDenyClaimJson { Motivo = "Reason" }));
 
-        unitOfWork.Verify(work => work.Commit(), Times.Never);
+        unitOfWork.Verify(work => work.CommitAsync(), Times.Never);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarValidacaoSemConfirmar_Quando_SinistroNaoEstiverEmAnalise))]
@@ -67,11 +67,11 @@ public class DenyClaimUseCaseTests
         var (useCase, unitOfWork) = CreateUseCase(claim);
 
         await Should.ThrowAsync<DomainRuleException>(
-            () => useCase.Execute(claim.Id, new RequestDenyClaimJson { Motivo = "Reason" }));
+            () => useCase.ExecuteAsync(claim.Id, new RequestDenyClaimJson { Motivo = "Reason" }));
 
         claim.Status.ShouldBe(ClaimStatus.Pending);
         claim.DenialReason.ShouldBeNull();
-        unitOfWork.Verify(work => work.Commit(), Times.Never);
+        unitOfWork.Verify(work => work.CommitAsync(), Times.Never);
     }
 
     private static (DenyClaimUseCase UseCase, Mock<IUnitOfWork> UnitOfWork) CreateUseCase(Claim? claim = null)
@@ -93,10 +93,10 @@ public class DenyClaimUseCaseTests
         var useCase = new DenyClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<DenyClaimUseCase>.Instance);
         var request = new RequestDenyClaimJson { Motivo = new string('a', FieldLimits.DenialReason + 1) };
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.Execute(Guid.NewGuid(), request));
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(Guid.NewGuid(), request));
 
         exception.GetErrors().ShouldBe([FieldLimits.DenialReasonTooLong]);
-        repository.Mock.Verify(item => item.GetByIdForUpdate(It.IsAny<Guid>()), Times.Never);
-        unitOfWork.Verify(work => work.Commit(), Times.Never);
+        repository.Mock.Verify(item => item.GetByIdForUpdateAsync(It.IsAny<Guid>()), Times.Never);
+        unitOfWork.Verify(work => work.CommitAsync(), Times.Never);
     }
 }

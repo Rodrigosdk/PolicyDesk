@@ -138,4 +138,25 @@
     <data name="CLAIM_DENIAL_REASON_TOO_LONG" xml:space="preserve">
         <value>The denial reason must have at most {0} characters.</value>
     </data>
+    <data name="COVERAGE_AMOUNT_INVALID_PRECISION" xml:space="preserve">
+        <value>The coverage amount must have at most {0} integer digits and {1} decimal places.</value>
+    </data>
+    <data name="PREMIUM_AMOUNT_INVALID_PRECISION" xml:space="preserve">
+        <value>The premium amount must have at most {0} integer digits and {1} decimal places.</value>
+    </data>
+    <data name="CLAIM_AMOUNT_INVALID_PRECISION" xml:space="preserve">
+        <value>The claim amount must have at most {0} integer digits and {1} decimal places.</value>
+    </data>
+    <data name="INVALID_PAGE" xml:space="preserve">
+        <value>The page must be greater than or equal to 1.</value>
+    </data>
+    <data name="INVALID_PAGE_SIZE" xml:space="preserve">
+        <value>The page size must be between 1 and {0}.</value>
+    </data>
+    <data name="INVALID_BUSINESS_TIME_ZONE" xml:space="preserve">
+        <value>Invalid Business:TimeZone. Provide an IANA time zone identifier, such as "America/Sao_Paulo".</value>
+    </data>
+    <data name="MISSING_CONNECTION_STRING" xml:space="preserve">
+        <value>ConnectionStrings:DbConnection is not configured. Provide it via User Secrets (dotnet user-secrets set "ConnectionStrings:DbConnection" "...") or the ConnectionStrings__DbConnection environment variable.</value>
+    </data>
 </root>

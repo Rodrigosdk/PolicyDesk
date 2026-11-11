@@ -18,7 +18,7 @@ public abstract class ClaimsTestBase(PolicyDeskApplicationFactory factory) : Pol
             $"/api/apolices/{policy.Id}/sinistros",
             request ?? RequestClaimJsonBuilder.Build(amount: 100));
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var created = await response.Content.ReadFromJsonAsync<ResponseCreatedJson>();
+        var created = await response.Content.ReadFromJsonAsync<ResponseCreatedJson>(TestJson.Options);
         Assert.NotNull(created);
         return await FindClaim(created.Id);
     }

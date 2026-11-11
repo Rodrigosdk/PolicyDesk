@@ -11,6 +11,7 @@ public static class FieldLimits
     public const int Phone = 20;
     public const int Description = 500;
     public const int DenialReason = 1000;
+    public const int Status = 20;
 
     public static bool Exceeds(string? value, int maxLength) =>
         value is not null && value.Trim().Length > maxLength;

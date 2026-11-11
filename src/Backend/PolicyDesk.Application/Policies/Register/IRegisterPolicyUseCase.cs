@@ -5,5 +5,5 @@ namespace PolicyDesk.Application.Policies.Register;
 
 public interface IRegisterPolicyUseCase
 {
-    Task<ResponseCreatedJson> Execute(RequestPolicyJson request, CancellationToken cancellationToken = default);
+    Task<ResponseCreatedJson> ExecuteAsync(RequestPolicyJson request, CancellationToken cancellationToken = default);
 }

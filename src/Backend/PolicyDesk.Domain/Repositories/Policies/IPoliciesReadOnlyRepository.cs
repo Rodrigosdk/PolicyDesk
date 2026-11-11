@@ -5,6 +5,6 @@ namespace PolicyDesk.Domain.Repositories.Policies;
 
 public interface IPoliciesReadOnlyRepository
 {
-    Task<Policy?> GetById(Guid id, CancellationToken cancellationToken = default);
-    Task<IEnumerable<Policy>> GetAll(Guid? policyholderId, PolicyStatus? status, CancellationToken cancellationToken = default);
+    Task<Policy?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<PagedResult<Policy>> GetPageAsync(Guid? policyholderId, PolicyStatus? status, int page, int pageSize, CancellationToken cancellationToken = default);
 }

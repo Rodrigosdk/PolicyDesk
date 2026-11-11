@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PolicyDesk.Domain.Entities;
+using PolicyDesk.Domain.Enums;
 using PolicyDesk.Domain.Validations;
 
 namespace PolicyDesk.Infrastructure.DataAccess.Mappings;
@@ -9,7 +10,8 @@ internal class PolicyMap : IEntityTypeConfiguration<Policy>
 {
     public void Configure(EntityTypeBuilder<Policy> builder)
     {
-        builder.ToTable("policies");
+        builder.ToTable("policies", table =>
+            table.HasCheckConstraint("CK_policies_status", EnumCheckConstraint.AllowedValues<PolicyStatus>("status")));
 
         builder.HasKey(policy => policy.Id);
         builder.Property(policy => policy.Id)
@@ -24,9 +26,11 @@ internal class PolicyMap : IEntityTypeConfiguration<Policy>
             .IsRequired();
         builder.Property(policy => policy.CoverageAmount)
             .HasColumnName("coverage_amount")
+            .HasPrecision(MoneyLimits.Precision, MoneyLimits.Scale)
             .IsRequired();
         builder.Property(policy => policy.PremiumAmount)
             .HasColumnName("premium_amount")
+            .HasPrecision(MoneyLimits.Precision, MoneyLimits.Scale)
             .IsRequired();
         builder.Property(policy => policy.StartDate)
             .HasColumnName("start_date")
@@ -38,7 +42,8 @@ internal class PolicyMap : IEntityTypeConfiguration<Policy>
             .IsRequired();
         builder.Property(policy => policy.Status)
             .HasColumnName("status")
-            .HasConversion<int>()
+            .HasConversion<string>()
+            .HasMaxLength(FieldLimits.Status)
             .IsRequired();
         builder.Property(policy => policy.CancelledAt)
             .HasColumnName("cancelled_at");
@@ -52,7 +57,7 @@ internal class PolicyMap : IEntityTypeConfiguration<Policy>
         // que o PostgreSQL altera a cada UPDATE. Gravar com um xmin desatualizado falha.
         builder.Property<uint>("Version").IsRowVersion();
 
-        builder.HasOne<Policyholders>()
+        builder.HasOne<Policyholder>()
             .WithMany()
             .HasForeignKey(policy => policy.PolicyholderId)
             .OnDelete(DeleteBehavior.Restrict);

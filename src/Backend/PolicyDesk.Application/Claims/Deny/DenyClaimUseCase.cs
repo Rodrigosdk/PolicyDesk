@@ -14,18 +14,18 @@ internal class DenyClaimUseCase(
     IUnitOfWork unitOfWork,
     ILogger<DenyClaimUseCase> logger) : IDenyClaimUseCase
 {
-    public async Task Execute(Guid claimId, RequestDenyClaimJson request, CancellationToken cancellationToken = default)
+    public async Task ExecuteAsync(Guid claimId, RequestDenyClaimJson request, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.Motivo))
             throw new ErrorOnValidationException(ResourcesMessageException.CLAIM_DENIAL_REASON_REQUIRED);
         if (FieldLimits.Exceeds(request.Motivo, FieldLimits.DenialReason))
             throw new ErrorOnValidationException(FieldLimits.DenialReasonTooLong);
 
-        var claim = await claimsUpdateOnlyRepository.GetByIdForUpdate(claimId, cancellationToken)
+        var claim = await claimsUpdateOnlyRepository.GetByIdForUpdateAsync(claimId, cancellationToken)
                     ?? throw new NotFoundException(ResourcesMessageException.CLAIM_NOT_FOUND);
 
         claim.Deny(request.Motivo);
-        await unitOfWork.Commit(cancellationToken);
+        await unitOfWork.CommitAsync(cancellationToken);
         logger.ClaimDenied(claim.Id);
     }
 }

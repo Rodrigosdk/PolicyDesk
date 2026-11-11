@@ -138,4 +138,25 @@
     <data name="CLAIM_DENIAL_REASON_TOO_LONG" xml:space="preserve">
         <value>O motivo da negação deve ter no máximo {0} caracteres.</value>
     </data>
+    <data name="COVERAGE_AMOUNT_INVALID_PRECISION" xml:space="preserve">
+        <value>O valor da cobertura deve ter no máximo {0} dígitos inteiros e {1} casas decimais.</value>
+    </data>
+    <data name="PREMIUM_AMOUNT_INVALID_PRECISION" xml:space="preserve">
+        <value>O valor do prêmio deve ter no máximo {0} dígitos inteiros e {1} casas decimais.</value>
+    </data>
+    <data name="CLAIM_AMOUNT_INVALID_PRECISION" xml:space="preserve">
+        <value>O valor do sinistro deve ter no máximo {0} dígitos inteiros e {1} casas decimais.</value>
+    </data>
+    <data name="INVALID_PAGE" xml:space="preserve">
+        <value>A página deve ser maior ou igual a 1.</value>
+    </data>
+    <data name="INVALID_PAGE_SIZE" xml:space="preserve">
+        <value>O tamanho da página deve estar entre 1 e {0}.</value>
+    </data>
+    <data name="INVALID_BUSINESS_TIME_ZONE" xml:space="preserve">
+        <value>Business:TimeZone inválido. Informe um identificador de fuso horário IANA, como "America/Sao_Paulo".</value>
+    </data>
+    <data name="MISSING_CONNECTION_STRING" xml:space="preserve">
+        <value>ConnectionStrings:DbConnection não configurada. Informe-a via User Secrets (dotnet user-secrets set "ConnectionStrings:DbConnection" "...") ou pela variável de ambiente ConnectionStrings__DbConnection.</value>
+    </data>
 </root>

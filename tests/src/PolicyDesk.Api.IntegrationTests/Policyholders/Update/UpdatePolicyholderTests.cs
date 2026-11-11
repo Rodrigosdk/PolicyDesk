@@ -12,13 +12,13 @@ public class UpdatePolicyholderTests(PolicyDeskApplicationFactory factory) : Pol
     public async Task Deve_Atualizar_Quando_RequisicaoForValida()
     {
         var policyholder = await RegisterPolicyholder();
-        var request = RequestPolicyholdersUpdateJsonBuilder.Build();
+        var request = RequestUpdatePolicyholderJsonBuilder.Build();
 
         var response = await Put($"{RequestUri}/{policyholder.Id}", request);
 
         response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
         var updated = await FindById(policyholder.Id);
-        updated.Name.ShouldBe(request.Name.Trim());
+        updated.Name.ShouldBe(request.Nome.Trim());
         updated.Email.ShouldBe(request.Email.ToLowerInvariant());
         updated.Cpf.ShouldBe(policyholder.Cpf);
     }
@@ -32,7 +32,7 @@ public class UpdatePolicyholderTests(PolicyDeskApplicationFactory factory) : Pol
 
         var response = await Put(
             $"{RequestUri}/{other.Id}",
-            RequestPolicyholdersUpdateJsonBuilder.Build(email: existing.Email.ToUpperInvariant()));
+            RequestUpdatePolicyholderJsonBuilder.Build(email: existing.Email.ToUpperInvariant()));
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await FindById(other.Id)).Email.ShouldBe(other.Email);
@@ -43,8 +43,8 @@ public class UpdatePolicyholderTests(PolicyDeskApplicationFactory factory) : Pol
     public async Task Deve_RetornarBadRequestSemAlterar_Quando_NomeForEmBranco()
     {
         var policyholder = await RegisterPolicyholder();
-        var request = RequestPolicyholdersUpdateJsonBuilder.Build();
-        request.Name = "   ";
+        var request = RequestUpdatePolicyholderJsonBuilder.Build();
+        request.Nome = "   ";
 
         var response = await Put($"{RequestUri}/{policyholder.Id}", request);
 
@@ -60,8 +60,8 @@ public class UpdatePolicyholderTests(PolicyDeskApplicationFactory factory) : Pol
     public async Task Deve_RetornarBadRequestSemAlterar_Quando_TelefoneForInvalido()
     {
         var policyholder = await RegisterPolicyholder();
-        var request = RequestPolicyholdersUpdateJsonBuilder.Build();
-        request.PhoneNumber = "123";
+        var request = RequestUpdatePolicyholderJsonBuilder.Build();
+        request.Telefone = "123";
 
         var response = await Put($"{RequestUri}/{policyholder.Id}", request);
 
@@ -74,7 +74,7 @@ public class UpdatePolicyholderTests(PolicyDeskApplicationFactory factory) : Pol
     [Trait("Integration", "Policyholders - Atualização")]
     public async Task Deve_RetornarNotFound_Quando_SeguradoNaoExistir()
     {
-        var response = await Put($"{RequestUri}/{Guid.NewGuid()}", RequestPolicyholdersUpdateJsonBuilder.Build());
+        var response = await Put($"{RequestUri}/{Guid.NewGuid()}", RequestUpdatePolicyholderJsonBuilder.Build());
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }

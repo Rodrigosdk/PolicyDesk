@@ -4,46 +4,51 @@ using PolicyDesk.Communication.Requests;
 using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Policyholders;
 using PolicyDesk.Domain.Validations;
+using PolicyDesk.Domain.SeedWorks;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 
 namespace PolicyDesk.Application.Policyholders.Update;
 
-internal class UpdatePolicyholderCommand(
+internal class UpdatePolicyholderUseCase(
     IPolicyholdersReadOnlyRepository policyholdersReadOnlyRepository,
     IPolicyholdersUpdateOnlyRepository policyholdersUpdateOnlyRepository,
     IUnitOfWork unitOfWork,
-    ILogger<UpdatePolicyholderCommand> logger)
-    : IUpdatePolicyholderCommand
+    BusinessClock clock,
+    ILogger<UpdatePolicyholderUseCase> logger)
+    : IUpdatePolicyholderUseCase
 {
-    public async Task Execute(Guid policyholderId, RequestPolicyholdersUpdateJson request, CancellationToken cancellationToken = default)
+    public async Task ExecuteAsync(Guid policyholderId, RequestUpdatePolicyholderJson request, CancellationToken cancellationToken = default)
     {
-        var policyholder = await ValidateAndThrowOnFailures(policyholderId, request, cancellationToken);
+        var today = clock.Today;
+        var policyholder = await ValidateAndThrowOnFailuresAsync(policyholderId, request, today, cancellationToken);
         
         policyholder.Update(
-            request.Name,
-            request.BirthDate,
+            request.Nome,
+            request.DataNascimento,
             request.Email,
-            request.PhoneNumber
+            request.Telefone,
+            today
         );
         
-        await unitOfWork.Commit(cancellationToken);
+        await unitOfWork.CommitAsync(cancellationToken);
         logger.PolicyholderUpdated(policyholder.Id);
     }
-    private async Task<Domain.Entities.Policyholders> ValidateAndThrowOnFailures(
-        Guid policyholderId, RequestPolicyholdersUpdateJson request, CancellationToken cancellationToken)
+    private async Task<Domain.Entities.Policyholder> ValidateAndThrowOnFailuresAsync(
+        Guid policyholderId, RequestUpdatePolicyholderJson request, DateOnly today, CancellationToken cancellationToken)
     {
         var errors = PolicyholderDataValidator.Validate(
-            request.Name,
-            request.BirthDate,
+            request.Nome,
+            request.DataNascimento,
             request.Email,
-            request.PhoneNumber);
+            request.Telefone,
+            today);
 
         if (errors.Count > 0)
         {
             throw new ErrorOnValidationException(errors);
         }
-        var policyholder = await policyholdersUpdateOnlyRepository.GetByIdForUpdate(policyholderId, cancellationToken);
+        var policyholder = await policyholdersUpdateOnlyRepository.GetByIdForUpdateAsync(policyholderId, cancellationToken);
         
         if (policyholder == null)
         {
@@ -51,7 +56,7 @@ internal class UpdatePolicyholderCommand(
         }
         
         var normalizedEmail = EmailValidator.Normalize(request.Email);
-        var existActivePolicyholdersWithEmail = await policyholdersReadOnlyRepository.ExistActivePolicyholdersWithEmail(normalizedEmail, policyholderId, cancellationToken);
+        var existActivePolicyholdersWithEmail = await policyholdersReadOnlyRepository.ExistActivePolicyholdersWithEmailAsync(normalizedEmail, policyholderId, cancellationToken);
         
         return existActivePolicyholdersWithEmail
             ? throw new ErrorOnValidationException(ResourcesMessageException.POLICYHOLDER_ACTIVE_EMAIL_EXISTS)

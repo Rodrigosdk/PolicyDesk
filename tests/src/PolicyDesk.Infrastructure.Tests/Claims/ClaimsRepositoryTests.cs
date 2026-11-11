@@ -29,11 +29,11 @@ public class ClaimsRepositoryTests(PostgreSqlInfrastructureFixture fixture) : Cl
         var policy = await SavePolicy(dbContext);
         var claim = ClaimBuilder.Build(policy.Id, amount: 750.55m);
 
-        await repository.Add(claim);
-        await new UnitOfWork(dbContext).Commit();
+        await repository.AddAsync(claim);
+        await new UnitOfWork(dbContext).CommitAsync();
 
         await using var verificationContext = Fixture.CreateDbContext();
-        var saved = await CreateRepository(verificationContext).GetById(claim.Id);
+        var saved = await CreateRepository(verificationContext).GetByIdAsync(claim.Id);
         saved.ShouldNotBeNull();
         saved.PolicyId.ShouldBe(policy.Id);
         saved.Description.ShouldBe(claim.Description);
@@ -48,7 +48,7 @@ public class ClaimsRepositoryTests(PostgreSqlInfrastructureFixture fixture) : Cl
     {
         await using var dbContext = Fixture.CreateDbContext();
 
-        (await CreateRepository(dbContext).GetById(Guid.NewGuid())).ShouldBeNull();
+        (await CreateRepository(dbContext).GetByIdAsync(Guid.NewGuid())).ShouldBeNull();
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarApenasSinistrosDaApolice_Quando_BuscarPorApolice))]
@@ -66,10 +66,10 @@ public class ClaimsRepositoryTests(PostgreSqlInfrastructureFixture fixture) : Cl
         dbContext.Claims.AddRange(second, other, first);
         await dbContext.SaveChangesAsync();
 
-        var result = await repository.GetByPolicyId(policy.Id);
+        var result = await repository.GetByPolicyIdAsync(policy.Id);
 
         result.Select(claim => claim.Id).ShouldBe([first.Id, second.Id]);
-        (await repository.GetByPolicyId(Guid.NewGuid())).ShouldBeEmpty();
+        (await repository.GetByPolicyIdAsync(Guid.NewGuid())).ShouldBeEmpty();
     }
 
     [Fact(DisplayName = nameof(Deve_PersistirFluxoDoSinistro_Quando_ConfirmarUnidadeDeTrabalho))]
@@ -82,12 +82,12 @@ public class ClaimsRepositoryTests(PostgreSqlInfrastructureFixture fixture) : Cl
         dbContext.Claims.Add(claim);
         await dbContext.SaveChangesAsync();
 
-        var tracked = await CreateRepository(dbContext).GetByIdForUpdate(claim.Id);
+        var tracked = await CreateRepository(dbContext).GetByIdForUpdateAsync(claim.Id);
         tracked.ShouldNotBeNull();
         tracked.StartAnalysis();
         tracked.Approve();
         tracked.RegisterPayment();
-        await new UnitOfWork(dbContext).Commit();
+        await new UnitOfWork(dbContext).CommitAsync();
 
         await using var verificationContext = Fixture.CreateDbContext();
         var saved = await verificationContext.Claims.AsNoTracking().SingleAsync(item => item.Id == claim.Id);
@@ -137,11 +137,11 @@ public class ClaimsRepositoryTests(PostgreSqlInfrastructureFixture fixture) : Cl
         await setupContext.SaveChangesAsync();
 
         await using var readContext = Fixture.CreateDbContext();
-        (await CreateRepository(readContext).GetById(claim.Id)).ShouldNotBeNull();
+        (await CreateRepository(readContext).GetByIdAsync(claim.Id)).ShouldNotBeNull();
         readContext.ChangeTracker.Entries<Claim>().ShouldBeEmpty();
 
         await using var updateContext = Fixture.CreateDbContext();
-        (await CreateRepository(updateContext).GetByIdForUpdate(claim.Id)).ShouldNotBeNull();
+        (await CreateRepository(updateContext).GetByIdForUpdateAsync(claim.Id)).ShouldNotBeNull();
         updateContext.ChangeTracker.Entries<Claim>().ShouldHaveSingleItem();
     }
 
@@ -153,7 +153,7 @@ public class ClaimsRepositoryTests(PostgreSqlInfrastructureFixture fixture) : Cl
         await using var dbContext = Fixture.CreateDbContext();
 
         await Should.ThrowAsync<OperationCanceledException>(
-            () => CreateRepository(dbContext).GetById(Guid.NewGuid(), new CancellationToken(canceled: true)));
+            () => CreateRepository(dbContext).GetByIdAsync(Guid.NewGuid(), new CancellationToken(canceled: true)));
     }
 
     [Fact(DisplayName = nameof(Deve_SomarApenasSinistrosNaoNegadosDaApolice_Quando_CalcularValorComprometido))]
@@ -177,7 +177,7 @@ public class ClaimsRepositoryTests(PostgreSqlInfrastructureFixture fixture) : Cl
         dbContext.Claims.AddRange(pending, inAnalysis, paid, denied, fromOtherPolicy);
         await dbContext.SaveChangesAsync();
 
-        var committed = await CreateRepository(dbContext).SumCommittedAmount(policy.Id);
+        var committed = await CreateRepository(dbContext).SumCommittedAmountAsync(policy.Id);
 
         committed.ShouldBe(600);
     }
@@ -189,6 +189,6 @@ public class ClaimsRepositoryTests(PostgreSqlInfrastructureFixture fixture) : Cl
         await using var dbContext = Fixture.CreateDbContext();
         var policy = await SavePolicy(dbContext);
 
-        (await CreateRepository(dbContext).SumCommittedAmount(policy.Id)).ShouldBe(0);
+        (await CreateRepository(dbContext).SumCommittedAmountAsync(policy.Id)).ShouldBe(0);
     }
 }
