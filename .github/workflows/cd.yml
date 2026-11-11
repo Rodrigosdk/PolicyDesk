@@ -24,8 +24,8 @@ jobs:
     name: CI
     uses: ./.github/workflows/ci.yml
 
-  package:
-    name: Empacotar
+  migrations:
+    name: Bundle de migrations
     needs: ci
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -49,14 +49,6 @@ jobs:
       - name: Restaurar ferramentas locais
         run: dotnet tool restore
 
-      - name: Publicar a API
-        run: >
-          dotnet publish src/Backend/PolicyDesk.Api/PolicyDesk.Api.csproj
-          --configuration Release
-          --output artifacts/api
-          -p:UseAppHost=false
-          -p:SourceRevisionId=${{ github.sha }}
-
       - name: Restaurar a infraestrutura para linux-x64
         run: dotnet restore src/Backend/PolicyDesk.Infrastructure/PolicyDesk.Infrastructure.csproj --runtime linux-x64
 
@@ -70,13 +62,6 @@ jobs:
           --runtime linux-x64
           --output artifacts/migrations/efbundle
 
-      - name: Anexar a API
-        uses: actions/upload-artifact@v4
-        with:
-          name: api
-          path: artifacts/api
-          retention-days: 7
-
       - name: Anexar as migrations
         uses: actions/upload-artifact@v4
         with:
@@ -84,9 +69,54 @@ jobs:
           path: artifacts/migrations
           retention-days: 7
 
+  image:
+    name: Imagem Docker
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.name.outputs.image }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Definir o nome da imagem
+        id: name
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}-api" >> "$GITHUB_OUTPUT"
+
+      - name: Preparar o Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login no GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Gerar e publicar a imagem
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.name.outputs.image }}:${{ github.sha }}
+            ${{ steps.name.outputs.image }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.licenses=MIT
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   deploy:
     name: Deploy em produção
-    needs: package
+    needs: [migrations, image]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
@@ -97,12 +127,6 @@ jobs:
       id-token: write
 
     steps:
-      - name: Baixar a API
-        uses: actions/download-artifact@v4
-        with:
-          name: api
-          path: api
-
       - name: Baixar as migrations
         uses: actions/download-artifact@v4
         with:
@@ -123,16 +147,16 @@ jobs:
           chmod +x migrations/efbundle
           migrations/efbundle --connection "$DB_CONNECTION"
 
-      - name: Deploy no Azure App Service
+      - name: Deploy da imagem no Azure App Service
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ vars.AZURE_WEBAPP_NAME }}
-          package: api
+          images: ${{ needs.image.outputs.image }}:${{ github.sha }}
 
       - name: Smoke test (/health)
         run: >
           curl --fail --silent --show-error
-          --retry 12 --retry-delay 10 --retry-all-errors
+          --retry 18 --retry-delay 10 --retry-all-errors
           --max-time 30
           "https://${{ vars.AZURE_WEBAPP_NAME }}.azurewebsites.net/health"
 

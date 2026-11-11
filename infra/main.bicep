@@ -18,6 +18,9 @@ param databaseAdminPassword string
 @description('Nome do banco usado pela API.')
 param databaseName string = 'policydesk'
 
+@description('Imagem da API. O pipeline de CD troca a tag pela do commit publicado.')
+param containerImage string = 'ghcr.io/rodrigosdk/policydesk-api:latest'
+
 @description('Endpoint OTLP opcional para exportar traces, métricas e logs.')
 param otlpEndpoint string = ''
 
@@ -96,14 +99,13 @@ resource plan 'Microsoft.Web/serverfarms@2024-04-01' = {
 resource app 'Microsoft.Web/sites@2024-04-01' = {
   name: appName
   location: location
-  kind: 'app,linux'
+  kind: 'app,linux,container'
   properties: {
     serverFarmId: plan.id
     httpsOnly: true
     clientAffinityEnabled: false
     siteConfig: {
-      linuxFxVersion: 'DOTNETCORE|10.0'
-      appCommandLine: 'dotnet PolicyDesk.Api.dll'
+      linuxFxVersion: 'DOCKER|${containerImage}'
       alwaysOn: false
       http20Enabled: true
       minTlsVersion: '1.2'
@@ -119,8 +121,16 @@ resource app 'Microsoft.Web/sites@2024-04-01' = {
           value: 'true'
         }
         {
-          name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
+          name: 'WEBSITES_PORT'
+          value: '8080'
+        }
+        {
+          name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE'
           value: 'false'
+        }
+        {
+          name: 'DOCKER_REGISTRY_SERVER_URL'
+          value: 'https://ghcr.io'
         }
       ], otlpSettings)
       connectionStrings: [
