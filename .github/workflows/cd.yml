@@ -57,6 +57,9 @@ jobs:
           -p:UseAppHost=false
           -p:SourceRevisionId=${{ github.sha }}
 
+      - name: Restaurar a infraestrutura para linux-x64
+        run: dotnet restore src/Backend/PolicyDesk.Infrastructure/PolicyDesk.Infrastructure.csproj --runtime linux-x64
+
       - name: Gerar o bundle de migrations
         run: >
           dotnet ef migrations bundle
