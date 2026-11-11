@@ -12,6 +12,10 @@ for cli in az gh; do
   command -v "$cli" >/dev/null || { echo "Instale o $cli antes de continuar." >&2; exit 1; }
 done
 az account show --output none 2>/dev/null || { echo "Rode 'az login' antes de continuar." >&2; exit 1; }
+if [[ "$(az account show --query name --output tsv)" == "N/A(tenant level account)" ]]; then
+  echo "A conta logada não tem assinatura da Azure. Crie uma em https://azure.microsoft.com/free e rode 'az login' de novo." >&2
+  exit 1
+fi
 gh auth status >/dev/null 2>&1 || { echo "Rode 'gh auth login' antes de continuar." >&2; exit 1; }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
