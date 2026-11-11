@@ -8,6 +8,12 @@ RESOURCE_GROUP="${RESOURCE_GROUP:-rg-policydesk}"
 LOCATION="${LOCATION:-brazilsouth}"
 GITHUB_REPO="${GITHUB_REPO:-Rodrigosdk/PolicyDesk}"
 GITHUB_ENVIRONMENT="${GITHUB_ENVIRONMENT:-production}"
+for cli in az gh; do
+  command -v "$cli" >/dev/null || { echo "Instale o $cli antes de continuar." >&2; exit 1; }
+done
+az account show --output none 2>/dev/null || { echo "Rode 'az login' antes de continuar." >&2; exit 1; }
+gh auth status >/dev/null 2>&1 || { echo "Rode 'gh auth login' antes de continuar." >&2; exit 1; }
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "==> Grupo de recursos $RESOURCE_GROUP ($LOCATION)"
@@ -49,27 +55,20 @@ az role assignment create \
   --scope "$WEBAPP_ID" \
   --output none 2>/dev/null || true
 
-cat <<OUT
+echo "==> Environment $GITHUB_ENVIRONMENT no GitHub (deploy só a partir da main)"
+gh api -X PUT "repos/$GITHUB_REPO/environments/$GITHUB_ENVIRONMENT" --silent --input - <<< \
+  '{"deployment_branch_policy":{"protected_branches":false,"custom_branch_policies":true}}'
+if [[ -z "$(gh api "repos/$GITHUB_REPO/environments/$GITHUB_ENVIRONMENT/deployment-branch-policies" --jq '.branch_policies[] | select(.name=="main") | .name')" ]]; then
+  gh api -X POST "repos/$GITHUB_REPO/environments/$GITHUB_ENVIRONMENT/deployment-branch-policies" \
+    -f name=main -f type=branch --silent
+fi
 
-Pronto. Configure no GitHub (Settings > Environments > $GITHUB_ENVIRONMENT):
+echo "==> Secrets e variável do environment"
+gh secret set AZURE_CLIENT_ID --repo "$GITHUB_REPO" --env "$GITHUB_ENVIRONMENT" --body "$CLIENT_ID"
+gh secret set AZURE_TENANT_ID --repo "$GITHUB_REPO" --env "$GITHUB_ENVIRONMENT" --body "$TENANT_ID"
+gh secret set AZURE_SUBSCRIPTION_ID --repo "$GITHUB_REPO" --env "$GITHUB_ENVIRONMENT" --body "$SUBSCRIPTION_ID"
+gh secret set DATABASE_CONNECTION_STRING --repo "$GITHUB_REPO" --env "$GITHUB_ENVIRONMENT" --body "$DATABASE_CONNECTION_STRING"
+gh variable set AZURE_WEBAPP_NAME --repo "$GITHUB_REPO" --env "$GITHUB_ENVIRONMENT" --body "$APP_NAME"
 
-  Secrets:
-    AZURE_CLIENT_ID             = $CLIENT_ID
-    AZURE_TENANT_ID             = $TENANT_ID
-    AZURE_SUBSCRIPTION_ID       = $SUBSCRIPTION_ID
-    DATABASE_CONNECTION_STRING  = (a mesma connection string usada acima)
-
-  Variables:
-    AZURE_WEBAPP_NAME           = $APP_NAME
-
-Ou, com o GitHub CLI:
-
-  gh api -X PUT repos/$GITHUB_REPO/environments/$GITHUB_ENVIRONMENT
-  gh secret set AZURE_CLIENT_ID --env $GITHUB_ENVIRONMENT --body "$CLIENT_ID"
-  gh secret set AZURE_TENANT_ID --env $GITHUB_ENVIRONMENT --body "$TENANT_ID"
-  gh secret set AZURE_SUBSCRIPTION_ID --env $GITHUB_ENVIRONMENT --body "$SUBSCRIPTION_ID"
-  gh secret set DATABASE_CONNECTION_STRING --env $GITHUB_ENVIRONMENT
-  gh variable set AZURE_WEBAPP_NAME --env $GITHUB_ENVIRONMENT --body "$APP_NAME"
-
-URL: https://$APP_NAME.azurewebsites.net
-OUT
+echo
+echo "Pronto. Faça merge em main para o primeiro deploy: https://$APP_NAME.azurewebsites.net"
