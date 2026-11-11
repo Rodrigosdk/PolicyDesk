@@ -21,7 +21,7 @@ public class UpdatePolicyholderUseCaseTests
     public async Task Deve_AtualizarSeguradoEConfirmar_Quando_RequisicaoForValida()
     {
         var policyholder = PolicyholderBuilder.Build();
-        var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand(policyholder);
+        var (command, readBuilder, _, unitOfWork) = CreateCommand(policyholder);
         var request = RequestUpdatePolicyholderJsonBuilder.Build(email: "Jane.Updated@Example.com");
         request.Telefone = "(83) 9 1234-5678";
 
@@ -41,7 +41,7 @@ public class UpdatePolicyholderUseCaseTests
     [Trait("Application", "Policyholders - Update")]
     public async Task Deve_LancarExcecaoAntesDaBusca_Quando_EmailForInvalido()
     {
-        var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand();
+        var (command, _, updateBuilder, unitOfWork) = CreateCommand();
 
         await Should.ThrowAsync<ErrorOnValidationException>(
             () => command.ExecuteAsync(Guid.NewGuid(), RequestUpdatePolicyholderJsonBuilder.Build(email: "invalid")));
@@ -111,7 +111,7 @@ public class UpdatePolicyholderUseCaseTests
     [Trait("Application", "Policyholders - Update")]
     public async Task Deve_LancarNaoEncontradoSemConfirmar_Quando_SeguradoNaoExistir()
     {
-        var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand();
+        var (command, readBuilder, _, unitOfWork) = CreateCommand();
 
         await Should.ThrowAsync<NotFoundException>(
             () => command.ExecuteAsync(Guid.NewGuid(), RequestUpdatePolicyholderJsonBuilder.Build()));
@@ -128,7 +128,7 @@ public class UpdatePolicyholderUseCaseTests
     {
         var policyholder = PolicyholderBuilder.Build();
         var originalEmail = policyholder.Email;
-        var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand(policyholder, emailAlreadyExists: true);
+        var (command, readBuilder, _, unitOfWork) = CreateCommand(policyholder, emailAlreadyExists: true);
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
             () => command.ExecuteAsync(
@@ -145,7 +145,7 @@ public class UpdatePolicyholderUseCaseTests
 
     private static async Task ShouldFailBeforeSearching(RequestUpdatePolicyholderJson request, string expectedError)
     {
-        var (command, readBuilder, updateBuilder, unitOfWork) = CreateCommand();
+        var (command, _, updateBuilder, unitOfWork) = CreateCommand();
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
             () => command.ExecuteAsync(Guid.NewGuid(), request));

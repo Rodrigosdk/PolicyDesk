@@ -38,11 +38,13 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: csharp
-          build-mode: manual
+          build-mode: none
           queries: security-and-quality
-
-      - name: Build
-        run: dotnet build PolicyDesk.sln --configuration Release
+          config: |
+            paths-ignore:
+              - '**/obj/**'
+              - '**/bin/**'
+              - '**/Migrations/**'
 
       - name: Analisar
         uses: github/codeql-action/analyze@v3
