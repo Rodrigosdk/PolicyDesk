@@ -4,7 +4,7 @@ set -euo pipefail
 APP_NAME="${APP_NAME:-policydesk-api-rodrigo}"
 
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-policydesk}"
-LOCATION="${LOCATION:-brazilsouth}"
+LOCATION="${LOCATION:-westus2}"
 GITHUB_REPO="${GITHUB_REPO:-Rodrigosdk/PolicyDesk}"
 GITHUB_ENVIRONMENT="${GITHUB_ENVIRONMENT:-production}"
 for cli in az gh; do
