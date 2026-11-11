@@ -153,4 +153,10 @@
     <data name="INVALID_PAGE_SIZE" xml:space="preserve">
         <value>O tamanho da página deve estar entre 1 e {0}.</value>
     </data>
+    <data name="INVALID_BUSINESS_TIME_ZONE" xml:space="preserve">
+        <value>Business:TimeZone inválido. Informe um identificador de fuso horário IANA, como "America/Sao_Paulo".</value>
+    </data>
+    <data name="MISSING_CONNECTION_STRING" xml:space="preserve">
+        <value>ConnectionStrings:DbConnection não configurada. Informe-a via User Secrets (dotnet user-secrets set "ConnectionStrings:DbConnection" "...") ou pela variável de ambiente ConnectionStrings__DbConnection.</value>
+    </data>
 </root>

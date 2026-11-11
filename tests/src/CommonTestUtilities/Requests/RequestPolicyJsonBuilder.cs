@@ -1,4 +1,5 @@
 using Bogus;
+using CommonTestUtilities.Time;
 using PolicyDesk.Communication.Requests;
 
 namespace CommonTestUtilities.Requests;
@@ -10,11 +11,11 @@ public static class RequestPolicyJsonBuilder
         string? description = null,
         decimal? coverageAmount = null,
         decimal? premiumAmount = null,
-        DateTime? startDate = null,
-        DateTime? endDate = null)
+        DateOnly? startDate = null,
+        DateOnly? endDate = null)
     {
         var faker = new Faker();
-        var today = DateTime.UtcNow.Date;
+        var today = BusinessClockBuilder.DefaultToday;
         return new RequestPolicyJson
         {
             SeguradoId = policyholderId ?? Guid.NewGuid(),

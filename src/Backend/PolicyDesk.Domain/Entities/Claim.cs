@@ -8,7 +8,7 @@ namespace PolicyDesk.Domain.Entities;
 
 public class Claim : Entity
 {
-    public Claim(Guid policyId, string description, decimal amount, DateTime occurredOn)
+    public Claim(Guid policyId, string description, decimal amount, DateOnly occurredOn)
     {
         if (policyId == Guid.Empty)
             throw new DomainRuleException(ResourcesMessageException.POLICY_REQUIRED);
@@ -26,7 +26,7 @@ public class Claim : Entity
         PolicyId = policyId;
         Description = description.Trim();
         Amount = amount;
-        OccurredOn = occurredOn.Date;
+        OccurredOn = occurredOn;
     }
 
     // Usado pelo EF Core ao carregar do banco: não reaplica as regras de criação
@@ -37,7 +37,7 @@ public class Claim : Entity
     public Guid PolicyId { get; private set; }
     public string Description { get; private set; } = string.Empty;
     public decimal Amount { get; private set; }
-    public DateTime OccurredOn { get; private set; }
+    public DateOnly OccurredOn { get; private set; }
     public ClaimStatus Status { get; private set; } = ClaimStatus.Pending;
     public DateTime? ApprovedAt { get; private set; }
     public string? DenialReason { get; private set; }

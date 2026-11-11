@@ -1,4 +1,5 @@
 using CommonTestUtilities.Entities;
+using CommonTestUtilities.Time;
 using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Enums;
 using PolicyDesk.Exception;
@@ -13,8 +14,8 @@ public class PoliciesTests
     [Trait("Domain", "Policies - Instancia")]
     public void Deve_InstanciarApoliceAtiva_Quando_DadosForemValidos()
     {
-        var startDate = new DateTime(2026, 1, 2, 12, 30, 0, DateTimeKind.Utc);
-        var endDate = new DateTime(2027, 1, 2, 18, 0, 0, DateTimeKind.Utc);
+        var startDate = new DateOnly(2026, 1, 2);
+        var endDate = new DateOnly(2027, 1, 2);
         var beforeCreation = DateTime.UtcNow;
 
         var policy = PolicyBuilder.Build(
@@ -25,8 +26,8 @@ public class PoliciesTests
         var afterCreation = DateTime.UtcNow;
         policy.Id.ShouldNotBe(Guid.Empty);
         policy.Description.ShouldBe("Home coverage");
-        policy.StartDate.ShouldBe(startDate.Date);
-        policy.EndDate.ShouldBe(endDate.Date);
+        policy.StartDate.ShouldBe(startDate);
+        policy.EndDate.ShouldBe(endDate);
         policy.Status.ShouldBe(PolicyStatus.Active);
         policy.IsCancelled.ShouldBeFalse();
         policy.CreatedAt.ShouldBeInRange(beforeCreation, afterCreation);
@@ -41,17 +42,17 @@ public class PoliciesTests
     [InlineData(1)]
     public void Deve_ConsiderarVigente_Quando_DataEstiverNosLimites(int dayOffset)
     {
-        var today = DateTime.UtcNow.Date;
+        var today = BusinessClockBuilder.DefaultToday;
         var policy = PolicyBuilder.Build(startDate: today.AddDays(-1), endDate: today.AddDays(1));
 
-        policy.IsInForce(today.AddDays(dayOffset).AddHours(12)).ShouldBeTrue();
+        policy.IsInForce(today.AddDays(dayOffset)).ShouldBeTrue();
     }
 
     [Fact(DisplayName = nameof(Deve_ConsiderarForaDeVigencia_Quando_DataEstiverAntesDoInicio))]
     [Trait("Domain", "Policies - Vigência")]
     public void Deve_ConsiderarForaDeVigencia_Quando_DataEstiverAntesDoInicio()
     {
-        var today = DateTime.UtcNow.Date;
+        var today = BusinessClockBuilder.DefaultToday;
         var policy = PolicyBuilder.Build(startDate: today, endDate: today.AddDays(1));
 
         policy.IsInForce(today.AddDays(-1)).ShouldBeFalse();
@@ -61,7 +62,7 @@ public class PoliciesTests
     [Trait("Domain", "Policies - Vigência")]
     public void Deve_ConsiderarForaDeVigencia_Quando_DataEstiverDepoisDoFim()
     {
-        var today = DateTime.UtcNow.Date;
+        var today = BusinessClockBuilder.DefaultToday;
         var policy = PolicyBuilder.Build(startDate: today.AddDays(-1), endDate: today);
 
         policy.IsInForce(today.AddDays(1)).ShouldBeFalse();
@@ -79,7 +80,7 @@ public class PoliciesTests
         var afterCancellation = DateTime.UtcNow;
         policy.Status.ShouldBe(PolicyStatus.Cancelled);
         policy.IsCancelled.ShouldBeTrue();
-        policy.IsInForce(DateTime.UtcNow).ShouldBeFalse();
+        policy.IsInForce(BusinessClockBuilder.DefaultToday).ShouldBeFalse();
         policy.CancelledAt.ShouldNotBeNull();
         policy.CancelledAt.Value.ShouldBeInRange(beforeCancellation, afterCancellation);
         policy.UpdatedAt.ShouldBe(policy.CancelledAt);
@@ -112,7 +113,7 @@ public class PoliciesTests
     public void Deve_LancarExcecao_Quando_InstanciarComDadosInvalidos(string invalidField, string expectedMessageKey)
     {
         // InlineData só aceita constantes: o campo inválido chega como texto e o valor é montado aqui
-        var today = DateTime.UtcNow.Date;
+        var today = BusinessClockBuilder.DefaultToday;
         var policyholderId = invalidField == "policyholder" ? Guid.Empty : Guid.NewGuid();
         var description = invalidField == "description" ? "   " : "Home coverage";
         var coverage = invalidField == "coverage" ? 0m : 10000m;

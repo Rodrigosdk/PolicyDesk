@@ -8,7 +8,7 @@ public class ResponseClaimJson
     public Guid ApoliceId { get; set; }
     public string Descricao { get; set; } = string.Empty;
     public decimal Valor { get; set; }
-    public DateTime DataOcorrencia { get; set; }
+    public DateOnly DataOcorrencia { get; set; }
     public StatusSinistro Status { get; set; }
     public string? MotivoNegacao { get; set; }
     public DateTime? DataAprovacao { get; set; }

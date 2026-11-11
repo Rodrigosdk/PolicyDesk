@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using CommonTestUtilities.Requests;
+using CommonTestUtilities.Time;
 using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Communication.Requests;
 using PolicyDesk.Domain.Entities;
@@ -29,7 +30,7 @@ public abstract class PolicyholdersTestBase(PolicyDeskApplicationFactory factory
 
     protected async Task<HttpResponseMessage> RegisterPolicy(Guid policyholderId)
     {
-        var today = DateTime.UtcNow.Date;
+        var today = BusinessClockBuilder.DefaultToday;
         return await Post("/api/apolices", new RequestPolicyJson
         {
             SeguradoId = policyholderId,

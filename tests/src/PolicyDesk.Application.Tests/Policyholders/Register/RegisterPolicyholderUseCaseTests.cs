@@ -2,6 +2,7 @@ using PolicyDesk.Domain.Validations;
 using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Requests;
+using CommonTestUtilities.Time;
 using Moq;
 using PolicyDesk.Application.Policyholders.Register;
 using PolicyDesk.Communication.Requests;
@@ -10,6 +11,7 @@ using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 using Shouldly;
 using PolicyDesk.Domain.Entities;
+using PolicyDesk.Domain.SeedWorks;
 
 namespace PolicyDesk.Application.Tests.Policyholders.Register;
 
@@ -106,9 +108,22 @@ public class RegisterPolicyholderUseCaseTests
     public async Task Deve_LancarExcecaoSemChamarRepositorio_Quando_DataDeNascimentoForFutura()
     {
         var request = RequestPolicyholderJsonBuilder.Build();
-        request.DataNascimento = DateTime.UtcNow.Date.AddDays(1);
+        request.DataNascimento = BusinessClockBuilder.DefaultToday.AddDays(1);
 
         await ShouldFailWithoutCallingRepository(request, ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_IN_FUTURE);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarExcecaoSemChamarRepositorio_Quando_NascimentoForAmanhaNoBrasilMasHojeEmUtc))]
+    [Trait("Application", "Policyholders - Register")]
+    public async Task Deve_LancarExcecaoSemChamarRepositorio_Quando_NascimentoForAmanhaNoBrasilMasHojeEmUtc()
+    {
+        var request = RequestPolicyholderJsonBuilder.Build();
+        request.DataNascimento = new DateOnly(2026, 3, 11);
+
+        await ShouldFailWithoutCallingRepository(
+            request,
+            ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_IN_FUTURE,
+            BusinessClockBuilder.Build(BusinessClockBuilder.LateEveningUtcNow));
     }
 
     [Theory(DisplayName = nameof(Deve_LancarExcecaoSemChamarRepositorio_Quando_TelefoneForVazio))]
@@ -176,10 +191,13 @@ public class RegisterPolicyholderUseCaseTests
         writeRepository.Verify(r => r.RegisterOrReactivateAsync(It.IsAny<Policyholder>()), Times.Never);
     }
 
-    private static async Task ShouldFailWithoutCallingRepository(RequestPolicyholderJson request, string expectedError)
+    private static async Task ShouldFailWithoutCallingRepository(
+        RequestPolicyholderJson request,
+        string expectedError,
+        BusinessClock? clock = null)
     {
         var writeRepository = PolicyholdersWriteOnlyRepositoryBuilder.Build();
-        var useCase = CreateUseCase(writeRepository);
+        var useCase = CreateUseCase(writeRepository, clock);
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(request));
 
@@ -187,8 +205,10 @@ public class RegisterPolicyholderUseCaseTests
         writeRepository.Verify(r => r.RegisterOrReactivateAsync(It.IsAny<Policyholder>()), Times.Never);
     }
 
-    private static RegisterPolicyholderUseCase CreateUseCase(Mock<IPolicyholdersWriteOnlyRepository> writeRepository) =>
-        new(writeRepository.Object, NullLogger<RegisterPolicyholderUseCase>.Instance);
+    private static RegisterPolicyholderUseCase CreateUseCase(
+        Mock<IPolicyholdersWriteOnlyRepository> writeRepository,
+        BusinessClock? clock = null) =>
+        new(writeRepository.Object, clock ?? BusinessClockBuilder.Build(), NullLogger<RegisterPolicyholderUseCase>.Instance);
 
 
     [Fact(DisplayName = nameof(Deve_LancarExcecaoSemChamarRepositorio_Quando_NomeOuTelefoneExcederemOLimite))]

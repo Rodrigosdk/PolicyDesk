@@ -6,6 +6,6 @@ public class RequestPolicyJson
     public string Descricao { get; set; } = string.Empty;
     public decimal ValorCobertura { get; set; }
     public decimal ValorPremio { get; set; }
-    public DateTime InicioVigencia { get; set; }
-    public DateTime FimVigencia { get; set; }
+    public DateOnly InicioVigencia { get; set; }
+    public DateOnly FimVigencia { get; set; }
 }
