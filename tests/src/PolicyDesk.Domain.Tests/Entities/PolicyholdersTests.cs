@@ -120,8 +120,7 @@ public class PolicyholdersTests
         policyholder.BirthDate.ShouldBe(NewBirthDate);
         policyholder.Email.ShouldBe("jane.doe@example.com");
         policyholder.Phone.ShouldBe("+5583912345678");
-        policyholder.UpdatedAt.ShouldNotBeNull();
-        policyholder.UpdatedAt.Value.ShouldBeInRange(beforeUpdate, afterUpdate);
+        policyholder.UpdatedAt.ShouldNotBeNull().ShouldBeInRange(beforeUpdate, afterUpdate);
     }
 
     [Fact(DisplayName = nameof(Deve_ManterCpf_Quando_Atualizar))]
@@ -256,8 +255,7 @@ public class PolicyholdersTests
 
         policyholder.RegisterPolicy();
 
-        policyholder.UpdatedAt.ShouldNotBeNull();
-        policyholder.UpdatedAt.Value.ShouldBeInRange(before, DateTime.UtcNow);
+        policyholder.UpdatedAt.ShouldNotBeNull().ShouldBeInRange(before, DateTime.UtcNow);
         policyholder.Active.ShouldBeTrue();
     }
 

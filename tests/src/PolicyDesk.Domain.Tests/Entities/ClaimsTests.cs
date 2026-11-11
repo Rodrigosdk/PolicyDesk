@@ -71,8 +71,7 @@ public class ClaimsTests
 
         var after = DateTime.UtcNow;
         claim.Status.ShouldBe(ClaimStatus.Approved);
-        claim.ApprovedAt.ShouldNotBeNull();
-        claim.ApprovedAt.Value.ShouldBeInRange(before, after);
+        claim.ApprovedAt.ShouldNotBeNull().ShouldBeInRange(before, after);
         claim.UpdatedAt.ShouldBe(claim.ApprovedAt);
     }
 
@@ -141,8 +140,7 @@ public class ClaimsTests
 
         var after = DateTime.UtcNow;
         claim.Status.ShouldBe(ClaimStatus.Paid);
-        claim.PaidAt.ShouldNotBeNull();
-        claim.PaidAt.Value.ShouldBeInRange(before, after);
+        claim.PaidAt.ShouldNotBeNull().ShouldBeInRange(before, after);
         claim.UpdatedAt.ShouldBe(claim.PaidAt);
     }
 
