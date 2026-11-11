@@ -2,15 +2,21 @@ targetScope = 'resourceGroup'
 
 @description('Nome do Web App; vira o subdomínio <nome>.azurewebsites.net e precisa ser único na Azure.')
 @minLength(2)
-@maxLength(60)
+@maxLength(58)
 param appName string
 
 @description('Região dos recursos.')
 param location string = resourceGroup().location
 
-@description('Connection string do PostgreSQL usada pela API.')
+@description('Usuário administrador do PostgreSQL.')
+param databaseAdminLogin string = 'policydeskadmin'
+
+@description('Senha do administrador do PostgreSQL.')
 @secure()
-param databaseConnectionString string
+param databaseAdminPassword string
+
+@description('Nome do banco usado pela API.')
+param databaseName string = 'policydesk'
 
 @description('Endpoint OTLP opcional para exportar traces, métricas e logs.')
 param otlpEndpoint string = ''
@@ -21,6 +27,58 @@ var otlpSettings = empty(otlpEndpoint) ? [] : [
     value: otlpEndpoint
   }
 ]
+
+resource postgres 'Microsoft.DBforPostgreSQL/flexibleServers@2024-08-01' = {
+  name: 'psql-${appName}'
+  location: location
+  sku: {
+    name: 'Standard_B1ms'
+    tier: 'Burstable'
+  }
+  properties: {
+    version: '17'
+    administratorLogin: databaseAdminLogin
+    administratorLoginPassword: databaseAdminPassword
+    storage: {
+      storageSizeGB: 32
+      autoGrow: 'Disabled'
+    }
+    backup: {
+      backupRetentionDays: 7
+      geoRedundantBackup: 'Disabled'
+    }
+    highAvailability: {
+      mode: 'Disabled'
+    }
+    network: {
+      publicNetworkAccess: 'Enabled'
+    }
+    authConfig: {
+      passwordAuth: 'Enabled'
+      activeDirectoryAuth: 'Disabled'
+    }
+  }
+}
+
+resource database 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2024-08-01' = {
+  parent: postgres
+  name: databaseName
+  properties: {
+    charset: 'UTF8'
+    collation: 'en_US.utf8'
+  }
+}
+
+resource allowAzureServices 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2024-08-01' = {
+  parent: postgres
+  name: 'AllowAllAzureServicesAndResourcesWithinAzureIps'
+  properties: {
+    startIpAddress: '0.0.0.0'
+    endIpAddress: '0.0.0.0'
+  }
+}
+
+var databaseConnectionString = 'Host=${postgres.properties.fullyQualifiedDomainName};Port=5432;Database=${database.name};Username=${databaseAdminLogin};Password=${databaseAdminPassword};SSL Mode=Require'
 
 resource plan 'Microsoft.Web/serverfarms@2024-04-01' = {
   name: 'plan-${appName}'
@@ -85,4 +143,5 @@ resource ftpBasicAuth 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@20
 }
 
 output webAppName string = app.name
+output databaseHost string = postgres.properties.fullyQualifiedDomainName
 output webAppUrl string = 'https://${app.properties.defaultHostName}'

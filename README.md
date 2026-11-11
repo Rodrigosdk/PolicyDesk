@@ -345,20 +345,17 @@ flowchart LR
 - **Sem segredos de longa duração**: o login na Azure usa OIDC (federated credentials); a identidade só tem `Website Contributor` no próprio Web App.
 - **Build once, deploy many**: o artefato testado é o mesmo que vai para produção.
 - **Migrations fora da inicialização**: um *migrations bundle* do EF Core é aplicado antes do deploy, então a API em produção nunca altera o schema ao subir.
-- **Infraestrutura como código**: o plano F1 e o Web App estão descritos em [`infra/main.bicep`](infra/main.bicep).
+- **Infraestrutura como código**: o banco, o plano F1 e o Web App estão descritos em [`infra/main.bicep`](infra/main.bicep).
 
 ### Primeiro deploy
 
-1. Tenha um PostgreSQL acessível pela internet (por exemplo, Azure Database for PostgreSQL Flexible Server na oferta gratuita de 12 meses, Neon ou Supabase) e libere o acesso a partir dos runners do GitHub, que aplicam as migrations.
-2. Com o Azure CLI e o GitHub CLI autenticados (`az login` e `gh auth login`), rode um único comando, que provisiona a Azure e configura o environment, os secrets e a variável no GitHub:
+Com o Azure CLI e o GitHub CLI autenticados (`az login` e `gh auth login`), um único comando provisiona o PostgreSQL Flexible Server, o plano F1 e o Web App, e configura no GitHub o environment `production`, os secrets e a variável:
 
-   ```bash
-   APP_NAME=policydesk-api-<sufixo-unico> \
-   DATABASE_CONNECTION_STRING='Host=...;Database=...;Username=...;Password=...;SSL Mode=Require' \
-   ./infra/bootstrap.sh
-   ```
+```bash
+./infra/bootstrap.sh
+```
 
-3. Faça merge em `main`. A URL publicada aparece no próprio job de deploy.
+Depois, basta fazer merge em `main`. Detalhes, variáveis opcionais e problemas comuns na [wiki](https://github.com/Rodrigosdk/PolicyDesk/wiki/CI-CD-e-Deploy).
 
 > **Limites do F1:** 60 minutos de CPU por dia, 1 GB de RAM, sem *Always On* (a primeira requisição após inatividade é lenta) e sem deployment slots. Em produção real, um plano B1 ou superior habilita slots para deploy sem downtime.
 

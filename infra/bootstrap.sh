@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-: "${APP_NAME:?Defina APP_NAME (nome único do Web App, ex.: policydesk-api-rodrigo)}"
-: "${DATABASE_CONNECTION_STRING:?Defina DATABASE_CONNECTION_STRING}"
+APP_NAME="${APP_NAME:-policydesk-api-rodrigo}"
 
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-policydesk}"
 LOCATION="${LOCATION:-brazilsouth}"
@@ -23,12 +22,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 echo "==> Grupo de recursos $RESOURCE_GROUP ($LOCATION)"
 az group create --name "$RESOURCE_GROUP" --location "$LOCATION" --output none
 
-echo "==> Plano F1 + Web App $APP_NAME"
-az deployment group create \
+DB_ADMIN_LOGIN="policydeskadmin"
+DB_NAME="policydesk"
+DB_ADMIN_PASSWORD="${DB_ADMIN_PASSWORD:-$(openssl rand -base64 32 | tr -dc 'A-Za-z0-9' | head -c 24)Aa1}"
+
+echo "==> PostgreSQL Flexible Server (B1ms), plano F1 e Web App $APP_NAME (pode levar ~10 min)"
+DB_HOST="$(az deployment group create \
   --resource-group "$RESOURCE_GROUP" \
   --template-file "$SCRIPT_DIR/main.bicep" \
-  --parameters appName="$APP_NAME" databaseConnectionString="$DATABASE_CONNECTION_STRING" \
-  --output none
+  --parameters appName="$APP_NAME" databaseAdminLogin="$DB_ADMIN_LOGIN" databaseAdminPassword="$DB_ADMIN_PASSWORD" databaseName="$DB_NAME" \
+  --query properties.outputs.databaseHost.value \
+  --output tsv)"
+DATABASE_CONNECTION_STRING="Host=$DB_HOST;Port=5432;Database=$DB_NAME;Username=$DB_ADMIN_LOGIN;Password=$DB_ADMIN_PASSWORD;SSL Mode=Require"
 
 WEBAPP_ID="$(az webapp show --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" --query id --output tsv)"
 SUBSCRIPTION_ID="$(az account show --query id --output tsv)"
