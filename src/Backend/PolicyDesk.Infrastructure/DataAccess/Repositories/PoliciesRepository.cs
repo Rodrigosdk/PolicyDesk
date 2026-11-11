@@ -30,10 +30,10 @@ internal sealed class PoliciesRepository(PolicyDeskDbContext dbContext) :
     public async Task<PagedResult<Policy>> GetPageAsync(Guid? policyholderId, PolicyStatus? status, int page, int pageSize, CancellationToken cancellationToken = default)
     {
         var query = dbContext.Policies.AsNoTracking();
-        if (policyholderId.HasValue)
-            query = query.Where(policy => policy.PolicyholderId == policyholderId.Value);
-        if (status.HasValue)
-            query = query.Where(policy => policy.Status == status.Value);
+        if (policyholderId is { } policyholderIdFilter)
+            query = query.Where(policy => policy.PolicyholderId == policyholderIdFilter);
+        if (status is { } statusFilter)
+            query = query.Where(policy => policy.Status == statusFilter);
 
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query

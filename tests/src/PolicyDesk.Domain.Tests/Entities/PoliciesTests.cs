@@ -81,8 +81,7 @@ public class PoliciesTests
         policy.Status.ShouldBe(PolicyStatus.Cancelled);
         policy.IsCancelled.ShouldBeTrue();
         policy.IsInForce(BusinessClockBuilder.DefaultToday).ShouldBeFalse();
-        policy.CancelledAt.ShouldNotBeNull();
-        policy.CancelledAt.Value.ShouldBeInRange(beforeCancellation, afterCancellation);
+        policy.CancelledAt.ShouldNotBeNull().ShouldBeInRange(beforeCancellation, afterCancellation);
         policy.UpdatedAt.ShouldBe(policy.CancelledAt);
     }
 
@@ -139,8 +138,7 @@ public class PoliciesTests
 
         policy.RegisterClaim(amount, committedAmount);
 
-        policy.UpdatedAt.ShouldNotBeNull();
-        policy.UpdatedAt.Value.ShouldBeGreaterThanOrEqualTo(beforeRegistration);
+        policy.UpdatedAt.ShouldNotBeNull().ShouldBeGreaterThanOrEqualTo(beforeRegistration);
     }
 
     [Theory(DisplayName = nameof(Deve_LancarExcecaoSemAtualizar_Quando_ValorExcederSaldo))]

@@ -328,22 +328,24 @@ O pipeline roda no **GitHub Actions** e publica a API num **Azure App Service Li
 flowchart LR
     PR["Pull request<br/>ou push em developer"] --> CI
     MAIN["Push em main"] --> CI
-    CI["<b>CI</b><br/>restore · vulnerabilidades<br/>build Release · testes · cobertura"] --> PKG
-    PKG["<b>Empacotar</b><br/>dotnet publish<br/>bundle de migrations"] --> DEP
-    DEP["<b>Deploy</b> (environment production)<br/>login OIDC · migrations<br/>App Service · smoke test /health"]
+    CI["<b>CI</b><br/>restore · vulnerabilidades<br/>build Release · testes · cobertura"] --> MIG
+    CI --> IMG
+    MIG["<b>Bundle de migrations</b>"] --> DEP
+    IMG["<b>Imagem Docker</b><br/>docker/Dockerfile → ghcr.io"] --> DEP
+    DEP["<b>Deploy</b> (environment production)<br/>login OIDC · migrations<br/>imagem no App Service · smoke test /health"]
 ```
 
 | Workflow | Quando roda | O que faz |
 | --- | --- | --- |
 | `ci.yml` | PRs para `main`/`developer`, push em `developer` | Build com analisadores como erro, auditoria de pacotes vulneráveis, todos os testes (com Testcontainers) e relatório de cobertura no resumo da execução |
-| `cd.yml` | Push em `main` ou manual | Reaproveita o CI, gera os artefatos e faz o deploy no environment `production` |
+| `cd.yml` | Push em `main` ou manual | Reaproveita o CI, gera o bundle de migrations e a imagem Docker (publicada no `ghcr.io`) e faz o deploy no environment `production` |
 | `codeql.yml` | PRs, pushes e semanalmente | Análise estática de segurança do código C# |
 | `dependabot.yml` | Semanalmente | PRs de atualização de NuGet, Actions e imagens Docker, agrupados |
 
 **Decisões:**
 
 - **Sem segredos de longa duração**: o login na Azure usa OIDC (federated credentials); a identidade só tem `Website Contributor` no próprio Web App.
-- **Build once, deploy many**: o artefato testado é o mesmo que vai para produção.
+- **Build once, deploy many**: a imagem testada é a mesma que vai para produção, gerada pelo mesmo `docker/Dockerfile` usado localmente e identificada pelo SHA do commit.
 - **Migrations fora da inicialização**: um *migrations bundle* do EF Core é aplicado antes do deploy, então a API em produção nunca altera o schema ao subir.
 - **Infraestrutura como código**: o banco, o plano F1 e o Web App estão descritos em [`infra/main.bicep`](infra/main.bicep).
 
