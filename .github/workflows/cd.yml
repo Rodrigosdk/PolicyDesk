@@ -1,0 +1,138 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md', 'docs/**', 'LICENSE']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  package:
+    name: Empacotar
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Instalar o .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache de pacotes NuGet
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('global.json', 'Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restaurar ferramentas locais
+        run: dotnet tool restore
+
+      - name: Publicar a API
+        run: >
+          dotnet publish src/Backend/PolicyDesk.Api/PolicyDesk.Api.csproj
+          --configuration Release
+          --output artifacts/api
+          -p:UseAppHost=false
+          -p:SourceRevisionId=${{ github.sha }}
+
+      - name: Gerar o bundle de migrations
+        run: >
+          dotnet ef migrations bundle
+          --project src/Backend/PolicyDesk.Infrastructure
+          --startup-project src/Backend/PolicyDesk.Infrastructure
+          --configuration Release
+          --self-contained
+          --runtime linux-x64
+          --output artifacts/migrations/efbundle
+
+      - name: Anexar a API
+        uses: actions/upload-artifact@v4
+        with:
+          name: api
+          path: artifacts/api
+          retention-days: 7
+
+      - name: Anexar as migrations
+        uses: actions/upload-artifact@v4
+        with:
+          name: migrations
+          path: artifacts/migrations
+          retention-days: 7
+
+  deploy:
+    name: Deploy em produção
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: https://${{ vars.AZURE_WEBAPP_NAME }}.azurewebsites.net
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Baixar a API
+        uses: actions/download-artifact@v4
+        with:
+          name: api
+          path: api
+
+      - name: Baixar as migrations
+        uses: actions/download-artifact@v4
+        with:
+          name: migrations
+          path: migrations
+
+      - name: Login na Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Aplicar as migrations
+        env:
+          DB_CONNECTION: ${{ secrets.DATABASE_CONNECTION_STRING }}
+        run: |
+          chmod +x migrations/efbundle
+          migrations/efbundle --connection "$DB_CONNECTION"
+
+      - name: Deploy no Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          package: api
+
+      - name: Smoke test (/health)
+        run: >
+          curl --fail --silent --show-error
+          --retry 12 --retry-delay 10 --retry-all-errors
+          --max-time 30
+          "https://${{ vars.AZURE_WEBAPP_NAME }}.azurewebsites.net/health"
+
+      - name: Logout da Azure
+        if: always()
+        run: az logout

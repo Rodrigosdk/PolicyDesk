@@ -9,6 +9,8 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docs.docker.com/compose/)
 [![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-Observability-F5A800?style=for-the-badge&logo=opentelemetry&logoColor=white)](https://opentelemetry.io/)
+[![CI](https://img.shields.io/github/actions/workflow/status/Rodrigosdk/PolicyDesk/ci.yml?branch=developer&style=for-the-badge&label=CI)](https://github.com/Rodrigosdk/PolicyDesk/actions/workflows/ci.yml)
+[![CD](https://img.shields.io/github/actions/workflow/status/Rodrigosdk/PolicyDesk/cd.yml?branch=main&style=for-the-badge&label=CD)](https://github.com/Rodrigosdk/PolicyDesk/actions/workflows/cd.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
 [Sobre](#-sobre) •
@@ -18,6 +20,7 @@
 [Como executar](#-como-executar) •
 [Endpoints](#-endpoints) •
 [Testes](#-testes) •
+[CI/CD](#-cicd) •
 [Licença](#-licença)
 
 </div>
@@ -314,6 +317,51 @@ dotnet test
 # Com cobertura de código
 dotnet test --collect:"XPlat Code Coverage"
 ```
+
+---
+
+## ⚙️ CI/CD
+
+O pipeline roda no **GitHub Actions** e publica a API num **Azure App Service Linux no plano F1 (gratuito)**.
+
+```mermaid
+flowchart LR
+    PR["Pull request<br/>ou push em developer"] --> CI
+    MAIN["Push em main"] --> CI
+    CI["<b>CI</b><br/>restore · vulnerabilidades<br/>build Release · testes · cobertura"] --> PKG
+    PKG["<b>Empacotar</b><br/>dotnet publish<br/>bundle de migrations"] --> DEP
+    DEP["<b>Deploy</b> (environment production)<br/>login OIDC · migrations<br/>App Service · smoke test /health"]
+```
+
+| Workflow | Quando roda | O que faz |
+| --- | --- | --- |
+| `ci.yml` | PRs para `main`/`developer`, push em `developer` | Build com analisadores como erro, auditoria de pacotes vulneráveis, todos os testes (com Testcontainers) e relatório de cobertura no resumo da execução |
+| `cd.yml` | Push em `main` ou manual | Reaproveita o CI, gera os artefatos e faz o deploy no environment `production` |
+| `codeql.yml` | PRs, pushes e semanalmente | Análise estática de segurança do código C# |
+| `dependabot.yml` | Semanalmente | PRs de atualização de NuGet, Actions e imagens Docker, agrupados |
+
+**Decisões:**
+
+- **Sem segredos de longa duração**: o login na Azure usa OIDC (federated credentials); a identidade só tem `Website Contributor` no próprio Web App.
+- **Build once, deploy many**: o artefato testado é o mesmo que vai para produção.
+- **Migrations fora da inicialização**: um *migrations bundle* do EF Core é aplicado antes do deploy, então a API em produção nunca altera o schema ao subir.
+- **Infraestrutura como código**: o plano F1 e o Web App estão descritos em [`infra/main.bicep`](infra/main.bicep).
+
+### Primeiro deploy
+
+1. Tenha um PostgreSQL acessível pela internet (por exemplo, Azure Database for PostgreSQL Flexible Server na oferta gratuita de 12 meses, Neon ou Supabase) e libere o acesso a partir dos runners do GitHub, que aplicam as migrations.
+2. Com o Azure CLI autenticado (`az login`), provisione tudo:
+
+   ```bash
+   APP_NAME=policydesk-api-<sufixo-unico> \
+   DATABASE_CONNECTION_STRING='Host=...;Database=...;Username=...;Password=...;SSL Mode=Require' \
+   ./infra/bootstrap.sh
+   ```
+
+3. Cadastre no environment `production` do GitHub os secrets e a variável que o script imprime.
+4. Faça merge em `main`. A URL publicada aparece no próprio job de deploy.
+
+> **Limites do F1:** 60 minutos de CPU por dia, 1 GB de RAM, sem *Always On* (a primeira requisição após inatividade é lenta) e sem deployment slots. Em produção real, um plano B1 ou superior habilita slots para deploy sem downtime.
 
 ---
 

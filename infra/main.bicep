@@ -1,0 +1,88 @@
+targetScope = 'resourceGroup'
+
+@description('Nome do Web App; vira o subdomínio <nome>.azurewebsites.net e precisa ser único na Azure.')
+@minLength(2)
+@maxLength(60)
+param appName string
+
+@description('Região dos recursos.')
+param location string = resourceGroup().location
+
+@description('Connection string do PostgreSQL usada pela API.')
+@secure()
+param databaseConnectionString string
+
+@description('Endpoint OTLP opcional para exportar traces, métricas e logs.')
+param otlpEndpoint string = ''
+
+var otlpSettings = empty(otlpEndpoint) ? [] : [
+  {
+    name: 'OTEL_EXPORTER_OTLP_ENDPOINT'
+    value: otlpEndpoint
+  }
+]
+
+resource plan 'Microsoft.Web/serverfarms@2024-04-01' = {
+  name: 'plan-${appName}'
+  location: location
+  kind: 'linux'
+  sku: {
+    name: 'F1'
+    tier: 'Free'
+  }
+  properties: {
+    reserved: true
+  }
+}
+
+resource app 'Microsoft.Web/sites@2024-04-01' = {
+  name: appName
+  location: location
+  kind: 'app,linux'
+  properties: {
+    serverFarmId: plan.id
+    httpsOnly: true
+    clientAffinityEnabled: false
+    siteConfig: {
+      linuxFxVersion: 'DOTNETCORE|10.0'
+      appCommandLine: 'dotnet PolicyDesk.Api.dll'
+      alwaysOn: false
+      http20Enabled: true
+      minTlsVersion: '1.2'
+      scmMinTlsVersion: '1.2'
+      ftpsState: 'Disabled'
+      appSettings: concat([
+        {
+          name: 'ASPNETCORE_ENVIRONMENT'
+          value: 'Production'
+        }
+        {
+          name: 'ASPNETCORE_FORWARDEDHEADERS_ENABLED'
+          value: 'true'
+        }
+        {
+          name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
+          value: 'false'
+        }
+      ], otlpSettings)
+      connectionStrings: [
+        {
+          name: 'DbConnection'
+          connectionString: databaseConnectionString
+          type: 'Custom'
+        }
+      ]
+    }
+  }
+}
+
+resource ftpBasicAuth 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2024-04-01' = {
+  parent: app
+  name: 'ftp'
+  properties: {
+    allow: false
+  }
+}
+
+output webAppName string = app.name
+output webAppUrl string = 'https://${app.properties.defaultHostName}'
