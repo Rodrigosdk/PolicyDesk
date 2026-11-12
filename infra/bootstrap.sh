@@ -47,12 +47,14 @@ if [[ -z "$CLIENT_ID" ]]; then
 fi
 az ad sp show --id "$CLIENT_ID" --output none 2>/dev/null || az ad sp create --id "$CLIENT_ID" --output none
 
-CREDENTIAL_NAME="github-$GITHUB_ENVIRONMENT"
-if [[ -z "$(az ad app federated-credential list --id "$CLIENT_ID" --query "[?name=='$CREDENTIAL_NAME'].name" --output tsv)" ]]; then
+SUBJECT_PREFIX="$(gh api "repos/$GITHUB_REPO/actions/oidc/customization/sub" --jq '.sub_claim_prefix // empty' 2>/dev/null || true)"
+SUBJECT="${SUBJECT_PREFIX:-repo:$GITHUB_REPO}:environment:$GITHUB_ENVIRONMENT"
+CREDENTIAL_NAME="github-$GITHUB_ENVIRONMENT-$(printf '%s' "$SUBJECT" | sha1sum | cut -c1-8)"
+if [[ -z "$(az ad app federated-credential list --id "$CLIENT_ID" --query "[?subject=='$SUBJECT'].name" --output tsv)" ]]; then
   az ad app federated-credential create --id "$CLIENT_ID" --parameters "{
     \"name\": \"$CREDENTIAL_NAME\",
     \"issuer\": \"https://token.actions.githubusercontent.com\",
-    \"subject\": \"repo:$GITHUB_REPO:environment:$GITHUB_ENVIRONMENT\",
+    \"subject\": \"$SUBJECT\",
     \"audiences\": [\"api://AzureADTokenExchange\"]
   }" --output none
 fi

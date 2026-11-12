@@ -117,6 +117,10 @@ resource app 'Microsoft.Web/sites@2024-04-01' = {
           value: 'Production'
         }
         {
+          name: 'Swagger__Enabled'
+          value: 'true'
+        }
+        {
           name: 'ASPNETCORE_FORWARDEDHEADERS_ENABLED'
           value: 'true'
         }
