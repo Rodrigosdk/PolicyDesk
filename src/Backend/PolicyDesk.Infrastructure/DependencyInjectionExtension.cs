@@ -7,6 +7,7 @@ using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Claims;
 using PolicyDesk.Domain.Repositories.Policies;
 using PolicyDesk.Domain.Repositories.Policyholders;
+using PolicyDesk.Domain.Repositories.Users;
 using PolicyDesk.Domain.Security.PasswordHashing;
 using PolicyDesk.Domain.SeedWorks;
 using PolicyDesk.Exception;
@@ -40,6 +41,10 @@ public static class DependencyInjectionExtension
         services.AddScoped<IClaimsWriteOnlyRepository, ClaimsRepository>();
         services.AddScoped<IClaimsReadOnlyRepository, ClaimsRepository>();
         services.AddScoped<IClaimsUpdateOnlyRepository, ClaimsRepository>();
+
+        services.AddScoped<IUsersWriteOnlyRepository, UsersRepository>();
+        services.AddScoped<IUsersReadOnlyRepository, UsersRepository>();
+        services.AddScoped<IUsersUpdateOnlyRepository, UsersRepository>();
 
     }
     
