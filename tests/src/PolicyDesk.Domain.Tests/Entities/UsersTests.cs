@@ -145,8 +145,10 @@ public class UsersTests
         var user = UserBuilder.Build();
         user.Deactivate();
 
-        user.CanBeReactivated(user.DeactivatedAt!.Value.AddDays(daysAfterDeactivation)).ShouldBeTrue();
-        user.CanBeReactivated(user.DeactivatedAt.Value.Add(User.ReactivationPeriod)).ShouldBeTrue();
+        var deactivatedAt = user.DeactivatedAt.ShouldNotBeNull();
+
+        user.CanBeReactivated(deactivatedAt.AddDays(daysAfterDeactivation)).ShouldBeTrue();
+        user.CanBeReactivated(deactivatedAt.Add(User.ReactivationPeriod)).ShouldBeTrue();
     }
 
     [Fact(DisplayName = nameof(Deve_RecusarReativacao_Quando_PrazoDeReativacaoTiverPassado))]
@@ -156,7 +158,9 @@ public class UsersTests
         var user = UserBuilder.Build();
         user.Deactivate();
 
-        user.CanBeReactivated(user.DeactivatedAt!.Value.Add(User.ReactivationPeriod).AddTicks(1)).ShouldBeFalse();
+        var deactivatedAt = user.DeactivatedAt.ShouldNotBeNull();
+
+        user.CanBeReactivated(deactivatedAt.Add(User.ReactivationPeriod).AddTicks(1)).ShouldBeFalse();
     }
 
     [Fact(DisplayName = nameof(Deve_RecusarReativacao_Quando_UsuarioEstiverAtivo))]

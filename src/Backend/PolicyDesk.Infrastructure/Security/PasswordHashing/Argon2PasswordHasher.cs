@@ -45,7 +45,7 @@ internal sealed class Argon2PasswordHasher : IPasswordHashing
     {
         var passwordBytes = Encoding.UTF8.GetBytes(password);
 
-        var hashAlgorithm = new Argon2id(passwordBytes)
+        using var hashAlgorithm = new Argon2id(passwordBytes)
         {
             DegreeOfParallelism = DegreeOfParallelism,
             Iterations = Iteration,
