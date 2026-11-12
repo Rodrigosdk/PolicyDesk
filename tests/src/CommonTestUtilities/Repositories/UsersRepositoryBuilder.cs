@@ -51,6 +51,14 @@ public class UsersUpdateOnlyRepositoryBuilder
         return this;
     }
 
+    public UsersUpdateOnlyRepositoryBuilder GetLatestInactiveByEmailForUpdate(User user)
+    {
+        _repository
+            .Setup(repository => repository.GetLatestInactiveByEmailForUpdateAsync(user.Email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+        return this;
+    }
+
     public IUsersUpdateOnlyRepository Build() => _repository.Object;
 }
 

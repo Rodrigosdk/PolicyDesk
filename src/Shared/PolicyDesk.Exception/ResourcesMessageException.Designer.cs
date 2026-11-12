@@ -231,6 +231,24 @@ namespace PolicyDesk.Exception {
             }
         }
 
+        public static string USER_PASSWORD_TOO_SHORT {
+            get {
+                return ResourceManager.GetString("USER_PASSWORD_TOO_SHORT", resourceCulture);
+            }
+        }
+
+        public static string USER_ACTIVE_EMAIL_EXISTS {
+            get {
+                return ResourceManager.GetString("USER_ACTIVE_EMAIL_EXISTS", resourceCulture);
+            }
+        }
+
+        public static string USER_INVALID_CREDENTIALS {
+            get {
+                return ResourceManager.GetString("USER_INVALID_CREDENTIALS", resourceCulture);
+            }
+        }
+
         public static string POLICYHOLDER_NAME_REQUIRED {
             get {
                 return ResourceManager.GetString("POLICYHOLDER_NAME_REQUIRED", resourceCulture);

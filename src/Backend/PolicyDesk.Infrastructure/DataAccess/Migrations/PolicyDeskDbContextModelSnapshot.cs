@@ -237,6 +237,10 @@ namespace PolicyDesk.Infrastructure.DataAccess.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<DateTime?>("DeactivatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deactivated_at");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(254)

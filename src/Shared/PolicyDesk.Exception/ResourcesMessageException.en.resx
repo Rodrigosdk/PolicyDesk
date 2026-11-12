@@ -168,4 +168,13 @@
     <data name="USER_PASSWORD_REQUIRED" xml:space="preserve">
         <value>The password is required.</value>
     </data>
+    <data name="USER_PASSWORD_TOO_SHORT" xml:space="preserve">
+        <value>The password must have at least {0} characters.</value>
+    </data>
+    <data name="USER_ACTIVE_EMAIL_EXISTS" xml:space="preserve">
+        <value>An active user with this email already exists.</value>
+    </data>
+    <data name="USER_INVALID_CREDENTIALS" xml:space="preserve">
+        <value>Invalid email or password.</value>
+    </data>
 </root>

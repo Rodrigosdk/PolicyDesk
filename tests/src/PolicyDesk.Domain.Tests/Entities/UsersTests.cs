@@ -1,4 +1,5 @@
 using CommonTestUtilities.Entities;
+using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Validations;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
@@ -123,6 +124,50 @@ public class UsersTests
         user.UpdatedAt.ShouldNotBeNull();
     }
 
+    [Fact(DisplayName = nameof(Deve_RegistrarDataDeInativacao_Quando_Inativar))]
+    [Trait("Domain", "Users - Inativação")]
+    public void Deve_RegistrarDataDeInativacao_Quando_Inativar()
+    {
+        var user = UserBuilder.Build();
+        var beforeDeactivation = DateTime.UtcNow;
+
+        user.Deactivate();
+
+        user.DeactivatedAt.ShouldNotBeNull().ShouldBeInRange(beforeDeactivation, DateTime.UtcNow);
+    }
+
+    [Theory(DisplayName = nameof(Deve_PermitirReativacao_Quando_InativadoDentroDoPrazo))]
+    [Trait("Domain", "Users - Reativação")]
+    [InlineData(0)]
+    [InlineData(29)]
+    public void Deve_PermitirReativacao_Quando_InativadoDentroDoPrazo(int daysAfterDeactivation)
+    {
+        var user = UserBuilder.Build();
+        user.Deactivate();
+
+        user.CanBeReactivated(user.DeactivatedAt!.Value.AddDays(daysAfterDeactivation)).ShouldBeTrue();
+        user.CanBeReactivated(user.DeactivatedAt.Value.Add(User.ReactivationPeriod)).ShouldBeTrue();
+    }
+
+    [Fact(DisplayName = nameof(Deve_RecusarReativacao_Quando_PrazoDeReativacaoTiverPassado))]
+    [Trait("Domain", "Users - Reativação")]
+    public void Deve_RecusarReativacao_Quando_PrazoDeReativacaoTiverPassado()
+    {
+        var user = UserBuilder.Build();
+        user.Deactivate();
+
+        user.CanBeReactivated(user.DeactivatedAt!.Value.Add(User.ReactivationPeriod).AddTicks(1)).ShouldBeFalse();
+    }
+
+    [Fact(DisplayName = nameof(Deve_RecusarReativacao_Quando_UsuarioEstiverAtivo))]
+    [Trait("Domain", "Users - Reativação")]
+    public void Deve_RecusarReativacao_Quando_UsuarioEstiverAtivo()
+    {
+        var user = UserBuilder.Build();
+
+        user.CanBeReactivated(DateTime.UtcNow).ShouldBeFalse();
+    }
+
     [Fact(DisplayName = nameof(Deve_Reativar_Quando_UsuarioEstiverInativo))]
     [Trait("Domain", "Users - Reativação")]
     public void Deve_Reativar_Quando_UsuarioEstiverInativo()
@@ -133,6 +178,7 @@ public class UsersTests
         user.Reactivate();
 
         user.Active.ShouldBeTrue();
+        user.DeactivatedAt.ShouldBeNull();
         user.UpdatedAt.ShouldNotBeNull();
     }
 }

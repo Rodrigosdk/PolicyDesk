@@ -1,6 +1,7 @@
 using CommonTestUtilities.Entities;
-using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Domain.Entities;
+using PolicyDesk.Exception;
+using PolicyDesk.Exception.Exception;
 using PolicyDesk.Infrastructure.DataAccess;
 using PolicyDesk.Infrastructure.Tests.Policyholders;
 using Shouldly;
@@ -91,6 +92,35 @@ public class UsersRepositoryTests(PostgreSqlInfrastructureFixture fixture) : Use
         result.Active.ShouldBeFalse();
     }
 
+    [Fact(DisplayName = nameof(Deve_RetornarUltimoUsuarioInativado_Quando_BuscarInativoPorEmail))]
+    [Trait("Infrastructure", "UsersRepository - Consulta")]
+    public async Task Deve_RetornarUltimoUsuarioInativado_Quando_BuscarInativoPorEmail()
+    {
+        await using var dbContext = Fixture.CreateDbContext();
+        var older = UserBuilder.Build();
+        older.Deactivate();
+        await SaveUser(dbContext, older);
+        var newer = UserBuilder.Build(email: older.Email);
+        newer.Deactivate();
+        await SaveUser(dbContext, newer);
+
+        var result = await CreateRepository(dbContext).GetLatestInactiveByEmailForUpdateAsync(older.Email);
+
+        result.ShouldNotBeNull();
+        result.Id.ShouldBe(newer.Id);
+        result.DeactivatedAt.ShouldNotBeNull();
+    }
+
+    [Fact(DisplayName = nameof(Deve_RetornarNulo_Quando_BuscarInativoPorEmailDeUsuarioAtivo))]
+    [Trait("Infrastructure", "UsersRepository - Consulta")]
+    public async Task Deve_RetornarNulo_Quando_BuscarInativoPorEmailDeUsuarioAtivo()
+    {
+        await using var dbContext = Fixture.CreateDbContext();
+        var user = await SaveUser(dbContext);
+
+        (await CreateRepository(dbContext).GetLatestInactiveByEmailForUpdateAsync(user.Email)).ShouldBeNull();
+    }
+
     [Fact(DisplayName = nameof(Deve_IndicarEmailEmUso_Quando_ExistirUsuarioAtivoComMesmoEmail))]
     [Trait("Infrastructure", "UsersRepository - Email")]
     public async Task Deve_IndicarEmailEmUso_Quando_ExistirUsuarioAtivoComMesmoEmail()
@@ -117,13 +147,20 @@ public class UsersRepositoryTests(PostgreSqlInfrastructureFixture fixture) : Use
     [Trait("Infrastructure", "UsersRepository - Email")]
     public async Task Deve_RecusarCadastro_Quando_JaExistirUsuarioAtivoComMesmoEmail()
     {
-        await using var dbContext = Fixture.CreateDbContext();
-        var existing = await SaveUser(dbContext);
-        var duplicate = UserBuilder.Build(email: existing.Email);
+        await using var firstRequest = Fixture.CreateDbContext();
+        await using var secondRequest = Fixture.CreateDbContext();
+        var first = UserBuilder.Build();
+        var second = UserBuilder.Build(email: first.Email);
+        await CreateRepository(firstRequest).AddAsync(first);
+        await CreateRepository(secondRequest).AddAsync(second);
 
-        await CreateRepository(dbContext).AddAsync(duplicate);
+        await new UnitOfWork(firstRequest).CommitAsync();
+        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => new UnitOfWork(secondRequest).CommitAsync());
 
-        await Should.ThrowAsync<DbUpdateException>(() => new UnitOfWork(dbContext).CommitAsync());
+        exception.GetErrors().ShouldBe([ResourcesMessageException.USER_ACTIVE_EMAIL_EXISTS]);
+        await using var verificationContext = Fixture.CreateDbContext();
+        (await CreateRepository(verificationContext).GetByIdAsync(first.Id)).ShouldNotBeNull();
+        (await CreateRepository(verificationContext).GetByIdAsync(second.Id)).ShouldBeNull();
     }
 
     [Fact(DisplayName = nameof(Deve_PersistirAlteracoes_Quando_ConfirmarUnidadeDeTrabalho))]

@@ -51,6 +51,9 @@ internal class UserMap : IEntityTypeConfiguration<User>
             .HasColumnName("active")
             .IsRequired();
 
+        builder.Property(user => user.DeactivatedAt)
+            .HasColumnName("deactivated_at");
+
         builder.Property<uint>("Version").IsRowVersion();
     }
 }

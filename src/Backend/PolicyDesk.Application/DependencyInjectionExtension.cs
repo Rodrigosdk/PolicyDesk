@@ -13,6 +13,7 @@ using PolicyDesk.Application.Policyholders.Deactivate;
 using PolicyDesk.Application.Policyholders.Listing;
 using PolicyDesk.Application.Policyholders.Register;
 using PolicyDesk.Application.Policyholders.Update;
+using PolicyDesk.Application.Users.Register;
 
 [assembly: InternalsVisibleTo("PolicyDesk.Application.Tests")]
 
@@ -40,5 +41,8 @@ public static class DependencyInjectionExtension
         services.AddScoped<IApproveClaimUseCase, ApproveClaimUseCase>();
         services.AddScoped<IDenyClaimUseCase, DenyClaimUseCase>();
         services.AddScoped<IPayClaimUseCase, PayClaimUseCase>();
+
+        // Users
+        services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
     }
 }

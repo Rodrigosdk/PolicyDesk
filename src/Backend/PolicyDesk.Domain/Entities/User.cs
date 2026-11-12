@@ -7,6 +7,8 @@ namespace PolicyDesk.Domain.Entities;
 
 public class User : Entity
 {
+    public static readonly TimeSpan ReactivationPeriod = TimeSpan.FromDays(30);
+
     public User(string name, string email, string password)
     {
         Name = NormalizeNameOrThrow(name);
@@ -22,6 +24,7 @@ public class User : Entity
     public string Email { get; private set; } = string.Empty;
     public string Password { get; private set; } = string.Empty;
     public bool Active { get; private set; } = true;
+    public DateTime? DeactivatedAt { get; private set; }
 
     public void Update(string name, string email, string password)
     {
@@ -38,14 +41,19 @@ public class User : Entity
     public void Deactivate()
     {
         Active = false;
-        UpdatedAt = DateTime.UtcNow;
+        DeactivatedAt = DateTime.UtcNow;
+        UpdatedAt = DeactivatedAt;
     }
 
     public void Reactivate()
     {
         Active = true;
+        DeactivatedAt = null;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    public bool CanBeReactivated(DateTime utcNow) =>
+        !Active && DeactivatedAt is not null && utcNow - DeactivatedAt.Value <= ReactivationPeriod;
 
     private static string NormalizeNameOrThrow(string? name)
     {

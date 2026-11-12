@@ -9,6 +9,7 @@ public static class FieldLimits
     public const int Email = 254;
     public const int PolicyholderName = 150;
     public const int UserName = 150;
+    public const int UserPasswordMinLength = 8;
     public const int Phone = 20;
     public const int Description = 500;
     public const int DenialReason = 1000;
@@ -22,6 +23,9 @@ public static class FieldLimits
 
     public static string UserNameTooLong =>
         string.Format(CultureInfo.CurrentCulture, ResourcesMessageException.USER_NAME_TOO_LONG, UserName);
+
+    public static string UserPasswordTooShort =>
+        string.Format(CultureInfo.CurrentCulture, ResourcesMessageException.USER_PASSWORD_TOO_SHORT, UserPasswordMinLength);
 
     public static string DescriptionTooLong =>
         string.Format(CultureInfo.CurrentCulture, ResourcesMessageException.DESCRIPTION_TOO_LONG, Description);

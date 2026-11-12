@@ -44,4 +44,13 @@ internal sealed class UsersRepository(PolicyDeskDbContext dbContext) :
             .IgnoreQueryFilters([UserMap.ActiveFilter])
             .FirstOrDefaultAsync(user => user.Id == id, cancellationToken);
     }
+
+    public Task<User?> GetLatestInactiveByEmailForUpdateAsync(string email, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Users
+            .IgnoreQueryFilters([UserMap.ActiveFilter])
+            .Where(user => !user.Active && user.Email == email)
+            .OrderByDescending(user => user.DeactivatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 }

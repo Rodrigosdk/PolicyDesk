@@ -4,7 +4,7 @@ namespace PolicyDesk.Application.Logging;
 
 // Catálogo dos eventos de log de negócio. O texto é um template fixo (não traduzir): é por ele e pelo
 // EventId que os logs são agrupados e filtrados. Registre apenas IDs e valores, nunca dados pessoais.
-// Faixas de EventId: 1xxx sinistros, 2xxx apólices, 3xxx segurados.
+// Faixas de EventId: 1xxx sinistros, 2xxx apólices, 3xxx segurados, 4xxx usuários.
 internal static partial class ApplicationLogs
 {
     // Sinistros
@@ -42,4 +42,12 @@ internal static partial class ApplicationLogs
 
     [LoggerMessage(EventId = 3003, Level = LogLevel.Information, Message = "Segurado {PolicyholderId} inativado")]
     public static partial void PolicyholderDeactivated(this ILogger logger, Guid policyholderId);
+
+    // Usuários
+
+    [LoggerMessage(EventId = 4001, Level = LogLevel.Information, Message = "Usuário {UserId} cadastrado")]
+    public static partial void UserRegistered(this ILogger logger, Guid userId);
+
+    [LoggerMessage(EventId = 4002, Level = LogLevel.Information, Message = "Usuário {UserId} reativado")]
+    public static partial void UserReactivated(this ILogger logger, Guid userId);
 }
