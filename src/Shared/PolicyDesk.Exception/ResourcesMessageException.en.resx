@@ -177,4 +177,10 @@
     <data name="USER_INVALID_CREDENTIALS" xml:space="preserve">
         <value>Invalid email or password.</value>
     </data>
+    <data name="INVALID_JWT_CONFIGURATION" xml:space="preserve">
+        <value>The Jwt section is invalid. Provide Jwt:Issuer, Jwt:Audience, Jwt:ExpirationMinutes greater than zero and Jwt:SigningKey with at least 32 bytes, via User Secrets (dotnet user-secrets set "Jwt:SigningKey" "...") or the Jwt__SigningKey environment variable.</value>
+    </data>
+    <data name="AUTHENTICATION_REQUIRED" xml:space="preserve">
+        <value>You must be authenticated to access this resource.</value>
+    </data>
 </root>

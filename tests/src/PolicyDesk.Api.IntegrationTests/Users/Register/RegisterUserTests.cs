@@ -19,7 +19,7 @@ public class RegisterUserTests(PolicyDeskApplicationFactory factory) : UsersTest
     {
         var request = RequestUserJsonBuilder.Build();
 
-        var response = await Post(RequestUri, request);
+        var response = await PostWithoutToken(RegisterUri, request);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
         var created = await response.Content.ReadFromJsonAsync<ResponseCreatedJson>(TestJson.Options);
@@ -38,7 +38,7 @@ public class RegisterUserTests(PolicyDeskApplicationFactory factory) : UsersTest
     {
         var request = RequestUserJsonBuilder.Build();
 
-        var response = await Post(RequestUri, request);
+        var response = await PostWithoutToken(RegisterUri, request);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
         var body = await response.Content.ReadAsStringAsync();
@@ -51,9 +51,9 @@ public class RegisterUserTests(PolicyDeskApplicationFactory factory) : UsersTest
     public async Task Deve_RetornarBadRequestSemGravar_Quando_EmailJaEstiverEmUso()
     {
         var existing = RequestUserJsonBuilder.Build();
-        (await Post(RequestUri, existing)).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await PostWithoutToken(RegisterUri, existing)).StatusCode.ShouldBe(HttpStatusCode.Created);
 
-        var response = await Post(RequestUri, RequestUserJsonBuilder.Build(email: existing.Email));
+        var response = await PostWithoutToken(RegisterUri, RequestUserJsonBuilder.Build(email: existing.Email));
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await response.Content.ReadAsStringAsync()).ShouldContain(ResourcesMessageException.USER_ACTIVE_EMAIL_EXISTS);
@@ -67,7 +67,7 @@ public class RegisterUserTests(PolicyDeskApplicationFactory factory) : UsersTest
         var original = RequestUserJsonBuilder.Build();
         var userId = await RegisterAndDeactivate(original);
 
-        var response = await Post(RequestUri, RequestUserJsonBuilder.Build(email: original.Email, password: original.Senha));
+        var response = await PostWithoutToken(RegisterUri, RequestUserJsonBuilder.Build(email: original.Email, password: original.Senha));
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
         var created = await response.Content.ReadFromJsonAsync<ResponseCreatedJson>(TestJson.Options);
@@ -86,7 +86,7 @@ public class RegisterUserTests(PolicyDeskApplicationFactory factory) : UsersTest
         var original = RequestUserJsonBuilder.Build();
         var userId = await RegisterAndDeactivate(original);
 
-        var response = await Post(RequestUri, RequestUserJsonBuilder.Build(email: original.Email));
+        var response = await PostWithoutToken(RegisterUri, RequestUserJsonBuilder.Build(email: original.Email));
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await response.Content.ReadAsStringAsync()).ShouldContain(ResourcesMessageException.USER_INVALID_CREDENTIALS);
@@ -99,7 +99,7 @@ public class RegisterUserTests(PolicyDeskApplicationFactory factory) : UsersTest
     {
         var request = RequestUserJsonBuilder.Build(name: "   ", email: "invalido", password: "curta");
 
-        var response = await Post(RequestUri, request);
+        var response = await PostWithoutToken(RegisterUri, request);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         var body = await response.Content.ReadAsStringAsync();
@@ -111,7 +111,7 @@ public class RegisterUserTests(PolicyDeskApplicationFactory factory) : UsersTest
 
     private async Task<Guid> RegisterAndDeactivate(RequestUserJson request)
     {
-        var response = await Post(RequestUri, request);
+        var response = await PostWithoutToken(RegisterUri, request);
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
         var created = await response.Content.ReadFromJsonAsync<ResponseCreatedJson>(TestJson.Options);
         created.ShouldNotBeNull();

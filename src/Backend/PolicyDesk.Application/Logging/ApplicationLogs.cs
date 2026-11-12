@@ -50,4 +50,10 @@ internal static partial class ApplicationLogs
 
     [LoggerMessage(EventId = 4002, Level = LogLevel.Information, Message = "Usuário {UserId} reativado")]
     public static partial void UserReactivated(this ILogger logger, Guid userId);
+
+    [LoggerMessage(EventId = 4003, Level = LogLevel.Information, Message = "Usuário {UserId} autenticado")]
+    public static partial void UserLoggedIn(this ILogger logger, Guid userId);
+
+    [LoggerMessage(EventId = 4004, Level = LogLevel.Warning, Message = "Tentativa de login com credenciais inválidas")]
+    public static partial void UserLoginFailed(this ILogger logger);
 }

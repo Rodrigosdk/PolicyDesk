@@ -9,12 +9,14 @@ using PolicyDesk.Domain.Repositories.Policies;
 using PolicyDesk.Domain.Repositories.Policyholders;
 using PolicyDesk.Domain.Repositories.Users;
 using PolicyDesk.Domain.Security.PasswordHashing;
+using PolicyDesk.Domain.Security.Tokens;
 using PolicyDesk.Domain.SeedWorks;
 using PolicyDesk.Exception;
 using PolicyDesk.Infrastructure.Configuration;
 using PolicyDesk.Infrastructure.DataAccess;
 using PolicyDesk.Infrastructure.DataAccess.Repositories;
 using PolicyDesk.Infrastructure.Security.PasswordHashing;
+using PolicyDesk.Infrastructure.Security.Tokens;
 
 namespace PolicyDesk.Infrastructure;
 
@@ -25,7 +27,7 @@ public static class DependencyInjectionExtension
         AddTimer(services, configuration);
         AddDatabase(services, configuration);
         AddRepositories(services);
-        AddSecurity(services);
+        AddSecurity(services, configuration);
     }
 
     private static void AddRepositories(IServiceCollection services)
@@ -79,8 +81,15 @@ public static class DependencyInjectionExtension
 
     }
 
-    private static void AddSecurity(IServiceCollection services)
+    private static void AddSecurity(IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<IPasswordHashing, Argon2PasswordHasher>();
+
+        services.AddOptions<JwtOptions>()
+            .Bind(configuration.GetSection(JwtOptions.SectionName))
+            .Validate(options => options.IsValid(), ResourcesMessageException.INVALID_JWT_CONFIGURATION)
+            .ValidateOnStart();
+
+        services.AddSingleton<IAccessTokenGenerator, JwtAccessTokenGenerator>();
     }
 }

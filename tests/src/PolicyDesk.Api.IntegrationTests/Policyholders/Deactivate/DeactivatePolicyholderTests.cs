@@ -64,6 +64,7 @@ public class DeactivatePolicyholderTests(PolicyDeskApplicationFactory factory) :
 
         var previousUtcNow = Factory.Clock.GetUtcNow();
         Factory.Clock.AdjustTime(BusinessClockBuilder.LateEveningUtcNow);
+        RenewAccessToken();
         try
         {
             var response = await Delete($"{RequestUri}/{policyholder.Id}");

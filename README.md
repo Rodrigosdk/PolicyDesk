@@ -188,9 +188,11 @@ O servidor **PolicyDesk (local)** já aparece cadastrado; na primeira conexão, 
 # 1. Suba o banco e as ferramentas de desenvolvimento
 docker compose -f docker/compose.yml -f docker/compose.dev.yml up -d db dashboard pgadmin
 
-# 2. Configure a connection string via User Secrets
+# 2. Configure a connection string e a chave do JWT (mínimo de 32 bytes) via User Secrets
 dotnet user-secrets set "ConnectionStrings:DbConnection" \
   "Host=localhost;Port=5432;Database=PolicyDesk;Username=admin;Password=policy-desk-local" \
+  --project src/Backend/PolicyDesk.Api
+dotnet user-secrets set "Jwt:SigningKey" "$(openssl rand -base64 48)" \
   --project src/Backend/PolicyDesk.Api
 
 # 3. Execute a API

@@ -249,6 +249,18 @@ namespace PolicyDesk.Exception {
             }
         }
 
+        public static string INVALID_JWT_CONFIGURATION {
+            get {
+                return ResourceManager.GetString("INVALID_JWT_CONFIGURATION", resourceCulture);
+            }
+        }
+
+        public static string AUTHENTICATION_REQUIRED {
+            get {
+                return ResourceManager.GetString("AUTHENTICATION_REQUIRED", resourceCulture);
+            }
+        }
+
         public static string POLICYHOLDER_NAME_REQUIRED {
             get {
                 return ResourceManager.GetString("POLICYHOLDER_NAME_REQUIRED", resourceCulture);
