@@ -18,7 +18,7 @@ public class ClaimsTests
         var occurredOn = new DateOnly(2026, 3, 4);
         var beforeCreation = DateTime.UtcNow;
 
-        var claim = ClaimBuilder.Build(policyId, "  Water damage  ", 1500, occurredOn);
+        var claim = Claim.Create(policyId, "  Water damage  ", 1500, occurredOn);
 
         var afterCreation = DateTime.UtcNow;
         claim.Id.ShouldNotBe(Guid.Empty);
@@ -158,47 +158,47 @@ public class ClaimsTests
             ResourcesMessageException.CLAIM_MUST_BE_APPROVED_FOR_PAYMENT);
     }
 
-    [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_InstanciarComDescricaoVazia))]
+    [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_CriarComDescricaoVazia))]
     [Trait("Domain", "Claims - Instancia")]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Deve_LancarExcecao_Quando_InstanciarComDescricaoVazia(string? description)
+    public void Deve_LancarExcecao_Quando_CriarComDescricaoVazia(string? description)
     {
         var exception = Should.Throw<DomainRuleException>(
-            () => new Claim(Guid.NewGuid(), description!, 100, BusinessClockBuilder.DefaultToday));
+            () => Claim.Create(Guid.NewGuid(), description!, 100, BusinessClockBuilder.DefaultToday));
 
         exception.Message.ShouldBe(ResourcesMessageException.DESCRIPTION_REQUIRED);
     }
 
-    [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_InstanciarComValorNaoPositivo))]
+    [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_CriarComValorNaoPositivo))]
     [Trait("Domain", "Claims - Instancia")]
     [InlineData(0)]
     [InlineData(-0.01)]
-    public void Deve_LancarExcecao_Quando_InstanciarComValorNaoPositivo(decimal amount)
+    public void Deve_LancarExcecao_Quando_CriarComValorNaoPositivo(decimal amount)
     {
         var exception = Should.Throw<DomainRuleException>(
-            () => new Claim(Guid.NewGuid(), "Description", amount, BusinessClockBuilder.DefaultToday));
+            () => Claim.Create(Guid.NewGuid(), "Description", amount, BusinessClockBuilder.DefaultToday));
 
         exception.Message.ShouldBe(ResourcesMessageException.CLAIM_AMOUNT_MUST_BE_POSITIVE);
     }
 
-    [Fact(DisplayName = nameof(Deve_LancarExcecao_Quando_InstanciarSemApolice))]
+    [Fact(DisplayName = nameof(Deve_LancarExcecao_Quando_CriarSemApolice))]
     [Trait("Domain", "Claims - Instancia")]
-    public void Deve_LancarExcecao_Quando_InstanciarSemApolice()
+    public void Deve_LancarExcecao_Quando_CriarSemApolice()
     {
         var exception = Should.Throw<DomainRuleException>(
-            () => new Claim(Guid.Empty, "Description", 100, BusinessClockBuilder.DefaultToday));
+            () => Claim.Create(Guid.Empty, "Description", 100, BusinessClockBuilder.DefaultToday));
 
         exception.Message.ShouldBe(ResourcesMessageException.POLICY_REQUIRED);
     }
 
-    [Fact(DisplayName = nameof(Deve_LancarExcecao_Quando_InstanciarSemDataDeOcorrencia))]
+    [Fact(DisplayName = nameof(Deve_LancarExcecao_Quando_CriarSemDataDeOcorrencia))]
     [Trait("Domain", "Claims - Instancia")]
-    public void Deve_LancarExcecao_Quando_InstanciarSemDataDeOcorrencia()
+    public void Deve_LancarExcecao_Quando_CriarSemDataDeOcorrencia()
     {
         var exception = Should.Throw<DomainRuleException>(
-            () => new Claim(Guid.NewGuid(), "Description", 100, default));
+            () => Claim.Create(Guid.NewGuid(), "Description", 100, default));
 
         exception.Message.ShouldBe(ResourcesMessageException.CLAIM_OCCURRENCE_DATE_REQUIRED);
     }

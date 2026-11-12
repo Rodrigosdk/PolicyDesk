@@ -9,32 +9,35 @@ public class User : Entity
 {
     public static readonly TimeSpan ReactivationPeriod = TimeSpan.FromDays(30);
 
-    public User(string name, string email, string password)
-    {
-        Name = NormalizeNameOrThrow(name);
-        Email = EmailValidator.NormalizeOrThrow(email);
-        Password = EnsureValidPassword(password);
-    }
-
-    private User()
-    {
-    }
-
     public string Name { get; private set; } = string.Empty;
     public string Email { get; private set; } = string.Empty;
     public string Password { get; private set; } = string.Empty;
     public bool Active { get; private set; } = true;
     public DateTime? DeactivatedAt { get; private set; }
 
+    private User()
+    {
+    }
+
+    public static User Create(string name, string email, string password)
+    {
+        Validate(name, email, password);
+
+        return new User
+        {
+            Name = name.Trim(),
+            Email = EmailValidator.Normalize(email),
+            Password = password
+        };
+    }
+
     public void Update(string name, string email, string password)
     {
-        var normalizedName = NormalizeNameOrThrow(name);
-        var normalizedEmail = EmailValidator.NormalizeOrThrow(email);
-        var validPassword = EnsureValidPassword(password);
+        Validate(name, email, password);
 
-        Name = normalizedName;
-        Email = normalizedEmail;
-        Password = validPassword;
+        Name = name.Trim();
+        Email = EmailValidator.Normalize(email);
+        Password = password;
         UpdatedAt = DateTime.UtcNow;
     }
 
@@ -55,20 +58,15 @@ public class User : Entity
     public bool CanBeReactivated(DateTime utcNow) =>
         !Active && DeactivatedAt is not null && utcNow - DeactivatedAt.Value <= ReactivationPeriod;
 
-    private static string NormalizeNameOrThrow(string? name)
+    private static void Validate(string name, string email, string password)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new DomainRuleException(ResourcesMessageException.USER_NAME_REQUIRED);
-
-        return FieldLimits.Exceeds(name, FieldLimits.UserName)
-            ? throw new DomainRuleException(FieldLimits.UserNameTooLong)
-            : name.Trim();
-    }
-
-    private static string EnsureValidPassword(string? password)
-    {
-        return string.IsNullOrWhiteSpace(password)
-            ? throw new DomainRuleException(ResourcesMessageException.USER_PASSWORD_REQUIRED)
-            : password;
+        if (FieldLimits.Exceeds(name, FieldLimits.UserName))
+            throw new DomainRuleException(FieldLimits.UserNameTooLong);
+        if (!EmailValidator.IsValid(email))
+            throw new DomainRuleException(ResourcesMessageException.INVALID_EMAIL);
+        if (string.IsNullOrWhiteSpace(password))
+            throw new DomainRuleException(ResourcesMessageException.USER_PASSWORD_REQUIRED);
     }
 }

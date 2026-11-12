@@ -1,3 +1,4 @@
+using CommonTestUtilities.Generators;
 using CommonTestUtilities.Requests;
 using CommonTestUtilities.Security;
 using PolicyDesk.Domain.Security.PasswordHashing;

@@ -38,7 +38,7 @@ internal class RegisterUserUseCase(
             return await ReactivateAsync(inactiveUser, request.Senha, cancellationToken);
         }
 
-        var user = new User(request.Nome, email, passwordHashing.HashPassword(request.Senha));
+        var user = User.Create(request.Nome, email, passwordHashing.HashPassword(request.Senha));
 
         await usersWriteOnlyRepository.AddAsync(user);
         await unitOfWork.CommitAsync(cancellationToken);

@@ -15,10 +15,7 @@ public class UsersTests
     {
         var beforeCreation = DateTime.UtcNow;
 
-        var user = UserBuilder.Build(
-            name: "  John Doe  ",
-            email: "  John.Doe@Example.com ",
-            password: "hash-da-senha");
+        var user = User.Create("  John Doe  ", "  John.Doe@Example.com ", "hash-da-senha");
 
         var afterCreation = DateTime.UtcNow;
         user.Id.ShouldNotBe(Guid.Empty);
@@ -36,7 +33,7 @@ public class UsersTests
     [InlineData("   ")]
     public void Deve_LancarExcecao_Quando_NomeForVazio(string name)
     {
-        var exception = Should.Throw<DomainRuleException>(() => UserBuilder.Build(name: name));
+        var exception = Should.Throw<DomainRuleException>(() => User.Create(name, "john.doe@example.com", "hash-da-senha"));
 
         exception.Message.ShouldBe(ResourcesMessageException.USER_NAME_REQUIRED);
     }
@@ -47,7 +44,7 @@ public class UsersTests
     {
         var name = new string('a', FieldLimits.UserName + 1);
 
-        var exception = Should.Throw<DomainRuleException>(() => UserBuilder.Build(name: name));
+        var exception = Should.Throw<DomainRuleException>(() => User.Create(name, "john.doe@example.com", "hash-da-senha"));
 
         exception.Message.ShouldBe(FieldLimits.UserNameTooLong);
     }
@@ -61,7 +58,7 @@ public class UsersTests
     [InlineData("john@@example.com")]
     public void Deve_LancarExcecao_Quando_EmailForInvalido(string email)
     {
-        var exception = Should.Throw<DomainRuleException>(() => UserBuilder.Build(email: email));
+        var exception = Should.Throw<DomainRuleException>(() => User.Create("John Doe", email, "hash-da-senha"));
 
         exception.Message.ShouldBe(ResourcesMessageException.INVALID_EMAIL);
     }
@@ -72,24 +69,9 @@ public class UsersTests
     [InlineData("   ")]
     public void Deve_LancarExcecao_Quando_SenhaForVazia(string password)
     {
-        var exception = Should.Throw<DomainRuleException>(() => UserBuilder.Build(password: password));
+        var exception = Should.Throw<DomainRuleException>(() => User.Create("John Doe", "john.doe@example.com", password));
 
         exception.Message.ShouldBe(ResourcesMessageException.USER_PASSWORD_REQUIRED);
-    }
-
-    [Fact(DisplayName = nameof(Deve_AtualizarOsDados_Quando_DadosForemValidos))]
-    [Trait("Domain", "Users - Atualização")]
-    public void Deve_AtualizarOsDados_Quando_DadosForemValidos()
-    {
-        var user = UserBuilder.Build();
-        var beforeUpdate = DateTime.UtcNow;
-
-        user.Update("  Jane Doe  ", " Jane.Doe@Example.com ", "novo-hash-da-senha");
-
-        user.Name.ShouldBe("Jane Doe");
-        user.Email.ShouldBe("jane.doe@example.com");
-        user.Password.ShouldBe("novo-hash-da-senha");
-        user.UpdatedAt.ShouldNotBeNull().ShouldBeInRange(beforeUpdate, DateTime.UtcNow);
     }
 
     [Theory(DisplayName = nameof(Deve_LancarExcecaoSemAlterar_Quando_AtualizarComDadosInvalidos))]
@@ -110,6 +92,21 @@ public class UsersTests
         user.Email.ShouldBe(originalEmail);
         user.Password.ShouldBe(originalPassword);
         user.UpdatedAt.ShouldBeNull();
+    }
+
+    [Fact(DisplayName = nameof(Deve_AtualizarOsDados_Quando_DadosForemValidos))]
+    [Trait("Domain", "Users - Atualização")]
+    public void Deve_AtualizarOsDados_Quando_DadosForemValidos()
+    {
+        var user = UserBuilder.Build();
+        var beforeUpdate = DateTime.UtcNow;
+
+        user.Update("  Jane Doe  ", " Jane.Doe@Example.com ", "novo-hash-da-senha");
+
+        user.Name.ShouldBe("Jane Doe");
+        user.Email.ShouldBe("jane.doe@example.com");
+        user.Password.ShouldBe("novo-hash-da-senha");
+        user.UpdatedAt.ShouldNotBeNull().ShouldBeInRange(beforeUpdate, DateTime.UtcNow);
     }
 
     [Fact(DisplayName = nameof(Deve_Inativar_Quando_UsuarioEstiverAtivo))]

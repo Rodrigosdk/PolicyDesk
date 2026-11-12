@@ -8,32 +8,6 @@ namespace PolicyDesk.Domain.Entities;
 
 public class Claim : Entity
 {
-    public Claim(Guid policyId, string description, decimal amount, DateOnly occurredOn)
-    {
-        if (policyId == Guid.Empty)
-            throw new DomainRuleException(ResourcesMessageException.POLICY_REQUIRED);
-        if (string.IsNullOrWhiteSpace(description))
-            throw new DomainRuleException(ResourcesMessageException.DESCRIPTION_REQUIRED);
-        if (FieldLimits.Exceeds(description, FieldLimits.Description))
-            throw new DomainRuleException(FieldLimits.DescriptionTooLong);
-        if (amount <= 0)
-            throw new DomainRuleException(ResourcesMessageException.CLAIM_AMOUNT_MUST_BE_POSITIVE);
-        if (!MoneyLimits.IsValid(amount))
-            throw new DomainRuleException(MoneyLimits.ClaimAmountInvalidPrecision);
-        if (occurredOn == default)
-            throw new DomainRuleException(ResourcesMessageException.CLAIM_OCCURRENCE_DATE_REQUIRED);
-
-        PolicyId = policyId;
-        Description = description.Trim();
-        Amount = amount;
-        OccurredOn = occurredOn;
-    }
-
-    // Usado pelo EF Core ao carregar do banco: não reaplica as regras de criação
-    private Claim()
-    {
-    }
-
     public Guid PolicyId { get; private set; }
     public string Description { get; private set; } = string.Empty;
     public decimal Amount { get; private set; }
@@ -43,6 +17,23 @@ public class Claim : Entity
     public string? DenialReason { get; private set; }
     public DateTime? PaidAt { get; private set; }
 
+    private Claim()
+    {
+    }
+
+    public static Claim Create(Guid policyId, string description, decimal amount, DateOnly occurredOn)
+    {
+        Validate(policyId, description, amount, occurredOn);
+        
+        return new Claim
+        {
+            PolicyId = policyId,
+            Description = description.Trim(),
+            Amount = amount,
+            OccurredOn = occurredOn
+        };
+    }
+    
     public void StartAnalysis()
     {
         EnsureStatus(ClaimStatus.Pending, ResourcesMessageException.CLAIM_MUST_BE_PENDING_FOR_ANALYSIS);
@@ -87,5 +78,22 @@ public class Claim : Entity
     {
         if (Status != expected)
             throw new DomainRuleException(error);
+    }
+
+    private static void Validate(Guid policyId, string description, decimal amount, DateOnly occurredOn)
+    {
+        if (policyId == Guid.Empty)
+            throw new DomainRuleException(ResourcesMessageException.POLICY_REQUIRED);
+        if (string.IsNullOrWhiteSpace(description))
+            throw new DomainRuleException(ResourcesMessageException.DESCRIPTION_REQUIRED);
+        if (FieldLimits.Exceeds(description, FieldLimits.Description))
+            throw new DomainRuleException(FieldLimits.DescriptionTooLong);
+        if (amount <= 0)
+            throw new DomainRuleException(ResourcesMessageException.CLAIM_AMOUNT_MUST_BE_POSITIVE);
+        if (!MoneyLimits.IsValid(amount))
+            throw new DomainRuleException(MoneyLimits.ClaimAmountInvalidPrecision);
+        if (occurredOn == default)
+            throw new DomainRuleException(ResourcesMessageException.CLAIM_OCCURRENCE_DATE_REQUIRED);
+
     }
 }

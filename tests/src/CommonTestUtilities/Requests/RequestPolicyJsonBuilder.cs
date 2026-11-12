@@ -12,18 +12,13 @@ public static class RequestPolicyJsonBuilder
         decimal? coverageAmount = null,
         decimal? premiumAmount = null,
         DateOnly? startDate = null,
-        DateOnly? endDate = null)
-    {
-        var faker = new Faker();
-        var today = BusinessClockBuilder.DefaultToday;
-        return new RequestPolicyJson
-        {
-            SeguradoId = policyholderId ?? Guid.NewGuid(),
-            Descricao = description ?? faker.Commerce.ProductName(),
-            ValorCobertura = coverageAmount ?? faker.Finance.Amount(1000, 100000),
-            ValorPremio = premiumAmount ?? faker.Finance.Amount(10, 1000),
-            InicioVigencia = startDate ?? today.AddDays(-1),
-            FimVigencia = endDate ?? today.AddDays(30)
-        };
-    }
+        DateOnly? endDate = null) =>
+        new Faker<RequestPolicyJson>()
+            .RuleFor(request => request.SeguradoId, f => policyholderId ?? f.Random.Guid())
+            .RuleFor(request => request.Descricao, f => description ?? f.Commerce.ProductName())
+            .RuleFor(request => request.ValorCobertura, f => coverageAmount ?? f.Finance.Amount(1000, 100000))
+            .RuleFor(request => request.ValorPremio, f => premiumAmount ?? f.Finance.Amount(10, 1000))
+            .RuleFor(request => request.InicioVigencia, _ => startDate ?? BusinessClockBuilder.DefaultToday.AddDays(-1))
+            .RuleFor(request => request.FimVigencia, _ => endDate ?? BusinessClockBuilder.DefaultToday.AddDays(30))
+            .Generate();
 }

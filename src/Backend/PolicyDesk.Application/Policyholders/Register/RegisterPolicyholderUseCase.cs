@@ -22,7 +22,7 @@ internal class RegisterPolicyholderUseCase(
         var today = clock.Today;
         ValidateAndThrowOnFailures(request, today);
 
-        var policyholder = new Domain.Entities.Policyholder(
+        var policyholder = Domain.Entities.Policyholder.Create(
             request.Nome,
             request.Cpf,
             request.DataNascimento,
