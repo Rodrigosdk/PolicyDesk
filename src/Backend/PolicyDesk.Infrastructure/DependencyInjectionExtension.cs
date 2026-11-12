@@ -7,11 +7,13 @@ using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Domain.Repositories.Claims;
 using PolicyDesk.Domain.Repositories.Policies;
 using PolicyDesk.Domain.Repositories.Policyholders;
+using PolicyDesk.Domain.Security.PasswordHashing;
 using PolicyDesk.Domain.SeedWorks;
 using PolicyDesk.Exception;
 using PolicyDesk.Infrastructure.Configuration;
 using PolicyDesk.Infrastructure.DataAccess;
 using PolicyDesk.Infrastructure.DataAccess.Repositories;
+using PolicyDesk.Infrastructure.Security.PasswordHashing;
 
 namespace PolicyDesk.Infrastructure;
 
@@ -22,6 +24,7 @@ public static class DependencyInjectionExtension
         AddTimer(services, configuration);
         AddDatabase(services, configuration);
         AddRepositories(services);
+        AddSecurity(services);
     }
 
     private static void AddRepositories(IServiceCollection services)
@@ -71,4 +74,8 @@ public static class DependencyInjectionExtension
 
     }
 
+    private static void AddSecurity(IServiceCollection services)
+    {
+        services.AddScoped<IPasswordHashing, Argon2PasswordHasher>();
+    }
 }
