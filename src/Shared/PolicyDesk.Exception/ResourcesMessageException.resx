@@ -159,4 +159,28 @@
     <data name="MISSING_CONNECTION_STRING" xml:space="preserve">
         <value>ConnectionStrings:DbConnection não configurada. Informe-a via User Secrets (dotnet user-secrets set "ConnectionStrings:DbConnection" "...") ou pela variável de ambiente ConnectionStrings__DbConnection.</value>
     </data>
+    <data name="USER_NAME_REQUIRED" xml:space="preserve">
+        <value>O nome do usuário é obrigatório.</value>
+    </data>
+    <data name="USER_NAME_TOO_LONG" xml:space="preserve">
+        <value>O nome do usuário deve ter no máximo {0} caracteres.</value>
+    </data>
+    <data name="USER_PASSWORD_REQUIRED" xml:space="preserve">
+        <value>A senha é obrigatória.</value>
+    </data>
+    <data name="USER_PASSWORD_TOO_SHORT" xml:space="preserve">
+        <value>A senha deve ter no mínimo {0} caracteres.</value>
+    </data>
+    <data name="USER_ACTIVE_EMAIL_EXISTS" xml:space="preserve">
+        <value>Já existe um usuário ativo com este e-mail.</value>
+    </data>
+    <data name="USER_INVALID_CREDENTIALS" xml:space="preserve">
+        <value>E-mail ou senha inválidos.</value>
+    </data>
+    <data name="INVALID_JWT_CONFIGURATION" xml:space="preserve">
+        <value>A seção Jwt está inválida. Informe Jwt:Issuer, Jwt:Audience, Jwt:ExpirationMinutes maior que zero e Jwt:SigningKey com pelo menos 32 bytes, via User Secrets (dotnet user-secrets set "Jwt:SigningKey" "...") ou pela variável de ambiente Jwt__SigningKey.</value>
+    </data>
+    <data name="AUTHENTICATION_REQUIRED" xml:space="preserve">
+        <value>É necessário estar autenticado para acessar este recurso.</value>
+    </data>
 </root>

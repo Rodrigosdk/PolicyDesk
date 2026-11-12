@@ -159,4 +159,28 @@
     <data name="MISSING_CONNECTION_STRING" xml:space="preserve">
         <value>ConnectionStrings:DbConnection is not configured. Provide it via User Secrets (dotnet user-secrets set "ConnectionStrings:DbConnection" "...") or the ConnectionStrings__DbConnection environment variable.</value>
     </data>
+    <data name="USER_NAME_REQUIRED" xml:space="preserve">
+        <value>The user name is required.</value>
+    </data>
+    <data name="USER_NAME_TOO_LONG" xml:space="preserve">
+        <value>The user name must have at most {0} characters.</value>
+    </data>
+    <data name="USER_PASSWORD_REQUIRED" xml:space="preserve">
+        <value>The password is required.</value>
+    </data>
+    <data name="USER_PASSWORD_TOO_SHORT" xml:space="preserve">
+        <value>The password must have at least {0} characters.</value>
+    </data>
+    <data name="USER_ACTIVE_EMAIL_EXISTS" xml:space="preserve">
+        <value>An active user with this email already exists.</value>
+    </data>
+    <data name="USER_INVALID_CREDENTIALS" xml:space="preserve">
+        <value>Invalid email or password.</value>
+    </data>
+    <data name="INVALID_JWT_CONFIGURATION" xml:space="preserve">
+        <value>The Jwt section is invalid. Provide Jwt:Issuer, Jwt:Audience, Jwt:ExpirationMinutes greater than zero and Jwt:SigningKey with at least 32 bytes, via User Secrets (dotnet user-secrets set "Jwt:SigningKey" "...") or the Jwt__SigningKey environment variable.</value>
+    </data>
+    <data name="AUTHENTICATION_REQUIRED" xml:space="preserve">
+        <value>You must be authenticated to access this resource.</value>
+    </data>
 </root>

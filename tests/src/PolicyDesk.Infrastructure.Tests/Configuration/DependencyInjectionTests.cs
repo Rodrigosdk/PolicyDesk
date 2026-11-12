@@ -1,9 +1,11 @@
+using CommonTestUtilities.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using PolicyDesk.Domain.SeedWorks;
 using PolicyDesk.Exception;
+using PolicyDesk.Infrastructure.Configuration;
 using PolicyDesk.Infrastructure.DataAccess;
 using Shouldly;
 
@@ -78,15 +80,39 @@ public class DependencyInjectionTests
         clock.UtcNow.ShouldBe(new DateTime(2026, 3, 11, 1, 0, 0, DateTimeKind.Utc));
     }
 
+    [Theory(DisplayName = nameof(Deve_FalharNaInicializacao_Quando_ChaveDoJwtForAusenteOuCurta))]
+    [Trait("Infrastructure", "Configuração - Jwt")]
+    [InlineData("")]
+    [InlineData("chave-curta")]
+    [InlineData("1234567890123456789012345678901")]
+    public void Deve_FalharNaInicializacao_Quando_ChaveDoJwtForAusenteOuCurta(string signingKey)
+    {
+        using var provider = BuildProvider("Host=localhost;Database=PolicyDesk", jwtOptions: JwtOptionsBuilder.Build(signingKey));
+
+        var exception = Should.Throw<OptionsValidationException>(
+            () => provider.GetRequiredService<IStartupValidator>().Validate());
+
+        exception.Message.ShouldContain("Jwt__SigningKey");
+    }
+
+    [Fact(DisplayName = nameof(Deve_PassarNaValidacaoDeInicializacao_Quando_ChaveDoJwtTiverTamanhoMinimo))]
+    [Trait("Infrastructure", "Configuração - Jwt")]
+    public void Deve_PassarNaValidacaoDeInicializacao_Quando_ChaveDoJwtTiverTamanhoMinimo()
+    {
+        var signingKey = new string('a', JwtOptions.MinimumSigningKeyBytes);
+        using var provider = BuildProvider("Host=localhost;Database=PolicyDesk", jwtOptions: JwtOptionsBuilder.Build(signingKey));
+
+        Should.NotThrow(() => provider.GetRequiredService<IStartupValidator>().Validate());
+    }
+
     private static ServiceProvider BuildProvider(
         string? connectionString,
         string? timeZone = "America/Sao_Paulo",
-        Action<IServiceCollection>? configureServices = null)
+        Action<IServiceCollection>? configureServices = null,
+        JwtOptions? jwtOptions = null)
     {
-        var settings = new Dictionary<string, string?>
-        {
-            ["ConnectionStrings:DbConnection"] = connectionString
-        };
+        var settings = JwtOptionsBuilder.Settings(jwtOptions ?? JwtOptionsBuilder.Build());
+        settings["ConnectionStrings:DbConnection"] = connectionString;
         if (timeZone is not null)
             settings["Business:TimeZone"] = timeZone;
 

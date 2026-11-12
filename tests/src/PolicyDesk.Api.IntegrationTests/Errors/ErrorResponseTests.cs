@@ -98,7 +98,7 @@ public class ErrorResponseTests(PolicyDeskApplicationFactory factory) : IClassFi
             services.AddScoped<IApproveClaimUseCase>(_ => new ThrowingUseCase(new InvalidOperationException(internalDetail)));
         }));
 
-        var response = await app.CreateClient().PostAsync($"/api/sinistros/{Guid.NewGuid()}/aprovacao", null);
+        var response = await factory.Authorize(app.CreateClient()).PostAsync($"/api/sinistros/{Guid.NewGuid()}/aprovacao", null);
 
         var problem = await ShouldBeProblem(response, HttpStatusCode.InternalServerError);
         Errors(problem).ShouldBe([ResourcesMessageException.UNKNOWN_ERROR]);
@@ -132,10 +132,10 @@ public class ErrorResponseTests(PolicyDeskApplicationFactory factory) : IClassFi
         problem.GetProperty(ProblemDetailsSetup.ErrorsKey).EnumerateArray().Select(error => error.GetString()!).ToList();
 
     private HttpClient CreateClientThrowing(System.Exception exception) =>
-        factory
+        factory.Authorize(factory
             .WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
                 services.AddScoped<IApproveClaimUseCase>(_ => new ThrowingUseCase(exception))))
-            .CreateClient();
+            .CreateClient());
 
     private sealed class ThrowingUseCase(System.Exception exception) : IApproveClaimUseCase
     {

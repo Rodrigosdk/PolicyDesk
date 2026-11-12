@@ -188,9 +188,11 @@ O servidor **PolicyDesk (local)** já aparece cadastrado; na primeira conexão, 
 # 1. Suba o banco e as ferramentas de desenvolvimento
 docker compose -f docker/compose.yml -f docker/compose.dev.yml up -d db dashboard pgadmin
 
-# 2. Configure a connection string via User Secrets
+# 2. Configure a connection string e a chave do JWT (mínimo de 32 bytes) via User Secrets
 dotnet user-secrets set "ConnectionStrings:DbConnection" \
   "Host=localhost;Port=5432;Database=PolicyDesk;Username=admin;Password=policy-desk-local" \
+  --project src/Backend/PolicyDesk.Api
+dotnet user-secrets set "Jwt:SigningKey" "$(openssl rand -base64 48)" \
   --project src/Backend/PolicyDesk.Api
 
 # 3. Execute a API
@@ -338,13 +340,13 @@ flowchart LR
 | Workflow | Quando roda | O que faz |
 | --- | --- | --- |
 | `ci.yml` | PRs para `main`/`developer`, push em `developer` | Build com analisadores como erro, auditoria de pacotes vulneráveis, todos os testes (com Testcontainers) e relatório de cobertura no resumo da execução |
-| `cd.yml` | Push em `main` ou manual | Reaproveita o CI, gera o bundle de migrations e a imagem Docker (publicada no `ghcr.io`) e faz o deploy no environment `production` |
+| `cd.yml` | Push em `main` ou manual | Reaproveita o CI, gera o bundle de migrations e a imagem Docker (publicada no `ghcr.io`), aplica o `infra/main.bicep` quando ele ou o `infra/bootstrap.sh` mudam e faz o deploy no environment `production` |
 | `codeql.yml` | PRs, pushes e semanalmente | Análise estática de segurança do código C# |
 | `dependabot.yml` | Semanalmente | PRs de atualização de NuGet, Actions e imagens Docker, agrupados |
 
 **Decisões:**
 
-- **Sem segredos de longa duração**: o login na Azure usa OIDC (federated credentials); a identidade só tem `Website Contributor` no próprio Web App.
+- **Sem segredos de longa duração**: o login na Azure usa OIDC (federated credentials); a identidade só tem `Contributor` no resource group do projeto, necessário para o CD aplicar o Bicep.
 - **Build once, deploy many**: a imagem testada é a mesma que vai para produção, gerada pelo mesmo `docker/Dockerfile` usado localmente e identificada pelo SHA do commit.
 - **Migrations fora da inicialização**: um *migrations bundle* do EF Core é aplicado antes do deploy, então a API em produção nunca altera o schema ao subir.
 - **Infraestrutura como código**: o banco, o plano F1 e o Web App estão descritos em [`infra/main.bicep`](infra/main.bicep).

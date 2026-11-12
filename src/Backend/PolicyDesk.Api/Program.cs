@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Localization;
 using PolicyDesk.Api.Errors;
 using PolicyDesk.Api.Filters;
 using PolicyDesk.Api.Observability;
+using PolicyDesk.Api.Security;
 using PolicyDesk.Application;
 using PolicyDesk.Infrastructure;
 using PolicyDesk.Api.Converters;
@@ -22,10 +23,15 @@ builder.Services.AddControllers(options => options.Filters.Add<ExceptionFilter>(
     options.JsonSerializerOptions.Converters.Add(new StringConverter());
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer<BearerSecurityTransformer>();
+    options.AddOperationTransformer<BearerSecurityTransformer>();
+});
 
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
+builder.Services.AddJwtAuthentication();
 
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
@@ -57,17 +63,18 @@ app.UseRequestLocalization();
 
 if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
     app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "PolicyDesk API"));
-    app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
+    app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription().AllowAnonymous();
 }
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health").AllowAnonymous();
 
 if (!app.Environment.IsProduction())
 {

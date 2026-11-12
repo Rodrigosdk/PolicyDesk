@@ -8,7 +8,8 @@ namespace PolicyDesk.Infrastructure.DataAccess;
 
 internal class UnitOfWork(PolicyDeskDbContext dbContext) : IUnitOfWork
 {
-    private const string ActiveEmailIndex = "IX_policyholders_email_active";
+    private const string PolicyholderActiveEmailIndex = "IX_policyholders_email_active";
+    private const string UserActiveEmailIndex = "IX_users_email_active";
 
     public async Task CommitAsync(CancellationToken cancellationToken = default)
     {
@@ -24,11 +25,19 @@ internal class UnitOfWork(PolicyDeskDbContext dbContext) : IUnitOfWork
         catch (DbUpdateException exception) when (exception.InnerException is PostgresException
                    {
                        SqlState: PostgresErrorCodes.UniqueViolation,
-                       ConstraintName: ActiveEmailIndex
+                       ConstraintName: PolicyholderActiveEmailIndex
                    })
         {
             // Duas operações simultâneas passaram pela verificação de e-mail; o índice barrou a segunda
             throw new ErrorOnValidationException(ResourcesMessageException.POLICYHOLDER_ACTIVE_EMAIL_EXISTS);
+        }
+        catch (DbUpdateException exception) when (exception.InnerException is PostgresException
+                   {
+                       SqlState: PostgresErrorCodes.UniqueViolation,
+                       ConstraintName: UserActiveEmailIndex
+                   })
+        {
+            throw new ErrorOnValidationException(ResourcesMessageException.USER_ACTIVE_EMAIL_EXISTS);
         }
     }
 }

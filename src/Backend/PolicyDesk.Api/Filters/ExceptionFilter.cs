@@ -25,6 +25,9 @@ public class ExceptionFilter(ProblemDetailsFactory problemDetailsFactory, ILogge
             case NotFoundException notFoundException:
                 SetErrorResult(context, StatusCodes.Status404NotFound, [notFoundException.Message]);
                 break;
+            case UnauthorizedException unauthorizedException:
+                SetErrorResult(context, StatusCodes.Status401Unauthorized, [unauthorizedException.Message]);
+                break;
             case ConflictException conflictException:
                 SetErrorResult(context, StatusCodes.Status409Conflict, [conflictException.Message]);
                 break;

@@ -24,6 +24,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DbConnection: Host=db;Port=5432;Database=PolicyDesk;Username=admin;Password=${POSTGRES_PASSWORD:-policy-desk-local}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:-policy-desk-local-jwt-signing-key-change-me}
     ports:
       - "8080:8080"
     depends_on:
