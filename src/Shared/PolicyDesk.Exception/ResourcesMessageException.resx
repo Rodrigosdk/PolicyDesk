@@ -159,4 +159,13 @@
     <data name="MISSING_CONNECTION_STRING" xml:space="preserve">
         <value>ConnectionStrings:DbConnection não configurada. Informe-a via User Secrets (dotnet user-secrets set "ConnectionStrings:DbConnection" "...") ou pela variável de ambiente ConnectionStrings__DbConnection.</value>
     </data>
+    <data name="USER_NAME_REQUIRED" xml:space="preserve">
+        <value>O nome do usuário é obrigatório.</value>
+    </data>
+    <data name="USER_NAME_TOO_LONG" xml:space="preserve">
+        <value>O nome do usuário deve ter no máximo {0} caracteres.</value>
+    </data>
+    <data name="USER_PASSWORD_REQUIRED" xml:space="preserve">
+        <value>A senha é obrigatória.</value>
+    </data>
 </root>

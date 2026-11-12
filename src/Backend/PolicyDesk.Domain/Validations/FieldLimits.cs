@@ -8,6 +8,7 @@ public static class FieldLimits
     public const int Cpf = 11;
     public const int Email = 254;
     public const int PolicyholderName = 150;
+    public const int UserName = 150;
     public const int Phone = 20;
     public const int Description = 500;
     public const int DenialReason = 1000;
@@ -18,6 +19,9 @@ public static class FieldLimits
 
     public static string PolicyholderNameTooLong =>
         string.Format(CultureInfo.CurrentCulture, ResourcesMessageException.POLICYHOLDER_NAME_TOO_LONG, PolicyholderName);
+
+    public static string UserNameTooLong =>
+        string.Format(CultureInfo.CurrentCulture, ResourcesMessageException.USER_NAME_TOO_LONG, UserName);
 
     public static string DescriptionTooLong =>
         string.Format(CultureInfo.CurrentCulture, ResourcesMessageException.DESCRIPTION_TOO_LONG, Description);
