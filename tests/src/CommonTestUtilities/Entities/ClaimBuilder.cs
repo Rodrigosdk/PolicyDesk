@@ -24,22 +24,29 @@ public static class ClaimBuilder
     public static Claim BuildWithStatus(ClaimStatus status, Guid? policyId = null)
     {
         var claim = Build(policyId);
-        if (status == ClaimStatus.Pending)
-            return claim;
 
-        claim.StartAnalysis();
         switch (status)
         {
-            case ClaimStatus.Denied:
-                claim.Deny("Not covered");
+            case ClaimStatus.Pending:
+                break;
+            case ClaimStatus.InAnalysis:
+                claim.StartAnalysis();
                 break;
             case ClaimStatus.Approved:
+                claim.StartAnalysis();
                 claim.Approve();
                 break;
+            case ClaimStatus.Denied:
+                claim.StartAnalysis();
+                claim.Deny("Not covered");
+                break;
             case ClaimStatus.Paid:
+                claim.StartAnalysis();
                 claim.Approve();
                 claim.RegisterPayment();
                 break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(status), status, null);
         }
 
         return claim;
