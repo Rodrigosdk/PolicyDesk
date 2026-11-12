@@ -55,10 +55,11 @@ app.UseErrorHandling();
 
 app.UseRequestLocalization();
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
     app.MapOpenApi();
     app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "PolicyDesk API"));
+    app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 }
 
 app.UseHttpsRedirection();
