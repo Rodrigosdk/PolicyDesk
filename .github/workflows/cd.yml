@@ -24,6 +24,34 @@ jobs:
     name: CI
     uses: ./.github/workflows/ci.yml
 
+  changes:
+    name: Mudanças na infraestrutura
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      infra: ${{ steps.diff.outputs.infra }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verificar se o main.bicep ou o bootstrap.sh mudaram
+        id: diff
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" != "push" ]]; then
+            echo "infra=false" >> "$GITHUB_OUTPUT"
+          elif [[ -z "$BEFORE" || "$BEFORE" =~ ^0+$ ]] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            echo "infra=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "$BEFORE" "$GITHUB_SHA" -- infra/main.bicep infra/bootstrap.sh; then
+            echo "infra=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "infra=true" >> "$GITHUB_OUTPUT"
+          fi
+
   migrations:
     name: Bundle de migrations
     needs: ci
@@ -114,9 +142,78 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  infra:
+    name: Infraestrutura (Bicep)
+    needs: [changes, image]
+    if: needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: production
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Conferir os secrets da infraestrutura
+        env:
+          DATABASE_ADMIN_PASSWORD: ${{ secrets.DATABASE_ADMIN_PASSWORD }}
+          JWT_SIGNING_KEY: ${{ secrets.JWT_SIGNING_KEY }}
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+        run: |
+          for name in DATABASE_ADMIN_PASSWORD JWT_SIGNING_KEY AZURE_RESOURCE_GROUP; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::$name não está configurado no environment production. Rode ./infra/bootstrap.sh."
+              exit 1
+            fi
+          done
+
+      - name: Login na Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Aplicar o main.bicep mantendo a imagem em execução
+        env:
+          DATABASE_ADMIN_PASSWORD: ${{ secrets.DATABASE_ADMIN_PASSWORD }}
+          JWT_SIGNING_KEY: ${{ secrets.JWT_SIGNING_KEY }}
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+          AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+          NEW_IMAGE: ${{ needs.image.outputs.image }}:${{ github.sha }}
+        run: |
+          CURRENT_IMAGE="$(az webapp config show \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$AZURE_WEBAPP_NAME" \
+            --query linuxFxVersion --output tsv 2>/dev/null || true)"
+          CURRENT_IMAGE="${CURRENT_IMAGE#DOCKER|}"
+
+          az deployment group create \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --template-file infra/main.bicep \
+            --parameters \
+              appName="$AZURE_WEBAPP_NAME" \
+              databaseAdminPassword="$DATABASE_ADMIN_PASSWORD" \
+              jwtSigningKey="$JWT_SIGNING_KEY" \
+              containerImage="${CURRENT_IMAGE:-$NEW_IMAGE}" \
+            --output none
+
+      - name: Logout da Azure
+        if: always()
+        run: az logout || true
+
   deploy:
     name: Deploy em produção
-    needs: [migrations, image]
+    needs: [migrations, image, infra]
+    if: >-
+      !cancelled() &&
+      needs.migrations.result == 'success' &&
+      needs.image.result == 'success' &&
+      (needs.infra.result == 'success' || needs.infra.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:

@@ -15,6 +15,11 @@ param databaseAdminLogin string = 'policydeskadmin'
 @secure()
 param databaseAdminPassword string
 
+@description('Chave de assinatura dos tokens JWT (mínimo de 32 bytes).')
+@secure()
+@minLength(32)
+param jwtSigningKey string
+
 @description('Nome do banco usado pela API.')
 param databaseName string = 'policydesk'
 
@@ -115,6 +120,10 @@ resource app 'Microsoft.Web/sites@2024-04-01' = {
         {
           name: 'ASPNETCORE_ENVIRONMENT'
           value: 'Production'
+        }
+        {
+          name: 'Jwt__SigningKey'
+          value: jwtSigningKey
         }
         {
           name: 'Swagger__Enabled'

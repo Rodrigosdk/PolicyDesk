@@ -25,17 +25,18 @@ az group create --name "$RESOURCE_GROUP" --location "$LOCATION" --output none
 DB_ADMIN_LOGIN="policydeskadmin"
 DB_NAME="policydesk"
 DB_ADMIN_PASSWORD="${DB_ADMIN_PASSWORD:-$(openssl rand -base64 32 | tr -dc 'A-Za-z0-9' | head -c 24)Aa1}"
+JWT_SIGNING_KEY="${JWT_SIGNING_KEY:-$(openssl rand -base64 48)}"
 
 echo "==> PostgreSQL Flexible Server (B1ms), plano F1 e Web App $APP_NAME (pode levar ~10 min)"
 DB_HOST="$(az deployment group create \
   --resource-group "$RESOURCE_GROUP" \
   --template-file "$SCRIPT_DIR/main.bicep" \
-  --parameters appName="$APP_NAME" databaseAdminLogin="$DB_ADMIN_LOGIN" databaseAdminPassword="$DB_ADMIN_PASSWORD" databaseName="$DB_NAME" \
+  --parameters appName="$APP_NAME" databaseAdminLogin="$DB_ADMIN_LOGIN" databaseAdminPassword="$DB_ADMIN_PASSWORD" databaseName="$DB_NAME" jwtSigningKey="$JWT_SIGNING_KEY" \
   --query properties.outputs.databaseHost.value \
   --output tsv)"
 DATABASE_CONNECTION_STRING="Host=$DB_HOST;Port=5432;Database=$DB_NAME;Username=$DB_ADMIN_LOGIN;Password=$DB_ADMIN_PASSWORD;SSL Mode=Require"
 
-WEBAPP_ID="$(az webapp show --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" --query id --output tsv)"
+RESOURCE_GROUP_ID="$(az group show --name "$RESOURCE_GROUP" --query id --output tsv)"
 SUBSCRIPTION_ID="$(az account show --query id --output tsv)"
 TENANT_ID="$(az account show --query tenantId --output tsv)"
 
@@ -59,11 +60,11 @@ if [[ -z "$(az ad app federated-credential list --id "$CLIENT_ID" --query "[?sub
   }" --output none
 fi
 
-echo "==> Permissão mínima: Website Contributor apenas no Web App"
+echo "==> Permissão: Contributor apenas no resource group $RESOURCE_GROUP (o CD aplica o main.bicep)"
 az role assignment create \
   --assignee "$CLIENT_ID" \
-  --role "Website Contributor" \
-  --scope "$WEBAPP_ID" \
+  --role "Contributor" \
+  --scope "$RESOURCE_GROUP_ID" \
   --output none 2>/dev/null || true
 
 echo "==> Environment $GITHUB_ENVIRONMENT no GitHub (deploy só a partir da main)"
@@ -79,7 +80,10 @@ gh secret set AZURE_CLIENT_ID --repo "$GITHUB_REPO" --env "$GITHUB_ENVIRONMENT" 
 gh secret set AZURE_TENANT_ID --repo "$GITHUB_REPO" --env "$GITHUB_ENVIRONMENT" --body "$TENANT_ID"
 gh secret set AZURE_SUBSCRIPTION_ID --repo "$GITHUB_REPO" --env "$GITHUB_ENVIRONMENT" --body "$SUBSCRIPTION_ID"
 gh secret set DATABASE_CONNECTION_STRING --repo "$GITHUB_REPO" --env "$GITHUB_ENVIRONMENT" --body "$DATABASE_CONNECTION_STRING"
+gh secret set DATABASE_ADMIN_PASSWORD --repo "$GITHUB_REPO" --env "$GITHUB_ENVIRONMENT" --body "$DB_ADMIN_PASSWORD"
+gh secret set JWT_SIGNING_KEY --repo "$GITHUB_REPO" --env "$GITHUB_ENVIRONMENT" --body "$JWT_SIGNING_KEY"
 gh variable set AZURE_WEBAPP_NAME --repo "$GITHUB_REPO" --env "$GITHUB_ENVIRONMENT" --body "$APP_NAME"
+gh variable set AZURE_RESOURCE_GROUP --repo "$GITHUB_REPO" --env "$GITHUB_ENVIRONMENT" --body "$RESOURCE_GROUP"
 
 echo
 echo "Pronto. Faça merge em main para o primeiro deploy: https://$APP_NAME.azurewebsites.net"
