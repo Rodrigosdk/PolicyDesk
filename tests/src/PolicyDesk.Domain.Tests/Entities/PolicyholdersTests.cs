@@ -4,6 +4,7 @@ using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 using Shouldly;
 using PolicyDesk.Domain.Entities;
+using PolicyDesk.Domain.Validations;
 
 namespace PolicyDesk.Domain.Tests.Entities;
 
@@ -64,6 +65,43 @@ public class PolicyholdersTests
     public void Deve_RemoverEspacosEmBranco_Quando_NomeTiverEspacosNasExtremidades(string name, string expected)
     {
         Create(name: name).Name.ShouldBe(expected);
+    }
+
+    [Fact(DisplayName = nameof(Deve_Criar_Quando_NomeTiverExatamenteOLimite))]
+    [Trait("Domain", "Policyholders - Nome")]
+    public void Deve_Criar_Quando_NomeTiverExatamenteOLimite()
+    {
+        var name = new string('a', FieldLimits.PolicyholderName);
+
+        var policyholder = Create(name: $"  {name}  ");
+
+        policyholder.Name.ShouldBe(name);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarExcecao_Quando_CriarComNomeAcimaDoLimite))]
+    [Trait("Domain", "Policyholders - Nome")]
+    public void Deve_LancarExcecao_Quando_CriarComNomeAcimaDoLimite()
+    {
+        var name = new string('a', FieldLimits.PolicyholderName + 1);
+
+        var exception = Should.Throw<DomainRuleException>(() => Create(name: name));
+
+        exception.Message.ShouldBe(FieldLimits.PolicyholderNameTooLong);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarExcecaoSemAlterar_Quando_AtualizarComNomeAcimaDoLimite))]
+    [Trait("Domain", "Policyholders - Update")]
+    public void Deve_LancarExcecaoSemAlterar_Quando_AtualizarComNomeAcimaDoLimite()
+    {
+        var policyholder = Create();
+        var name = new string('a', FieldLimits.PolicyholderName + 1);
+
+        var exception = Should.Throw<DomainRuleException>(
+            () => policyholder.Update(name, NewBirthDate, ValidEmail, NewPhone, Today));
+
+        exception.Message.ShouldBe(FieldLimits.PolicyholderNameTooLong);
+        policyholder.Name.ShouldBe(ValidName);
+        policyholder.UpdatedAt.ShouldBeNull();
     }
 
     [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_NomeForVazio))]

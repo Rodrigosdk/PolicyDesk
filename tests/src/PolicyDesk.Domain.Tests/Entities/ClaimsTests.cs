@@ -2,6 +2,7 @@ using CommonTestUtilities.Entities;
 using CommonTestUtilities.Time;
 using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Enums;
+using PolicyDesk.Domain.Validations;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 using Shouldly;
@@ -191,6 +192,39 @@ public class ClaimsTests
             () => Claim.Create(Guid.Empty, "Description", 100, BusinessClockBuilder.DefaultToday));
 
         exception.Message.ShouldBe(ResourcesMessageException.POLICY_REQUIRED);
+    }
+
+    [Fact(DisplayName = nameof(Deve_Criar_Quando_DescricaoTiverExatamenteOLimite))]
+    [Trait("Domain", "Claims - Instancia")]
+    public void Deve_Criar_Quando_DescricaoTiverExatamenteOLimite()
+    {
+        var description = new string('a', FieldLimits.Description);
+
+        var claim = Claim.Create(Guid.NewGuid(), $"  {description}  ", 100, BusinessClockBuilder.DefaultToday);
+
+        claim.Description.ShouldBe(description);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarExcecao_Quando_CriarComDescricaoAcimaDoLimite))]
+    [Trait("Domain", "Claims - Instancia")]
+    public void Deve_LancarExcecao_Quando_CriarComDescricaoAcimaDoLimite()
+    {
+        var description = new string('a', FieldLimits.Description + 1);
+
+        var exception = Should.Throw<DomainRuleException>(
+            () => Claim.Create(Guid.NewGuid(), description, 100, BusinessClockBuilder.DefaultToday));
+
+        exception.Message.ShouldBe(FieldLimits.DescriptionTooLong);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarExcecao_Quando_CriarComValorComMaisDeDuasCasasDecimais))]
+    [Trait("Domain", "Claims - Instancia")]
+    public void Deve_LancarExcecao_Quando_CriarComValorComMaisDeDuasCasasDecimais()
+    {
+        var exception = Should.Throw<DomainRuleException>(
+            () => Claim.Create(Guid.NewGuid(), "Description", 10.005m, BusinessClockBuilder.DefaultToday));
+
+        exception.Message.ShouldBe(MoneyLimits.ClaimAmountInvalidPrecision);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarExcecao_Quando_CriarSemDataDeOcorrencia))]

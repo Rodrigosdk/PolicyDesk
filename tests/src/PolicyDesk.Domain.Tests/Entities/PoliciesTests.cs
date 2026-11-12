@@ -2,6 +2,7 @@ using CommonTestUtilities.Entities;
 using CommonTestUtilities.Time;
 using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Enums;
+using PolicyDesk.Domain.Validations;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 using Shouldly;
@@ -101,6 +102,49 @@ public class PoliciesTests
         policy.Status.ShouldBe(PolicyStatus.Cancelled);
         policy.CancelledAt.ShouldBe(cancelledAt);
         policy.UpdatedAt.ShouldBe(cancelledAt);
+    }
+
+    [Fact(DisplayName = nameof(Deve_Criar_Quando_DescricaoTiverExatamenteOLimite))]
+    [Trait("Domain", "Policies - Instancia")]
+    public void Deve_Criar_Quando_DescricaoTiverExatamenteOLimite()
+    {
+        var today = BusinessClockBuilder.DefaultToday;
+        var description = new string('a', FieldLimits.Description);
+
+        var policy = Policy.Create(Guid.NewGuid(), $"  {description}  ", 10000m, 100m, today, today.AddDays(30));
+
+        policy.Description.ShouldBe(description);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarExcecao_Quando_CriarComDescricaoAcimaDoLimite))]
+    [Trait("Domain", "Policies - Instancia")]
+    public void Deve_LancarExcecao_Quando_CriarComDescricaoAcimaDoLimite()
+    {
+        var today = BusinessClockBuilder.DefaultToday;
+        var description = new string('a', FieldLimits.Description + 1);
+
+        var exception = Should.Throw<DomainRuleException>(
+            () => Policy.Create(Guid.NewGuid(), description, 10000m, 100m, today, today.AddDays(30)));
+
+        exception.Message.ShouldBe(FieldLimits.DescriptionTooLong);
+    }
+
+    [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_CriarComValoresComMaisDeDuasCasasDecimais))]
+    [Trait("Domain", "Policies - Instancia")]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Deve_LancarExcecao_Quando_CriarComValoresComMaisDeDuasCasasDecimais(bool invalidCoverage)
+    {
+        var today = BusinessClockBuilder.DefaultToday;
+        var coverage = invalidCoverage ? 1000.001m : 1000m;
+        var premium = invalidCoverage ? 100m : 100.001m;
+
+        var exception = Should.Throw<DomainRuleException>(
+            () => Policy.Create(Guid.NewGuid(), "Home coverage", coverage, premium, today, today.AddDays(30)));
+
+        exception.Message.ShouldBe(invalidCoverage
+            ? MoneyLimits.CoverageAmountInvalidPrecision
+            : MoneyLimits.PremiumAmountInvalidPrecision);
     }
 
     [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_CriarComDadosInvalidos))]
