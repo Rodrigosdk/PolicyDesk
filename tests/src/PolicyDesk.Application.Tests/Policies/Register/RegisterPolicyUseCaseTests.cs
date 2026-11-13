@@ -41,7 +41,7 @@ public class RegisterPolicyUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.ExecuteAsync(RequestPolicyJsonBuilder.Build()));
+        await useCase.ExecuteAsync(RequestPolicyJsonBuilder.Build()).ShouldThrowAsync<NotFoundException>();
     }
 
     [Fact(DisplayName = nameof(Deve_LancarValidacao_Quando_SeguradoEstiverInativo))]
@@ -52,10 +52,12 @@ public class RegisterPolicyUseCaseTests
         policyholder.Deactivate();
         var useCase = CreateUseCase(policyholder);
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.ExecuteAsync(RequestPolicyJsonBuilder.Build(policyholder.Id)));
-
-        exception.GetErrors().ShouldBe([ResourcesMessageException.POLICYHOLDER_INACTIVE]);
+        var exception = await useCase.ExecuteAsync(RequestPolicyJsonBuilder.Build(policyholder.Id)).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(ResourcesMessageException.POLICYHOLDER_INACTIVE);
+        });
     }
 
     [Theory(DisplayName = nameof(Deve_LancarValidacaoAntesDaBusca_Quando_DadosObrigatoriosForemInvalidos))]
@@ -79,7 +81,7 @@ public class RegisterPolicyUseCaseTests
             missingDates ? default : BusinessClockBuilder.DefaultToday.AddDays(1));
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(request));
+        await useCase.ExecuteAsync(request).ShouldThrowAsync<ErrorOnValidationException>();
     }
 
     [Fact(DisplayName = nameof(Deve_LancarValidacaoAntesDaBusca_Quando_DescricaoExcederOLimite))]
@@ -89,9 +91,12 @@ public class RegisterPolicyUseCaseTests
         var request = RequestPolicyJsonBuilder.Build(description: new string('a', FieldLimits.Description + 1));
         var useCase = CreateUseCase();
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(request));
-
-        exception.GetErrors().ShouldBe([FieldLimits.DescriptionTooLong]);
+        var exception = await useCase.ExecuteAsync(request).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(FieldLimits.DescriptionTooLong);
+        });
     }
 
     [Fact(DisplayName = nameof(Deve_LancarValidacao_Quando_DataFinalNaoForPosteriorAInicial))]
@@ -102,7 +107,7 @@ public class RegisterPolicyUseCaseTests
         var request = RequestPolicyJsonBuilder.Build(startDate: today, endDate: today);
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(request));
+        await useCase.ExecuteAsync(request).ShouldThrowAsync<ErrorOnValidationException>();
     }
 
     private static RegisterPolicyUseCase CreateUseCase(Policyholder? policyholder = null)

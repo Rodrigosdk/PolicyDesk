@@ -32,7 +32,7 @@ public class DeactivatePolicyholderUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.ExecuteAsync(Guid.NewGuid()));
+        await useCase.ExecuteAsync(Guid.NewGuid()).ShouldThrowAsync<NotFoundException>();
     }
 
     [Fact(DisplayName = nameof(Deve_LancarExcecaoSemInativar_Quando_HouverApoliceAtiva))]
@@ -42,10 +42,14 @@ public class DeactivatePolicyholderUseCaseTests
         var policyholder = PolicyholderBuilder.Build();
         var useCase = CreateUseCase(policyholder, hasActivePolicy: true);
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(policyholder.Id));
+        var exception = await useCase.ExecuteAsync(policyholder.Id).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(ResourcesMessageException.POLICYHOLDER_HAS_ACTIVE_POLICY);
+        });
 
         policyholder.Active.ShouldBeTrue();
-        exception.GetErrors().ShouldContain(ResourcesMessageException.POLICYHOLDER_HAS_ACTIVE_POLICY);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarExcecaoSemInativar_Quando_ApoliceTerminarHojeNoBrasilMasJaForAmanhaEmUtc))]
@@ -59,10 +63,14 @@ public class DeactivatePolicyholderUseCaseTests
             today: BusinessClockBuilder.DefaultToday,
             clock: BusinessClockBuilder.Build(BusinessClockBuilder.LateEveningUtcNow));
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(policyholder.Id));
+        var exception = await useCase.ExecuteAsync(policyholder.Id).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(ResourcesMessageException.POLICYHOLDER_HAS_ACTIVE_POLICY);
+        });
 
         policyholder.Active.ShouldBeTrue();
-        exception.GetErrors().ShouldContain(ResourcesMessageException.POLICYHOLDER_HAS_ACTIVE_POLICY);
     }
 
     private static DeactivatePolicyholderUseCase CreateUseCase(

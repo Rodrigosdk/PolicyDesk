@@ -38,7 +38,7 @@ public class ListClaimsUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.ListByPolicyAsync(Guid.NewGuid()));
+        await useCase.ListByPolicyAsync(Guid.NewGuid()).ShouldThrowAsync<NotFoundException>();
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarSinistroMapeado_Quando_BuscarPorId))]
@@ -71,7 +71,7 @@ public class ListClaimsUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.GetByIdAsync(Guid.NewGuid()));
+        await useCase.GetByIdAsync(Guid.NewGuid()).ShouldThrowAsync<NotFoundException>();
     }
 
     private static ListClaimsUseCase CreateUseCase(

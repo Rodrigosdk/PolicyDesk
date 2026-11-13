@@ -35,8 +35,7 @@ public class DenyClaimUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.ExecuteAsync(Guid.NewGuid(), new RequestDenyClaimJson { Motivo = reason }));
+        await useCase.ExecuteAsync(Guid.NewGuid(), new RequestDenyClaimJson { Motivo = reason }).ShouldThrowAsync<ErrorOnValidationException>();
     }
 
     [Fact(DisplayName = nameof(Deve_LancarValidacaoAntesDaBusca_Quando_MotivoExcederOLimite))]
@@ -46,9 +45,12 @@ public class DenyClaimUseCaseTests
         var request = new RequestDenyClaimJson { Motivo = new string('a', FieldLimits.DenialReason + 1) };
         var useCase = CreateUseCase();
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(Guid.NewGuid(), request));
-
-        exception.GetErrors().ShouldBe([FieldLimits.DenialReasonTooLong]);
+        var exception = await useCase.ExecuteAsync(Guid.NewGuid(), request).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(FieldLimits.DenialReasonTooLong);
+        });
     }
 
     [Fact(DisplayName = nameof(Deve_LancarNaoEncontrado_Quando_SinistroNaoExistir))]
@@ -57,8 +59,7 @@ public class DenyClaimUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(
-            () => useCase.ExecuteAsync(Guid.NewGuid(), new RequestDenyClaimJson { Motivo = "Reason" }));
+        await useCase.ExecuteAsync(Guid.NewGuid(), new RequestDenyClaimJson { Motivo = "Reason" }).ShouldThrowAsync<NotFoundException>();
     }
 
     [Fact(DisplayName = nameof(Deve_LancarRegra_Quando_SinistroNaoEstiverEmAnalise))]
@@ -68,8 +69,7 @@ public class DenyClaimUseCaseTests
         var claim = ClaimBuilder.Build();
         var useCase = CreateUseCase(claim);
 
-        await Should.ThrowAsync<DomainRuleException>(
-            () => useCase.ExecuteAsync(claim.Id, new RequestDenyClaimJson { Motivo = "Reason" }));
+        await useCase.ExecuteAsync(claim.Id, new RequestDenyClaimJson { Motivo = "Reason" }).ShouldThrowAsync<DomainRuleException>();
 
         claim.Status.ShouldBe(ClaimStatus.Pending);
         claim.DenialReason.ShouldBeNull();

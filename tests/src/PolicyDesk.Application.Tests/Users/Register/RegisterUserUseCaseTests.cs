@@ -71,9 +71,12 @@ public class RegisterUserUseCaseTests
         var request = RequestUserJsonBuilder.Build(email: inactiveUser.Email);
         var useCase = CreateUseCase(inactiveUser: inactiveUser, clock: ClockAfter(days: 29));
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(request));
-
-        exception.GetErrors().ShouldBe([ResourcesMessageException.USER_INVALID_CREDENTIALS]);
+        var exception = await useCase.ExecuteAsync(request).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(ResourcesMessageException.USER_INVALID_CREDENTIALS);
+        });
         inactiveUser.Active.ShouldBeFalse();
     }
 
@@ -97,18 +100,18 @@ public class RegisterUserUseCaseTests
     [InlineData("   ")]
     public async Task Deve_LancarValidacao_Quando_NomeForVazio(string name)
     {
-        await ShouldFailWithErrors(
+        await ShouldFailWithError(
             RequestUserJsonBuilder.Build(name: name),
-            [ResourcesMessageException.USER_NAME_REQUIRED]);
+            ResourcesMessageException.USER_NAME_REQUIRED);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarValidacao_Quando_NomeExcederOLimite))]
     [Trait("Application", "Users - Register")]
     public async Task Deve_LancarValidacao_Quando_NomeExcederOLimite()
     {
-        await ShouldFailWithErrors(
+        await ShouldFailWithError(
             RequestUserJsonBuilder.Build(name: new string('a', FieldLimits.UserName + 1)),
-            [FieldLimits.UserNameTooLong]);
+            FieldLimits.UserNameTooLong);
     }
 
     [Theory(DisplayName = nameof(Deve_LancarValidacao_Quando_EmailForInvalido))]
@@ -118,9 +121,9 @@ public class RegisterUserUseCaseTests
     [InlineData("john@example")]
     public async Task Deve_LancarValidacao_Quando_EmailForInvalido(string email)
     {
-        await ShouldFailWithErrors(
+        await ShouldFailWithError(
             RequestUserJsonBuilder.Build(email: email),
-            [ResourcesMessageException.INVALID_EMAIL]);
+            ResourcesMessageException.INVALID_EMAIL);
     }
 
     [Theory(DisplayName = nameof(Deve_LancarValidacao_Quando_SenhaForVazia))]
@@ -129,40 +132,47 @@ public class RegisterUserUseCaseTests
     [InlineData("   ")]
     public async Task Deve_LancarValidacao_Quando_SenhaForVazia(string password)
     {
-        await ShouldFailWithErrors(
+        await ShouldFailWithError(
             RequestUserJsonBuilder.Build(password: password),
-            [ResourcesMessageException.USER_PASSWORD_REQUIRED]);
+            ResourcesMessageException.USER_PASSWORD_REQUIRED);
     }
 
     [Fact(DisplayName = nameof(Deve_LancarValidacao_Quando_SenhaForMenorQueOMinimo))]
     [Trait("Application", "Users - Register")]
     public async Task Deve_LancarValidacao_Quando_SenhaForMenorQueOMinimo()
     {
-        await ShouldFailWithErrors(
+        await ShouldFailWithError(
             RequestUserJsonBuilder.Build(password: new string('a', FieldLimits.UserPasswordMinLength - 1)),
-            [FieldLimits.UserPasswordTooShort]);
+            FieldLimits.UserPasswordTooShort);
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarTodosOsErros_Quando_VariosCamposForemInvalidos))]
     [Trait("Application", "Users - Register")]
     public async Task Deve_RetornarTodosOsErros_Quando_VariosCamposForemInvalidos()
     {
-        await ShouldFailWithErrors(
-            RequestUserJsonBuilder.Build(name: "", email: "invalido", password: ""),
-            [
-                ResourcesMessageException.USER_NAME_REQUIRED,
-                ResourcesMessageException.INVALID_EMAIL,
-                ResourcesMessageException.USER_PASSWORD_REQUIRED
-            ]);
+        var request = RequestUserJsonBuilder.Build(name: "", email: "invalido", password: "");
+        var useCase = CreateUseCase();
+
+        var exception = await useCase.ExecuteAsync(request).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(3);
+            errorMessage.ShouldContain(ResourcesMessageException.USER_NAME_REQUIRED);
+            errorMessage.ShouldContain(ResourcesMessageException.INVALID_EMAIL);
+            errorMessage.ShouldContain(ResourcesMessageException.USER_PASSWORD_REQUIRED);
+        });
     }
 
-    private static async Task ShouldFailWithErrors(RequestUserJson request, string[] expectedErrors)
+    private static async Task ShouldFailWithError(RequestUserJson request, string expectedError)
     {
         var useCase = CreateUseCase();
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(request));
-
-        exception.GetErrors().ShouldBe(expectedErrors);
+        var exception = await useCase.ExecuteAsync(request).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(expectedError);
+        });
     }
 
     private static (User User, string Password) CreateInactiveUser()

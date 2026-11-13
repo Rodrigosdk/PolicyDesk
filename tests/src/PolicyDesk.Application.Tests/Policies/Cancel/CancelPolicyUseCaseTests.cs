@@ -31,7 +31,7 @@ public class CancelPolicyUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.ExecuteAsync(Guid.NewGuid()));
+        await useCase.ExecuteAsync(Guid.NewGuid()).ShouldThrowAsync<NotFoundException>();
     }
 
     [Fact(DisplayName = nameof(Deve_LancarRegra_Quando_ApoliceJaEstiverCancelada))]
@@ -42,7 +42,7 @@ public class CancelPolicyUseCaseTests
         policy.Cancel();
         var useCase = CreateUseCase(policy);
 
-        await Should.ThrowAsync<DomainRuleException>(() => useCase.ExecuteAsync(policy.Id));
+        await useCase.ExecuteAsync(policy.Id).ShouldThrowAsync<DomainRuleException>();
 
         policy.Status.ShouldBe(PolicyStatus.Cancelled);
     }

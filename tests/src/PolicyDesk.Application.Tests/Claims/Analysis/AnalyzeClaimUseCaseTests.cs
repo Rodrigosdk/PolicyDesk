@@ -30,7 +30,7 @@ public class AnalyzeClaimUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.ExecuteAsync(Guid.NewGuid()));
+        await useCase.ExecuteAsync(Guid.NewGuid()).ShouldThrowAsync<NotFoundException>();
     }
 
     [Fact(DisplayName = nameof(Deve_LancarRegra_Quando_SinistroNaoEstiverPendente))]
@@ -40,7 +40,7 @@ public class AnalyzeClaimUseCaseTests
         var claim = ClaimBuilder.BuildWithStatus(ClaimStatus.InAnalysis);
         var useCase = CreateUseCase(claim);
 
-        await Should.ThrowAsync<DomainRuleException>(() => useCase.ExecuteAsync(claim.Id));
+        await useCase.ExecuteAsync(claim.Id).ShouldThrowAsync<DomainRuleException>();
 
         claim.Status.ShouldBe(ClaimStatus.InAnalysis);
     }

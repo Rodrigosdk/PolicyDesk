@@ -58,10 +58,12 @@ public class ListPoliciesUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.ListAsync(null, (StatusApolice)999, FirstPage));
-
-        exception.GetErrors().ShouldBe([ResourcesMessageException.INVALID_POLICY_STATUS]);
+        var exception = await useCase.ListAsync(null, (StatusApolice)999, FirstPage).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(ResourcesMessageException.INVALID_POLICY_STATUS);
+        });
     }
 
     [Theory(DisplayName = nameof(Deve_LancarValidacaoAntesDaConsulta_Quando_PaginacaoForInvalida))]
@@ -72,13 +74,16 @@ public class ListPoliciesUseCaseTests
     [InlineData(-1, 500, true, true)]
     public async Task Deve_LancarValidacaoAntesDaConsulta_Quando_PaginacaoForInvalida(int page, int pageSize, bool invalidPage, bool invalidPageSize)
     {
+        var expectedErrorCount = (invalidPage ? 1 : 0) + (invalidPageSize ? 1 : 0);
         var useCase = CreateUseCase();
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.ListAsync(null, null, new RequestPaginationJson { Pagina = page, TamanhoPagina = pageSize }));
-
-        exception.GetErrors().Contains(ResourcesMessageException.INVALID_PAGE).ShouldBe(invalidPage);
-        exception.GetErrors().Any(error => error.Contains(RequestPaginationJson.MaxPageSize.ToString(System.Globalization.CultureInfo.InvariantCulture), StringComparison.Ordinal)).ShouldBe(invalidPageSize);
+        var exception = await useCase.ListAsync(null, null, new RequestPaginationJson { Pagina = page, TamanhoPagina = pageSize }).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(expectedErrorCount);
+            errorMessage.Contains(ResourcesMessageException.INVALID_PAGE).ShouldBe(invalidPage);
+            errorMessage.Any(error => error.Contains(RequestPaginationJson.MaxPageSize.ToString(System.Globalization.CultureInfo.InvariantCulture), StringComparison.Ordinal)).ShouldBe(invalidPageSize);
+        });
     }
 
     [Fact(DisplayName = nameof(Deve_MapearApoliceExistente_Quando_BuscarPorId))]
@@ -102,7 +107,7 @@ public class ListPoliciesUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.GetByIdAsync(Guid.NewGuid()));
+        await useCase.GetByIdAsync(Guid.NewGuid()).ShouldThrowAsync<NotFoundException>();
     }
 
     private static ListPoliciesUseCase CreateUseCase(IEnumerable<Policy>? policies = null, int? totalCount = null, Policy? policy = null)

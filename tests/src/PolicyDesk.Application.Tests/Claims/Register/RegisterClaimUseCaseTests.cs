@@ -36,8 +36,7 @@ public class RegisterClaimUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(
-            () => useCase.ExecuteAsync(Guid.NewGuid(), RequestClaimJsonBuilder.Build()));
+        await useCase.ExecuteAsync(Guid.NewGuid(), RequestClaimJsonBuilder.Build()).ShouldThrowAsync<NotFoundException>();
     }
 
     [Fact(DisplayName = nameof(Deve_LancarValidacao_Quando_ApoliceEstiverCancelada))]
@@ -48,8 +47,7 @@ public class RegisterClaimUseCaseTests
         policy.Cancel();
         var useCase = CreateUseCase(policy);
 
-        await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.ExecuteAsync(policy.Id, RequestClaimJsonBuilder.Build()));
+        await useCase.ExecuteAsync(policy.Id, RequestClaimJsonBuilder.Build()).ShouldThrowAsync<ErrorOnValidationException>();
     }
 
     [Theory(DisplayName = nameof(Deve_LancarValidacao_Quando_DataEstiverForaDaVigencia))]
@@ -63,10 +61,12 @@ public class RegisterClaimUseCaseTests
         var policy = PolicyBuilder.Build(startDate: today.AddDays(-30), endDate: today.AddDays(-10));
         var useCase = CreateUseCase(policy);
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.ExecuteAsync(policy.Id, RequestClaimJsonBuilder.Build(occurredOn: today.AddDays(dayOffset))));
-
-        exception.GetErrors().ShouldBe([ResourcesMessageException.CLAIM_DATE_OUTSIDE_POLICY_PERIOD]);
+        var exception = await useCase.ExecuteAsync(policy.Id, RequestClaimJsonBuilder.Build(occurredOn: today.AddDays(dayOffset))).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(ResourcesMessageException.CLAIM_DATE_OUTSIDE_POLICY_PERIOD);
+        });
     }
 
     [Fact(DisplayName = nameof(Deve_LancarValidacaoAntesDaBusca_Quando_DataDeOcorrenciaForFutura))]
@@ -76,9 +76,12 @@ public class RegisterClaimUseCaseTests
         var request = RequestClaimJsonBuilder.Build(occurredOn: BusinessClockBuilder.DefaultToday.AddDays(1));
         var useCase = CreateUseCase();
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(Guid.NewGuid(), request));
-
-        exception.GetErrors().ShouldBe([ResourcesMessageException.CLAIM_OCCURRENCE_DATE_IN_FUTURE]);
+        var exception = await useCase.ExecuteAsync(Guid.NewGuid(), request).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(ResourcesMessageException.CLAIM_OCCURRENCE_DATE_IN_FUTURE);
+        });
     }
 
     [Fact(DisplayName = nameof(Deve_LancarValidacao_Quando_OcorrenciaForAmanhaNoBrasilMasHojeEmUtc))]
@@ -89,9 +92,12 @@ public class RegisterClaimUseCaseTests
         var request = RequestClaimJsonBuilder.Build(occurredOn: new DateOnly(2026, 3, 11));
         var useCase = CreateUseCase(policy, clock: BusinessClockBuilder.Build(BusinessClockBuilder.LateEveningUtcNow));
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(policy.Id, request));
-
-        exception.GetErrors().ShouldBe([ResourcesMessageException.CLAIM_OCCURRENCE_DATE_IN_FUTURE]);
+        var exception = await useCase.ExecuteAsync(policy.Id, request).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(ResourcesMessageException.CLAIM_OCCURRENCE_DATE_IN_FUTURE);
+        });
     }
 
     [Fact(DisplayName = nameof(Deve_RegistrarSinistro_Quando_OcorrenciaForHojeNoBrasilNoUltimoDiaDeVigencia))]
@@ -129,9 +135,7 @@ public class RegisterClaimUseCaseTests
         var policy = PolicyBuilder.Build(coverageAmount: 1000);
         var useCase = CreateUseCase(policy);
 
-        var exception = await Should.ThrowAsync<DomainRuleException>(
-            () => useCase.ExecuteAsync(policy.Id, RequestClaimJsonBuilder.Build(amount: 1000.01m)));
-
+        var exception = await useCase.ExecuteAsync(policy.Id, RequestClaimJsonBuilder.Build(amount: 1000.01m)).ShouldThrowAsync<DomainRuleException>();
         exception.Message.ShouldBe(ResourcesMessageException.CLAIM_AMOUNT_EXCEEDS_COVERAGE);
     }
 
@@ -142,9 +146,7 @@ public class RegisterClaimUseCaseTests
         var policy = PolicyBuilder.Build(coverageAmount: 10000);
         var useCase = CreateUseCase(policy, committedAmount: 8000);
 
-        var exception = await Should.ThrowAsync<DomainRuleException>(
-            () => useCase.ExecuteAsync(policy.Id, RequestClaimJsonBuilder.Build(amount: 2000.01m)));
-
+        var exception = await useCase.ExecuteAsync(policy.Id, RequestClaimJsonBuilder.Build(amount: 2000.01m)).ShouldThrowAsync<DomainRuleException>();
         exception.Message.ShouldBe(ResourcesMessageException.CLAIM_AMOUNT_EXCEEDS_COVERAGE);
     }
 
@@ -176,7 +178,7 @@ public class RegisterClaimUseCaseTests
         var request = RequestClaimJsonBuilder.Build(description, amount, missingDate ? default(DateOnly) : BusinessClockBuilder.DefaultToday);
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(Guid.NewGuid(), request));
+        await useCase.ExecuteAsync(Guid.NewGuid(), request).ShouldThrowAsync<ErrorOnValidationException>();
     }
 
     [Fact(DisplayName = nameof(Deve_LancarValidacao_Quando_DescricaoExcederOLimite))]
@@ -187,9 +189,12 @@ public class RegisterClaimUseCaseTests
         var request = RequestClaimJsonBuilder.Build(description: new string('a', FieldLimits.Description + 1));
         var useCase = CreateUseCase(policy);
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(policy.Id, request));
-
-        exception.GetErrors().ShouldBe([FieldLimits.DescriptionTooLong]);
+        var exception = await useCase.ExecuteAsync(policy.Id, request).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(FieldLimits.DescriptionTooLong);
+        });
     }
 
     private static RegisterClaimUseCase CreateUseCase(

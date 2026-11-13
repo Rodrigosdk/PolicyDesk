@@ -33,10 +33,12 @@ public class RegisterPolicyholderUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.ExecuteAsync(RequestPolicyholderJsonBuilder.Build(cpf: "111.111.111-11")));
-
-        exception.GetErrors().ShouldContain(ResourcesMessageException.INVALID_CPF);
+        var exception = await useCase.ExecuteAsync(RequestPolicyholderJsonBuilder.Build(cpf: "111.111.111-11")).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(ResourcesMessageException.INVALID_CPF);
+        });
     }
 
     [Fact(DisplayName = nameof(Deve_LancarExcecao_Quando_EmailForInvalido))]
@@ -45,10 +47,12 @@ public class RegisterPolicyholderUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.ExecuteAsync(RequestPolicyholderJsonBuilder.Build(email: "invalid-email")));
-
-        exception.GetErrors().ShouldContain(ResourcesMessageException.INVALID_EMAIL);
+        var exception = await useCase.ExecuteAsync(RequestPolicyholderJsonBuilder.Build(email: "invalid-email")).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(ResourcesMessageException.INVALID_EMAIL);
+        });
     }
 
     [Theory(DisplayName = nameof(Deve_LancarExcecaoDeValidacao_Quando_JaExistirSeguradoAtivoComCpfOuEmail))]
@@ -59,13 +63,16 @@ public class RegisterPolicyholderUseCaseTests
     {
         var useCase = CreateUseCase(result);
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.ExecuteAsync(RequestPolicyholderJsonBuilder.Build()));
+        var exception = await useCase.ExecuteAsync(RequestPolicyholderJsonBuilder.Build()).ShouldThrowAsync<ErrorOnValidationException>();
 
         var expectedError = result == PolicyholderRegistrationResult.ActiveCpfAlreadyExists
             ? ResourcesMessageException.POLICYHOLDER_ACTIVE_CPF_EXISTS
             : ResourcesMessageException.POLICYHOLDER_ACTIVE_EMAIL_EXISTS;
-        exception.GetErrors().ShouldContain(expectedError);
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(expectedError);
+        });
     }
 
     [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_NomeForVazio))]
@@ -150,9 +157,13 @@ public class RegisterPolicyholderUseCaseTests
         request.Telefone = "(83) 98647-1687 celular";
         var useCase = CreateUseCase();
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(request));
-
-        exception.GetErrors().ShouldBe([FieldLimits.PolicyholderNameTooLong, ResourcesMessageException.INVALID_PHONE]);
+        var exception = await useCase.ExecuteAsync(request).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(2);
+            errorMessage.ShouldContain(FieldLimits.PolicyholderNameTooLong);
+            errorMessage.ShouldContain(ResourcesMessageException.INVALID_PHONE);
+        });
     }
 
     [Theory(DisplayName = nameof(Deve_Registrar_Quando_TelefoneTiverDezOuOnzeDigitos))]
@@ -178,16 +189,16 @@ public class RegisterPolicyholderUseCaseTests
         var request = new RequestPolicyholderJson { Cpf = "111.111.111-11", Email = "invalid" };
         var useCase = CreateUseCase();
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(request));
-
-        exception.GetErrors().ShouldBe(
-        [
-            ResourcesMessageException.INVALID_CPF,
-            ResourcesMessageException.POLICYHOLDER_NAME_REQUIRED,
-            ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_REQUIRED,
-            ResourcesMessageException.INVALID_EMAIL,
-            ResourcesMessageException.POLICYHOLDER_PHONE_REQUIRED
-        ], ignoreOrder: true);
+        var exception = await useCase.ExecuteAsync(request).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(5);
+            errorMessage.ShouldContain(ResourcesMessageException.INVALID_CPF);
+            errorMessage.ShouldContain(ResourcesMessageException.POLICYHOLDER_NAME_REQUIRED);
+            errorMessage.ShouldContain(ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_REQUIRED);
+            errorMessage.ShouldContain(ResourcesMessageException.INVALID_EMAIL);
+            errorMessage.ShouldContain(ResourcesMessageException.POLICYHOLDER_PHONE_REQUIRED);
+        });
     }
 
     private static async Task ShouldFailWithError(
@@ -197,9 +208,12 @@ public class RegisterPolicyholderUseCaseTests
     {
         var useCase = CreateUseCase(clock: clock);
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(() => useCase.ExecuteAsync(request));
-
-        exception.GetErrors().ShouldBe([expectedError]);
+        var exception = await useCase.ExecuteAsync(request).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(expectedError);
+        });
     }
 
     private static RegisterPolicyholderUseCase CreateUseCase(

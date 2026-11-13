@@ -65,18 +65,20 @@ public class LoginUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.ExecuteAsync(RequestLoginJsonBuilder.Build(email: " ", password: "")));
-
-        exception.GetErrors().ShouldBe([ResourcesMessageException.INVALID_EMAIL, ResourcesMessageException.USER_PASSWORD_REQUIRED]);
+        var exception = await useCase.ExecuteAsync(RequestLoginJsonBuilder.Build(email: " ", password: "")).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(2);
+            errorMessage.ShouldContain(ResourcesMessageException.INVALID_EMAIL);
+            errorMessage.ShouldContain(ResourcesMessageException.USER_PASSWORD_REQUIRED);
+        });
     }
 
     private static async Task ShouldFailAsUnauthorized(RequestLoginJson request, User? user = null)
     {
         var useCase = CreateUseCase(user);
 
-        var exception = await Should.ThrowAsync<UnauthorizedException>(() => useCase.ExecuteAsync(request));
-
+        var exception = await useCase.ExecuteAsync(request).ShouldThrowAsync<UnauthorizedException>();
         exception.Message.ShouldBe(ResourcesMessageException.USER_INVALID_CREDENTIALS);
     }
 

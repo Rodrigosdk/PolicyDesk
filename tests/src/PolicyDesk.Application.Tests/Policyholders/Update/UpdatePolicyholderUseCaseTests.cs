@@ -104,8 +104,7 @@ public class UpdatePolicyholderUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(
-            () => useCase.ExecuteAsync(Guid.NewGuid(), RequestUpdatePolicyholderJsonBuilder.Build()));
+        await useCase.ExecuteAsync(Guid.NewGuid(), RequestUpdatePolicyholderJsonBuilder.Build()).ShouldThrowAsync<NotFoundException>();
     }
 
     [Fact(DisplayName = nameof(Deve_LancarExcecaoSemAlterar_Quando_EmailPertencerAOutroSeguradoAtivo))]
@@ -117,21 +116,26 @@ public class UpdatePolicyholderUseCaseTests
         var request = RequestUpdatePolicyholderJsonBuilder.Build(email: "TAKEN@EXAMPLE.COM");
         var useCase = CreateUseCase(policyholder, emailAlreadyExists: true);
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.ExecuteAsync(policyholder.Id, request));
+        var exception = await useCase.ExecuteAsync(policyholder.Id, request).ShouldThrowAsync<ErrorOnValidationException>();
 
         policyholder.Email.ShouldBe(originalEmail);
-        exception.GetErrors().ShouldContain(ResourcesMessageException.POLICYHOLDER_ACTIVE_EMAIL_EXISTS);
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(ResourcesMessageException.POLICYHOLDER_ACTIVE_EMAIL_EXISTS);
+        });
     }
 
     private static async Task ShouldFailBeforeSearching(RequestUpdatePolicyholderJson request, string expectedError)
     {
         var useCase = CreateUseCase();
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.ExecuteAsync(Guid.NewGuid(), request));
-
-        exception.GetErrors().ShouldBe([expectedError]);
+        var exception = await useCase.ExecuteAsync(Guid.NewGuid(), request).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(expectedError);
+        });
     }
 
     private static UpdatePolicyholderUseCase CreateUseCase(

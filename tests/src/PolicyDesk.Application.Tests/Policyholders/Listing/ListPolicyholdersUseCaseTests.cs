@@ -54,10 +54,12 @@ public class ListPolicyholdersUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        var exception = await Should.ThrowAsync<ErrorOnValidationException>(
-            () => useCase.ListAsync(new RequestPaginationJson { Pagina = 0 }));
-
-        exception.GetErrors().ShouldBe([ResourcesMessageException.INVALID_PAGE]);
+        var exception = await useCase.ListAsync(new RequestPaginationJson { Pagina = 0 }).ShouldThrowAsync<ErrorOnValidationException>();
+        exception.GetErrors().ShouldSatisfyAllConditions(errorMessage =>
+        {
+            errorMessage.Count.ShouldBe(1);
+            errorMessage.ShouldContain(ResourcesMessageException.INVALID_PAGE);
+        });
     }
 
     [Fact(DisplayName = nameof(Deve_MapearSeguradoExistente_Quando_BuscarPorId))]
@@ -79,7 +81,7 @@ public class ListPolicyholdersUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.GetByIdAsync(Guid.NewGuid()));
+        await useCase.GetByIdAsync(Guid.NewGuid()).ShouldThrowAsync<NotFoundException>();
     }
 
     [Fact(DisplayName = nameof(Deve_PropagarExcecaoOriginal_Quando_RepositorioFalhar))]
@@ -88,8 +90,7 @@ public class ListPolicyholdersUseCaseTests
     {
         var useCase = CreateUseCase(failure: new TimeoutException("db timeout"));
 
-        var exception = await Should.ThrowAsync<TimeoutException>(() => useCase.ListAsync(FirstPage));
-
+        var exception = await useCase.ListAsync(FirstPage).ShouldThrowAsync<TimeoutException>();
         exception.Message.ShouldBe("db timeout");
     }
 

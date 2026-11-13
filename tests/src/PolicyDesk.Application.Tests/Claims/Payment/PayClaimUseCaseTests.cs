@@ -31,7 +31,7 @@ public class PayClaimUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.ExecuteAsync(Guid.NewGuid()));
+        await useCase.ExecuteAsync(Guid.NewGuid()).ShouldThrowAsync<NotFoundException>();
     }
 
     [Fact(DisplayName = nameof(Deve_LancarRegra_Quando_SinistroNaoEstiverAprovado))]
@@ -41,7 +41,7 @@ public class PayClaimUseCaseTests
         var claim = ClaimBuilder.BuildWithStatus(ClaimStatus.InAnalysis);
         var useCase = CreateUseCase(claim);
 
-        await Should.ThrowAsync<DomainRuleException>(() => useCase.ExecuteAsync(claim.Id));
+        await useCase.ExecuteAsync(claim.Id).ShouldThrowAsync<DomainRuleException>();
 
         claim.Status.ShouldBe(ClaimStatus.InAnalysis);
         claim.PaidAt.ShouldBeNull();
