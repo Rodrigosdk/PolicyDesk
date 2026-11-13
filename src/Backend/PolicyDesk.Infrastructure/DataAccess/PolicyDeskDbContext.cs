@@ -5,7 +5,6 @@ using PolicyDesk.Infrastructure.DataAccess.Mappings;
 
 [assembly: InternalsVisibleTo("PolicyDesk.Infrastructure.Tests")]
 [assembly: InternalsVisibleTo("PolicyDesk.Api.IntegrationTests")]
-[assembly: InternalsVisibleTo("CommonTestUtilities")]
 
 namespace PolicyDesk.Infrastructure.DataAccess;
 
