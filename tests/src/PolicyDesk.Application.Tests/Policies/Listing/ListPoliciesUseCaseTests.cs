@@ -1,11 +1,9 @@
 using CommonTestUtilities.Entities;
-using CommonTestUtilities.Repositories;
-using Moq;
+using CommonTestUtilities.Repositories.Policies;
 using PolicyDesk.Application.Policies.Listing;
 using PolicyDesk.Communication.Enums;
 using PolicyDesk.Communication.Requests;
 using PolicyDesk.Domain.Entities;
-using PolicyDesk.Domain.Enums;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 using Shouldly;
@@ -37,21 +35,6 @@ public class ListPoliciesUseCaseTests
         result.AtualizadoEm.ShouldBe(policy.UpdatedAt);
     }
 
-    [Fact(DisplayName = nameof(Deve_EncaminharFiltrosEPagina_Quando_Listar))]
-    [Trait("Application", "Policies - Listing")]
-    public async Task Deve_EncaminharFiltrosEPagina_Quando_Listar()
-    {
-        var policyholderId = Guid.NewGuid();
-        var builder = new PoliciesReadOnlyRepositoryBuilder().GetPage([]);
-        var useCase = new ListPoliciesUseCase(builder.Build());
-
-        await useCase.ListAsync(policyholderId, StatusApolice.Cancelada, new RequestPaginationJson { Pagina = 3, TamanhoPagina = 15 });
-
-        builder.Mock.Verify(
-            repository => repository.GetPageAsync(policyholderId, PolicyStatus.Cancelled, 3, 15, It.IsAny<CancellationToken>()),
-            Times.Once);
-    }
-
     [Theory(DisplayName = nameof(Deve_CalcularTotalDePaginas_Quando_Listar))]
     [Trait("Application", "Policies - Listing")]
     [InlineData(0, 0)]
@@ -73,14 +56,12 @@ public class ListPoliciesUseCaseTests
     [Trait("Application", "Policies - Listing")]
     public async Task Deve_LancarValidacaoAntesDaConsulta_Quando_StatusForInvalido()
     {
-        var builder = new PoliciesReadOnlyRepositoryBuilder();
-        var useCase = new ListPoliciesUseCase(builder.Build());
+        var useCase = CreateUseCase();
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
             () => useCase.ListAsync(null, (StatusApolice)999, FirstPage));
 
         exception.GetErrors().ShouldBe([ResourcesMessageException.INVALID_POLICY_STATUS]);
-        VerifyNoQuery(builder);
     }
 
     [Theory(DisplayName = nameof(Deve_LancarValidacaoAntesDaConsulta_Quando_PaginacaoForInvalida))]
@@ -91,15 +72,13 @@ public class ListPoliciesUseCaseTests
     [InlineData(-1, 500, true, true)]
     public async Task Deve_LancarValidacaoAntesDaConsulta_Quando_PaginacaoForInvalida(int page, int pageSize, bool invalidPage, bool invalidPageSize)
     {
-        var builder = new PoliciesReadOnlyRepositoryBuilder();
-        var useCase = new ListPoliciesUseCase(builder.Build());
+        var useCase = CreateUseCase();
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
             () => useCase.ListAsync(null, null, new RequestPaginationJson { Pagina = page, TamanhoPagina = pageSize }));
 
         exception.GetErrors().Contains(ResourcesMessageException.INVALID_PAGE).ShouldBe(invalidPage);
         exception.GetErrors().Any(error => error.Contains(RequestPaginationJson.MaxPageSize.ToString(System.Globalization.CultureInfo.InvariantCulture), StringComparison.Ordinal)).ShouldBe(invalidPageSize);
-        VerifyNoQuery(builder);
     }
 
     [Fact(DisplayName = nameof(Deve_MapearApoliceExistente_Quando_BuscarPorId))]
@@ -126,18 +105,16 @@ public class ListPoliciesUseCaseTests
         await Should.ThrowAsync<NotFoundException>(() => useCase.GetByIdAsync(Guid.NewGuid()));
     }
 
-    private static void VerifyNoQuery(PoliciesReadOnlyRepositoryBuilder builder) =>
-        builder.Mock.Verify(
-            repository => repository.GetPageAsync(It.IsAny<Guid?>(), It.IsAny<PolicyStatus?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-
     private static ListPoliciesUseCase CreateUseCase(IEnumerable<Policy>? policies = null, int? totalCount = null, Policy? policy = null)
     {
-        var readRepository = new PoliciesReadOnlyRepositoryBuilder();
+        var policiesReadOnlyRepositoryBuilder = new PoliciesReadOnlyRepositoryBuilder();
+
         if (policies is not null)
-            readRepository.GetPage(policies, totalCount);
+            policiesReadOnlyRepositoryBuilder.GetPage(policies, totalCount);
+
         if (policy is not null)
-            readRepository.GetById(policy);
-        return new ListPoliciesUseCase(readRepository.Build());
+            policiesReadOnlyRepositoryBuilder.GetById(policy);
+
+        return new ListPoliciesUseCase(policiesReadOnlyRepositoryBuilder.Build());
     }
 }

@@ -1,12 +1,12 @@
 using System.Net;
 using System.Net.Http.Json;
 using CommonTestUtilities.Requests;
-using CommonTestUtilities.Security;
 using Microsoft.EntityFrameworkCore;
 using PolicyDesk.Communication.Requests;
 using PolicyDesk.Communication.Responses;
 using PolicyDesk.Domain.Validations;
 using PolicyDesk.Exception;
+using PolicyDesk.Infrastructure.Security.PasswordHashing;
 using Shouldly;
 
 namespace PolicyDesk.Api.IntegrationTests.Users.Register;
@@ -29,7 +29,7 @@ public class RegisterUserTests(PolicyDeskApplicationFactory factory) : UsersTest
         saved.Name.ShouldBe(request.Nome.Trim());
         saved.Email.ShouldBe(request.Email.ToLowerInvariant());
         saved.Password.ShouldNotBe(request.Senha);
-        PasswordHashingBuilder.Build().VerifyPassword(request.Senha, saved.Password).ShouldBeTrue();
+        new Argon2PasswordHasher().VerifyPassword(request.Senha, saved.Password).ShouldBeTrue();
     }
 
     [Fact(DisplayName = nameof(Deve_NaoExporASenha_Quando_Cadastrar))]

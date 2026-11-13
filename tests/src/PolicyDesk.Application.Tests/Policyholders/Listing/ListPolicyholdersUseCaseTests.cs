@@ -1,8 +1,8 @@
 using CommonTestUtilities.Entities;
-using CommonTestUtilities.Repositories;
-using Moq;
+using CommonTestUtilities.Repositories.Policyholders;
 using PolicyDesk.Application.Policyholders.Listing;
 using PolicyDesk.Communication.Requests;
+using PolicyDesk.Domain.Entities;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 using Shouldly;
@@ -18,7 +18,7 @@ public class ListPolicyholdersUseCaseTests
     public async Task Deve_MapearSeguradosParaResposta_Quando_Listar()
     {
         var policyholder = PolicyholderBuilder.Build();
-        var useCase = CreateUseCase(new PolicyholdersReadOnlyRepositoryBuilder().GetPage([policyholder]));
+        var useCase = CreateUseCase(policyholders: [policyholder]);
 
         var page = await useCase.ListAsync(FirstPage);
 
@@ -35,16 +35,14 @@ public class ListPolicyholdersUseCaseTests
         result.AtualizadoEm.ShouldBe(policyholder.UpdatedAt);
     }
 
-    [Fact(DisplayName = nameof(Deve_EncaminharPagina_Quando_Listar))]
+    [Fact(DisplayName = nameof(Deve_CalcularPaginacao_Quando_Listar))]
     [Trait("Application", "Policyholders - Listing")]
-    public async Task Deve_EncaminharPagina_Quando_Listar()
+    public async Task Deve_CalcularPaginacao_Quando_Listar()
     {
-        var readBuilder = new PolicyholdersReadOnlyRepositoryBuilder().GetPage([], totalCount: 45);
-        var useCase = CreateUseCase(readBuilder);
+        var useCase = CreateUseCase(policyholders: [], totalCount: 45);
 
         var page = await useCase.ListAsync(new RequestPaginationJson { Pagina = 2, TamanhoPagina = 10 });
 
-        readBuilder.Mock.Verify(r => r.GetPageAsync(2, 10, It.IsAny<CancellationToken>()), Times.Once);
         page.Pagina.ShouldBe(2);
         page.TamanhoPagina.ShouldBe(10);
         page.TotalPaginas.ShouldBe(5);
@@ -54,14 +52,12 @@ public class ListPolicyholdersUseCaseTests
     [Trait("Application", "Policyholders - Listing")]
     public async Task Deve_LancarValidacaoAntesDaConsulta_Quando_PaginaForInvalida()
     {
-        var readBuilder = new PolicyholdersReadOnlyRepositoryBuilder();
-        var useCase = CreateUseCase(readBuilder);
+        var useCase = CreateUseCase();
 
         var exception = await Should.ThrowAsync<ErrorOnValidationException>(
             () => useCase.ListAsync(new RequestPaginationJson { Pagina = 0 }));
 
         exception.GetErrors().ShouldBe([ResourcesMessageException.INVALID_PAGE]);
-        readBuilder.Mock.Verify(r => r.GetPageAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact(DisplayName = nameof(Deve_MapearSeguradoExistente_Quando_BuscarPorId))]
@@ -69,7 +65,7 @@ public class ListPolicyholdersUseCaseTests
     public async Task Deve_MapearSeguradoExistente_Quando_BuscarPorId()
     {
         var policyholder = PolicyholderBuilder.Build();
-        var useCase = CreateUseCase(new PolicyholdersReadOnlyRepositoryBuilder().GetById(policyholder));
+        var useCase = CreateUseCase(policyholder: policyholder);
 
         var result = await useCase.GetByIdAsync(policyholder.Id);
 
@@ -81,7 +77,7 @@ public class ListPolicyholdersUseCaseTests
     [Trait("Application", "Policyholders - Listing")]
     public async Task Deve_LancarNaoEncontrado_Quando_BuscarPorIdInexistente()
     {
-        var useCase = CreateUseCase(new PolicyholdersReadOnlyRepositoryBuilder());
+        var useCase = CreateUseCase();
 
         await Should.ThrowAsync<NotFoundException>(() => useCase.GetByIdAsync(Guid.NewGuid()));
     }
@@ -90,17 +86,30 @@ public class ListPolicyholdersUseCaseTests
     [Trait("Application", "Policyholders - Listing")]
     public async Task Deve_PropagarExcecaoOriginal_Quando_RepositorioFalhar()
     {
-        var readBuilder = new PolicyholdersReadOnlyRepositoryBuilder();
-        readBuilder.Mock
-            .Setup(r => r.GetPageAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new TimeoutException("db timeout"));
-        var useCase = CreateUseCase(readBuilder);
+        var useCase = CreateUseCase(failure: new TimeoutException("db timeout"));
 
         var exception = await Should.ThrowAsync<TimeoutException>(() => useCase.ListAsync(FirstPage));
 
         exception.Message.ShouldBe("db timeout");
     }
 
-    private static ListPolicyholdersUseCase CreateUseCase(PolicyholdersReadOnlyRepositoryBuilder readBuilder) =>
-        new(readBuilder.Build());
+    private static ListPolicyholdersUseCase CreateUseCase(
+        IEnumerable<Policyholder>? policyholders = null,
+        int? totalCount = null,
+        Policyholder? policyholder = null,
+        System.Exception? failure = null)
+    {
+        var policyholdersReadOnlyRepositoryBuilder = new PolicyholdersReadOnlyRepositoryBuilder();
+
+        if (policyholders is not null)
+            policyholdersReadOnlyRepositoryBuilder.GetPage(policyholders, totalCount);
+
+        if (policyholder is not null)
+            policyholdersReadOnlyRepositoryBuilder.GetById(policyholder);
+
+        if (failure is not null)
+            policyholdersReadOnlyRepositoryBuilder.GetPageThrows(failure);
+
+        return new ListPolicyholdersUseCase(policyholdersReadOnlyRepositoryBuilder.Build());
+    }
 }

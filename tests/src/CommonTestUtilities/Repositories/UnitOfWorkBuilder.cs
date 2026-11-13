@@ -5,10 +5,10 @@ namespace CommonTestUtilities.Repositories;
 
 public static class UnitOfWorkBuilder
 {
-    public static Mock<IUnitOfWork> Build()
+    public static IUnitOfWork Build()
     {
         var mock = new Mock<IUnitOfWork>();
-        mock.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        return mock;
+        mock.Setup(unitOfWork => unitOfWork.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        return mock.Object;
     }
 }

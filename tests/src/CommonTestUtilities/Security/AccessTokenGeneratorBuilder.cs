@@ -10,11 +10,11 @@ public static class AccessTokenGeneratorBuilder
 
     public static string TokenFor(Guid userId) => $"token-{userId}";
 
-    public static Mock<IAccessTokenGenerator> Build()
+    public static IAccessTokenGenerator Build()
     {
         var mock = new Mock<IAccessTokenGenerator>();
         mock.Setup(generator => generator.Generate(It.IsAny<Guid>()))
             .Returns((Guid userId) => new AccessToken(TokenFor(userId), ExpiresAt));
-        return mock;
+        return mock.Object;
     }
 }
