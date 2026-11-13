@@ -20,6 +20,21 @@ public static class ClaimBuilder
             .RuleFor(claim => claim.OccurredOn, _ => occurredOn ?? BusinessClockBuilder.DefaultToday)
             .Generate();
 
+    public static Claim BuildToCreate(
+        Guid? policyId = null,
+        string? description = null,
+        decimal? amount = null,
+        DateOnly? occurredOn = null)
+    {
+        var faker = new Faker();
+
+        return Claim.Create(
+            policyId ?? faker.Random.Guid(),
+            description ?? faker.Lorem.Sentence(),
+            amount ?? faker.Finance.Amount(1, 10000),
+            occurredOn ?? BusinessClockBuilder.DefaultToday);
+    }
+
     // Leva o sinistro até o status pedido passando apenas por transições válidas
     public static Claim BuildWithStatus(ClaimStatus status, Guid? policyId = null)
     {

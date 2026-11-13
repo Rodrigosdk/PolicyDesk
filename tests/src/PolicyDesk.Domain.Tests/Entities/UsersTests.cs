@@ -15,7 +15,7 @@ public class UsersTests
     {
         var beforeCreation = DateTime.UtcNow;
 
-        var user = User.Create("  John Doe  ", "  John.Doe@Example.com ", "hash-da-senha");
+        var user = UserBuilder.BuildToCreate("  John Doe  ", "  John.Doe@Example.com ", "hash-da-senha");
 
         var afterCreation = DateTime.UtcNow;
         user.Id.ShouldNotBe(Guid.Empty);
@@ -33,7 +33,7 @@ public class UsersTests
     [InlineData("   ")]
     public void Deve_LancarExcecao_Quando_NomeForVazio(string name)
     {
-        var exception = Should.Throw<DomainRuleException>(() => User.Create(name, "john.doe@example.com", "hash-da-senha"));
+        var exception = Should.Throw<DomainRuleException>(() => UserBuilder.BuildToCreate(name: name));
 
         exception.Message.ShouldBe(ResourcesMessageException.USER_NAME_REQUIRED);
     }
@@ -44,7 +44,7 @@ public class UsersTests
     {
         var name = new string('a', FieldLimits.UserName + 1);
 
-        var exception = Should.Throw<DomainRuleException>(() => User.Create(name, "john.doe@example.com", "hash-da-senha"));
+        var exception = Should.Throw<DomainRuleException>(() => UserBuilder.BuildToCreate(name: name));
 
         exception.Message.ShouldBe(FieldLimits.UserNameTooLong);
     }
@@ -58,7 +58,7 @@ public class UsersTests
     [InlineData("john@@example.com")]
     public void Deve_LancarExcecao_Quando_EmailForInvalido(string email)
     {
-        var exception = Should.Throw<DomainRuleException>(() => User.Create("John Doe", email, "hash-da-senha"));
+        var exception = Should.Throw<DomainRuleException>(() => UserBuilder.BuildToCreate(email: email));
 
         exception.Message.ShouldBe(ResourcesMessageException.INVALID_EMAIL);
     }
@@ -69,7 +69,7 @@ public class UsersTests
     [InlineData("   ")]
     public void Deve_LancarExcecao_Quando_SenhaForVazia(string password)
     {
-        var exception = Should.Throw<DomainRuleException>(() => User.Create("John Doe", "john.doe@example.com", password));
+        var exception = Should.Throw<DomainRuleException>(() => UserBuilder.BuildToCreate(password: password));
 
         exception.Message.ShouldBe(ResourcesMessageException.USER_PASSWORD_REQUIRED);
     }

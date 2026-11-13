@@ -21,7 +21,7 @@ public class PoliciesTests
 
         var policyholderId = Guid.NewGuid();
 
-        var policy = Policy.Create(policyholderId, "  Home coverage  ", 10000m, 100m, startDate, endDate);
+        var policy = PolicyBuilder.BuildToCreate(policyholderId, "  Home coverage  ", 10000m, 100m, startDate, endDate);
 
         var afterCreation = DateTime.UtcNow;
         policy.Id.ShouldNotBe(Guid.Empty);
@@ -108,10 +108,9 @@ public class PoliciesTests
     [Trait("Domain", "Policies - Instancia")]
     public void Deve_Criar_Quando_DescricaoTiverExatamenteOLimite()
     {
-        var today = BusinessClockBuilder.DefaultToday;
         var description = new string('a', FieldLimits.Description);
 
-        var policy = Policy.Create(Guid.NewGuid(), $"  {description}  ", 10000m, 100m, today, today.AddDays(30));
+        var policy = PolicyBuilder.BuildToCreate(description: $"  {description}  ");
 
         policy.Description.ShouldBe(description);
     }
@@ -120,11 +119,9 @@ public class PoliciesTests
     [Trait("Domain", "Policies - Instancia")]
     public void Deve_LancarExcecao_Quando_CriarComDescricaoAcimaDoLimite()
     {
-        var today = BusinessClockBuilder.DefaultToday;
         var description = new string('a', FieldLimits.Description + 1);
 
-        var exception = Should.Throw<DomainRuleException>(
-            () => Policy.Create(Guid.NewGuid(), description, 10000m, 100m, today, today.AddDays(30)));
+        var exception = Should.Throw<DomainRuleException>(() => PolicyBuilder.BuildToCreate(description: description));
 
         exception.Message.ShouldBe(FieldLimits.DescriptionTooLong);
     }
@@ -135,12 +132,11 @@ public class PoliciesTests
     [InlineData(false)]
     public void Deve_LancarExcecao_Quando_CriarComValoresComMaisDeDuasCasasDecimais(bool invalidCoverage)
     {
-        var today = BusinessClockBuilder.DefaultToday;
         var coverage = invalidCoverage ? 1000.001m : 1000m;
         var premium = invalidCoverage ? 100m : 100.001m;
 
         var exception = Should.Throw<DomainRuleException>(
-            () => Policy.Create(Guid.NewGuid(), "Home coverage", coverage, premium, today, today.AddDays(30)));
+            () => PolicyBuilder.BuildToCreate(coverageAmount: coverage, premiumAmount: premium));
 
         exception.Message.ShouldBe(invalidCoverage
             ? MoneyLimits.CoverageAmountInvalidPrecision
@@ -166,7 +162,7 @@ public class PoliciesTests
         var endDate = invalidField == "endBeforeStart" ? today : today.AddDays(30);
 
         var exception = Should.Throw<DomainRuleException>(
-            () => Policy.Create(policyholderId, description, coverage, premium, startDate, endDate));
+            () => PolicyBuilder.BuildToCreate(policyholderId, description, coverage, premium, startDate, endDate));
 
         exception.Message.ShouldBe(ResourcesMessageException.ResourceManager.GetString(expectedMessageKey, ResourcesMessageException.Culture));
     }
