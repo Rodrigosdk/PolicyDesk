@@ -7,21 +7,6 @@ namespace PolicyDesk.Domain.Entities;
 
 public class Policyholder : Entity
 {
-    public Policyholder(string name, string cpf, DateOnly birthDate, string email, string phone, DateOnly today)
-    {
-        Name = NormalizeNameOrThrow(name);
-        Cpf = CpfValidator.NormalizeOrThrow(cpf);
-        BirthDate = EnsureValidBirthDate(birthDate, today);
-        Email = EmailValidator.NormalizeOrThrow(email);
-        Phone = EnsureValidPhone(phone);
-    }
-
-    // Usado pelo EF Core ao carregar do banco: não reaplica as regras de criação,
-    // para que registros gravados antes de uma regra nova continuem legíveis
-    private Policyholder()
-    {
-    }
-
     public string Name { get; private set; } = string.Empty;
     public string Cpf { get; private set; } = string.Empty;
     public DateOnly BirthDate { get; private set; }
@@ -29,18 +14,33 @@ public class Policyholder : Entity
     public string Phone { get; private set; } = string.Empty;
     public bool Active { get; private set; } = true;
 
+    private Policyholder()
+    {
+    }
+
+    public static Policyholder Create(string name, string cpf, DateOnly birthDate, string email, string phone, DateOnly today)
+    {
+        ValidateCpf(cpf);
+        Validate(name, birthDate, email, phone, today);
+
+        return new Policyholder
+        {
+            Name = name.Trim(),
+            Cpf = CpfValidator.Normalize(cpf),
+            BirthDate = birthDate,
+            Email = EmailValidator.Normalize(email),
+            Phone = PhoneValidator.NormalizeOrThrow(phone)
+        };
+    }
+
     public void Update(string name, DateOnly birthDate, string email, string phone, DateOnly today)
     {
-        // Valida tudo antes de alterar qualquer campo
-        var normalizedName = NormalizeNameOrThrow(name);
-        var validBirthDate = EnsureValidBirthDate(birthDate, today);
-        var normalizedEmail = EmailValidator.NormalizeOrThrow(email);
-        var validPhone = EnsureValidPhone(phone);
+        Validate(name, birthDate, email, phone, today);
 
-        Name = normalizedName;
-        BirthDate = validBirthDate;
-        Email = normalizedEmail;
-        Phone = validPhone;
+        Name = name.Trim();
+        BirthDate = birthDate;
+        Email = EmailValidator.Normalize(email);
+        Phone = PhoneValidator.NormalizeOrThrow(phone);
         UpdatedAt = DateTime.UtcNow;
     }
 
@@ -57,31 +57,27 @@ public class Policyholder : Entity
         UpdatedAt = DateTime.UtcNow;
     }
 
-    private static string NormalizeNameOrThrow(string? name)
+    private static void ValidateCpf(string cpf)
+    {
+        if (!CpfValidator.IsValid(cpf))
+            throw new DomainRuleException(ResourcesMessageException.INVALID_CPF);
+    }
+
+    private static void Validate(string name, DateOnly birthDate, string email, string phone, DateOnly today)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new DomainRuleException(ResourcesMessageException.POLICYHOLDER_NAME_REQUIRED);
-
-        return FieldLimits.Exceeds(name, FieldLimits.PolicyholderName)
-            ? throw new DomainRuleException(FieldLimits.PolicyholderNameTooLong)
-            : name.Trim();
-    }
-
-    private static DateOnly EnsureValidBirthDate(DateOnly birthDate, DateOnly today)
-    {
+        if (FieldLimits.Exceeds(name, FieldLimits.PolicyholderName))
+            throw new DomainRuleException(FieldLimits.PolicyholderNameTooLong);
         if (birthDate == default)
             throw new DomainRuleException(ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_REQUIRED);
-
-        return birthDate > today
-            ? throw new DomainRuleException(ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_IN_FUTURE)
-            : birthDate;
-    }
-
-    private static string EnsureValidPhone(string? phone)
-    {
+        if (birthDate > today)
+            throw new DomainRuleException(ResourcesMessageException.POLICYHOLDER_BIRTH_DATE_IN_FUTURE);
+        if (!EmailValidator.IsValid(email))
+            throw new DomainRuleException(ResourcesMessageException.INVALID_EMAIL);
         if (string.IsNullOrWhiteSpace(phone))
             throw new DomainRuleException(ResourcesMessageException.POLICYHOLDER_PHONE_REQUIRED);
-
-        return PhoneValidator.NormalizeOrThrow(phone);
+        if (!PhoneValidator.IsValid(phone))
+            throw new DomainRuleException(ResourcesMessageException.INVALID_PHONE);
     }
 }

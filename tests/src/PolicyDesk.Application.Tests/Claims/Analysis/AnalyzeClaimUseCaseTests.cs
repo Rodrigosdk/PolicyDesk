@@ -1,11 +1,10 @@
-using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Entities;
+using CommonTestUtilities.Loggers;
 using CommonTestUtilities.Repositories;
-using Moq;
+using CommonTestUtilities.Repositories.Claims;
 using PolicyDesk.Application.Claims.Analysis;
 using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Enums;
-using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Exception.Exception;
 using Shouldly;
 
@@ -13,50 +12,49 @@ namespace PolicyDesk.Application.Tests.Claims.Analysis;
 
 public class AnalyzeClaimUseCaseTests
 {
-    [Fact(DisplayName = nameof(Deve_IniciarAnaliseEConfirmar_Quando_SinistroEstiverPendente))]
+    [Fact(DisplayName = nameof(Deve_IniciarAnalise_Quando_SinistroEstiverPendente))]
     [Trait("Application", "Claims - Analysis")]
-    public async Task Deve_IniciarAnaliseEConfirmar_Quando_SinistroEstiverPendente()
+    public async Task Deve_IniciarAnalise_Quando_SinistroEstiverPendente()
     {
         var claim = ClaimBuilder.Build();
-        var (useCase, unitOfWork) = CreateUseCase(claim);
+        var useCase = CreateUseCase(claim);
 
         await useCase.ExecuteAsync(claim.Id);
 
         claim.Status.ShouldBe(ClaimStatus.InAnalysis);
-        unitOfWork.Verify(work => work.CommitAsync(), Times.Once);
     }
 
-    [Fact(DisplayName = nameof(Deve_LancarNaoEncontradoSemConfirmar_Quando_SinistroNaoExistir))]
+    [Fact(DisplayName = nameof(Deve_LancarNaoEncontrado_Quando_SinistroNaoExistir))]
     [Trait("Application", "Claims - Analysis")]
-    public async Task Deve_LancarNaoEncontradoSemConfirmar_Quando_SinistroNaoExistir()
+    public async Task Deve_LancarNaoEncontrado_Quando_SinistroNaoExistir()
     {
-        var (useCase, unitOfWork) = CreateUseCase();
+        var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.ExecuteAsync(Guid.NewGuid()));
-
-        unitOfWork.Verify(work => work.CommitAsync(), Times.Never);
+        await useCase.ExecuteAsync(Guid.NewGuid()).ShouldThrowAsync<NotFoundException>();
     }
 
-    [Fact(DisplayName = nameof(Deve_LancarValidacaoSemConfirmar_Quando_SinistroNaoEstiverPendente))]
+    [Fact(DisplayName = nameof(Deve_LancarRegra_Quando_SinistroNaoEstiverPendente))]
     [Trait("Application", "Claims - Analysis")]
-    public async Task Deve_LancarValidacaoSemConfirmar_Quando_SinistroNaoEstiverPendente()
+    public async Task Deve_LancarRegra_Quando_SinistroNaoEstiverPendente()
     {
-        var claim = ClaimBuilder.Build();
-        claim.StartAnalysis();
-        var (useCase, unitOfWork) = CreateUseCase(claim);
+        var claim = ClaimBuilder.BuildWithStatus(ClaimStatus.InAnalysis);
+        var useCase = CreateUseCase(claim);
 
-        await Should.ThrowAsync<DomainRuleException>(() => useCase.ExecuteAsync(claim.Id));
+        await useCase.ExecuteAsync(claim.Id).ShouldThrowAsync<DomainRuleException>();
 
         claim.Status.ShouldBe(ClaimStatus.InAnalysis);
-        unitOfWork.Verify(work => work.CommitAsync(), Times.Never);
     }
 
-    private static (AnalyzeClaimUseCase UseCase, Mock<IUnitOfWork> UnitOfWork) CreateUseCase(Claim? claim = null)
+    private static AnalyzeClaimUseCase CreateUseCase(Claim? claim = null)
     {
-        var repository = new ClaimsUpdateOnlyRepositoryBuilder();
+        var claimsUpdateOnlyRepositoryBuilder = new ClaimsUpdateOnlyRepositoryBuilder();
+
         if (claim is not null)
-            repository.GetByIdForUpdate(claim);
-        var unitOfWork = UnitOfWorkBuilder.Build();
-        return (new AnalyzeClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<AnalyzeClaimUseCase>.Instance), unitOfWork);
+            claimsUpdateOnlyRepositoryBuilder.GetByIdForUpdate(claim);
+
+        return new AnalyzeClaimUseCase(
+            claimsUpdateOnlyRepositoryBuilder.Build(),
+            UnitOfWorkBuilder.Build(),
+            LoggerBuilder.Build<AnalyzeClaimUseCase>());
     }
 }

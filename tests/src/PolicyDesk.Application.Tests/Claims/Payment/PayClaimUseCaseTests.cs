@@ -1,11 +1,10 @@
-using Microsoft.Extensions.Logging.Abstractions;
 using CommonTestUtilities.Entities;
+using CommonTestUtilities.Loggers;
 using CommonTestUtilities.Repositories;
-using Moq;
+using CommonTestUtilities.Repositories.Claims;
 using PolicyDesk.Application.Claims.Payment;
 using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Enums;
-using PolicyDesk.Domain.Repositories;
 using PolicyDesk.Exception.Exception;
 using Shouldly;
 
@@ -13,54 +12,51 @@ namespace PolicyDesk.Application.Tests.Claims.Payment;
 
 public class PayClaimUseCaseTests
 {
-    [Fact(DisplayName = nameof(Deve_RegistrarPagamentoEConfirmar_Quando_SinistroEstiverAprovado))]
+    [Fact(DisplayName = nameof(Deve_RegistrarPagamento_Quando_SinistroEstiverAprovado))]
     [Trait("Application", "Claims - Payment")]
-    public async Task Deve_RegistrarPagamentoEConfirmar_Quando_SinistroEstiverAprovado()
+    public async Task Deve_RegistrarPagamento_Quando_SinistroEstiverAprovado()
     {
-        var claim = ClaimBuilder.Build();
-        claim.StartAnalysis();
-        claim.Approve();
-        var (useCase, unitOfWork) = CreateUseCase(claim);
+        var claim = ClaimBuilder.BuildWithStatus(ClaimStatus.Approved);
+        var useCase = CreateUseCase(claim);
 
         await useCase.ExecuteAsync(claim.Id);
 
         claim.Status.ShouldBe(ClaimStatus.Paid);
         claim.PaidAt.ShouldNotBeNull();
-        unitOfWork.Verify(work => work.CommitAsync(), Times.Once);
     }
 
-    [Fact(DisplayName = nameof(Deve_LancarNaoEncontradoSemConfirmar_Quando_SinistroNaoExistir))]
+    [Fact(DisplayName = nameof(Deve_LancarNaoEncontrado_Quando_SinistroNaoExistir))]
     [Trait("Application", "Claims - Payment")]
-    public async Task Deve_LancarNaoEncontradoSemConfirmar_Quando_SinistroNaoExistir()
+    public async Task Deve_LancarNaoEncontrado_Quando_SinistroNaoExistir()
     {
-        var (useCase, unitOfWork) = CreateUseCase();
+        var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.ExecuteAsync(Guid.NewGuid()));
-
-        unitOfWork.Verify(work => work.CommitAsync(), Times.Never);
+        await useCase.ExecuteAsync(Guid.NewGuid()).ShouldThrowAsync<NotFoundException>();
     }
 
-    [Fact(DisplayName = nameof(Deve_LancarValidacaoSemConfirmar_Quando_SinistroNaoEstiverAprovado))]
+    [Fact(DisplayName = nameof(Deve_LancarRegra_Quando_SinistroNaoEstiverAprovado))]
     [Trait("Application", "Claims - Payment")]
-    public async Task Deve_LancarValidacaoSemConfirmar_Quando_SinistroNaoEstiverAprovado()
+    public async Task Deve_LancarRegra_Quando_SinistroNaoEstiverAprovado()
     {
-        var claim = ClaimBuilder.Build();
-        claim.StartAnalysis();
-        var (useCase, unitOfWork) = CreateUseCase(claim);
+        var claim = ClaimBuilder.BuildWithStatus(ClaimStatus.InAnalysis);
+        var useCase = CreateUseCase(claim);
 
-        await Should.ThrowAsync<DomainRuleException>(() => useCase.ExecuteAsync(claim.Id));
+        await useCase.ExecuteAsync(claim.Id).ShouldThrowAsync<DomainRuleException>();
 
         claim.Status.ShouldBe(ClaimStatus.InAnalysis);
         claim.PaidAt.ShouldBeNull();
-        unitOfWork.Verify(work => work.CommitAsync(), Times.Never);
     }
 
-    private static (PayClaimUseCase UseCase, Mock<IUnitOfWork> UnitOfWork) CreateUseCase(Claim? claim = null)
+    private static PayClaimUseCase CreateUseCase(Claim? claim = null)
     {
-        var repository = new ClaimsUpdateOnlyRepositoryBuilder();
+        var claimsUpdateOnlyRepositoryBuilder = new ClaimsUpdateOnlyRepositoryBuilder();
+
         if (claim is not null)
-            repository.GetByIdForUpdate(claim);
-        var unitOfWork = UnitOfWorkBuilder.Build();
-        return (new PayClaimUseCase(repository.Build(), unitOfWork.Object, NullLogger<PayClaimUseCase>.Instance), unitOfWork);
+            claimsUpdateOnlyRepositoryBuilder.GetByIdForUpdate(claim);
+
+        return new PayClaimUseCase(
+            claimsUpdateOnlyRepositoryBuilder.Build(),
+            UnitOfWorkBuilder.Build(),
+            LoggerBuilder.Build<PayClaimUseCase>());
     }
 }

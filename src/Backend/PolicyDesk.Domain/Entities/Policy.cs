@@ -8,7 +8,63 @@ namespace PolicyDesk.Domain.Entities;
 
 public class Policy : Entity
 {
-    public Policy(
+    public Guid PolicyholderId { get; private set; }
+    public string Description { get; private set; } = string.Empty;
+    public decimal CoverageAmount { get; private set; }
+    public decimal PremiumAmount { get; private set; }
+    public DateOnly StartDate { get; private set; }
+    public DateOnly EndDate { get; private set; }
+    public PolicyStatus Status { get; private set; } = PolicyStatus.Active;
+    public DateTime? CancelledAt { get; private set; }
+
+    private Policy()
+    {
+    }
+
+    public static Policy Create(
+        Guid policyholderId,
+        string description,
+        decimal coverageAmount,
+        decimal premiumAmount,
+        DateOnly startDate,
+        DateOnly endDate)
+    {
+        Validate(policyholderId, description, coverageAmount, premiumAmount, startDate, endDate);
+
+        return new Policy
+        {
+            PolicyholderId = policyholderId,
+            Description = description.Trim(),
+            CoverageAmount = coverageAmount,
+            PremiumAmount = premiumAmount,
+            StartDate = startDate,
+            EndDate = endDate
+        };
+    }
+
+    public bool IsCancelled => Status == PolicyStatus.Cancelled;
+
+    public bool IsInForce(DateOnly date) => !IsCancelled && date >= StartDate && date <= EndDate;
+
+    public void RegisterClaim(decimal amount, decimal committedAmount)
+    {
+        if (committedAmount + amount > CoverageAmount)
+            throw new DomainRuleException(ResourcesMessageException.CLAIM_AMOUNT_EXCEEDS_COVERAGE);
+
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void Cancel()
+    {
+        if (IsCancelled)
+            throw new DomainRuleException(ResourcesMessageException.POLICY_ALREADY_CANCELLED);
+
+        Status = PolicyStatus.Cancelled;
+        CancelledAt = DateTime.UtcNow;
+        UpdatedAt = CancelledAt;
+    }
+
+    private static void Validate(
         Guid policyholderId,
         string description,
         decimal coverageAmount,
@@ -34,48 +90,5 @@ public class Policy : Entity
             throw new DomainRuleException(ResourcesMessageException.POLICY_DATES_REQUIRED);
         if (endDate <= startDate)
             throw new DomainRuleException(ResourcesMessageException.POLICY_END_DATE_MUST_BE_AFTER_START_DATE);
-
-        PolicyholderId = policyholderId;
-        Description = description.Trim();
-        CoverageAmount = coverageAmount;
-        PremiumAmount = premiumAmount;
-        StartDate = startDate;
-        EndDate = endDate;
-    }
-
-    // Usado pelo EF Core ao carregar do banco: não reaplica as regras de criação
-    private Policy()
-    {
-    }
-
-    public Guid PolicyholderId { get; private set; }
-    public string Description { get; private set; } = string.Empty;
-    public decimal CoverageAmount { get; private set; }
-    public decimal PremiumAmount { get; private set; }
-    public DateOnly StartDate { get; private set; }
-    public DateOnly EndDate { get; private set; }
-    public PolicyStatus Status { get; private set; } = PolicyStatus.Active;
-    public DateTime? CancelledAt { get; private set; }
-
-    public bool IsCancelled => Status == PolicyStatus.Cancelled;
-
-    public bool IsInForce(DateOnly date) => !IsCancelled && date >= StartDate && date <= EndDate;
-
-    public void RegisterClaim(decimal amount, decimal committedAmount)
-    {
-        if (committedAmount + amount > CoverageAmount)
-            throw new DomainRuleException(ResourcesMessageException.CLAIM_AMOUNT_EXCEEDS_COVERAGE);
-
-        UpdatedAt = DateTime.UtcNow;
-    }
-
-    public void Cancel()
-    {
-        if (IsCancelled)
-            throw new DomainRuleException(ResourcesMessageException.POLICY_ALREADY_CANCELLED);
-
-        Status = PolicyStatus.Cancelled;
-        CancelledAt = DateTime.UtcNow;
-        UpdatedAt = CancelledAt;
     }
 }

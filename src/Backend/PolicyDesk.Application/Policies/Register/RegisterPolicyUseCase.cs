@@ -30,7 +30,7 @@ internal class RegisterPolicyUseCase(
             throw new ErrorOnValidationException(ResourcesMessageException.POLICYHOLDER_INACTIVE);
         }
 
-        var policy = new Policy(
+        var policy = Policy.Create(
             request.SeguradoId,
             request.Descricao,
             request.ValorCobertura,

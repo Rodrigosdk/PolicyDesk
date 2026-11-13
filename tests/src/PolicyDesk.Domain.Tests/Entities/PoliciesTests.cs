@@ -2,6 +2,7 @@ using CommonTestUtilities.Entities;
 using CommonTestUtilities.Time;
 using PolicyDesk.Domain.Entities;
 using PolicyDesk.Domain.Enums;
+using PolicyDesk.Domain.Validations;
 using PolicyDesk.Exception;
 using PolicyDesk.Exception.Exception;
 using Shouldly;
@@ -18,14 +19,16 @@ public class PoliciesTests
         var endDate = new DateOnly(2027, 1, 2);
         var beforeCreation = DateTime.UtcNow;
 
-        var policy = PolicyBuilder.Build(
-            description: "  Home coverage  ",
-            startDate: startDate,
-            endDate: endDate);
+        var policyholderId = Guid.NewGuid();
+
+        var policy = PolicyBuilder.BuildToCreate(policyholderId, "  Home coverage  ", 10000m, 100m, startDate, endDate);
 
         var afterCreation = DateTime.UtcNow;
         policy.Id.ShouldNotBe(Guid.Empty);
+        policy.PolicyholderId.ShouldBe(policyholderId);
         policy.Description.ShouldBe("Home coverage");
+        policy.CoverageAmount.ShouldBe(10000m);
+        policy.PremiumAmount.ShouldBe(100m);
         policy.StartDate.ShouldBe(startDate);
         policy.EndDate.ShouldBe(endDate);
         policy.Status.ShouldBe(PolicyStatus.Active);
@@ -101,7 +104,46 @@ public class PoliciesTests
         policy.UpdatedAt.ShouldBe(cancelledAt);
     }
 
-    [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_InstanciarComDadosInvalidos))]
+    [Fact(DisplayName = nameof(Deve_Criar_Quando_DescricaoTiverExatamenteOLimite))]
+    [Trait("Domain", "Policies - Instancia")]
+    public void Deve_Criar_Quando_DescricaoTiverExatamenteOLimite()
+    {
+        var description = new string('a', FieldLimits.Description);
+
+        var policy = PolicyBuilder.BuildToCreate(description: $"  {description}  ");
+
+        policy.Description.ShouldBe(description);
+    }
+
+    [Fact(DisplayName = nameof(Deve_LancarExcecao_Quando_CriarComDescricaoAcimaDoLimite))]
+    [Trait("Domain", "Policies - Instancia")]
+    public void Deve_LancarExcecao_Quando_CriarComDescricaoAcimaDoLimite()
+    {
+        var description = new string('a', FieldLimits.Description + 1);
+
+        var exception = Should.Throw<DomainRuleException>(() => PolicyBuilder.BuildToCreate(description: description));
+
+        exception.Message.ShouldBe(FieldLimits.DescriptionTooLong);
+    }
+
+    [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_CriarComValoresComMaisDeDuasCasasDecimais))]
+    [Trait("Domain", "Policies - Instancia")]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Deve_LancarExcecao_Quando_CriarComValoresComMaisDeDuasCasasDecimais(bool invalidCoverage)
+    {
+        var coverage = invalidCoverage ? 1000.001m : 1000m;
+        var premium = invalidCoverage ? 100m : 100.001m;
+
+        var exception = Should.Throw<DomainRuleException>(
+            () => PolicyBuilder.BuildToCreate(coverageAmount: coverage, premiumAmount: premium));
+
+        exception.Message.ShouldBe(invalidCoverage
+            ? MoneyLimits.CoverageAmountInvalidPrecision
+            : MoneyLimits.PremiumAmountInvalidPrecision);
+    }
+
+    [Theory(DisplayName = nameof(Deve_LancarExcecao_Quando_CriarComDadosInvalidos))]
     [Trait("Domain", "Policies - Instancia")]
     [InlineData("policyholder", "POLICYHOLDER_REQUIRED")]
     [InlineData("description", "DESCRIPTION_REQUIRED")]
@@ -109,9 +151,8 @@ public class PoliciesTests
     [InlineData("premium", "PREMIUM_AMOUNT_MUST_BE_POSITIVE")]
     [InlineData("dates", "POLICY_DATES_REQUIRED")]
     [InlineData("endBeforeStart", "POLICY_END_DATE_MUST_BE_AFTER_START_DATE")]
-    public void Deve_LancarExcecao_Quando_InstanciarComDadosInvalidos(string invalidField, string expectedMessageKey)
+    public void Deve_LancarExcecao_Quando_CriarComDadosInvalidos(string invalidField, string expectedMessageKey)
     {
-        // InlineData só aceita constantes: o campo inválido chega como texto e o valor é montado aqui
         var today = BusinessClockBuilder.DefaultToday;
         var policyholderId = invalidField == "policyholder" ? Guid.Empty : Guid.NewGuid();
         var description = invalidField == "description" ? "   " : "Home coverage";
@@ -121,7 +162,7 @@ public class PoliciesTests
         var endDate = invalidField == "endBeforeStart" ? today : today.AddDays(30);
 
         var exception = Should.Throw<DomainRuleException>(
-            () => new Policy(policyholderId, description, coverage, premium, startDate, endDate));
+            () => PolicyBuilder.BuildToCreate(policyholderId, description, coverage, premium, startDate, endDate));
 
         exception.Message.ShouldBe(ResourcesMessageException.ResourceManager.GetString(expectedMessageKey, ResourcesMessageException.Culture));
     }

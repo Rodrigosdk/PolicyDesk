@@ -1,6 +1,7 @@
+using CommonTestUtilities.Generators;
 using CommonTestUtilities.Requests;
-using CommonTestUtilities.Security;
 using PolicyDesk.Domain.Security.PasswordHashing;
+using PolicyDesk.Infrastructure.Security.PasswordHashing;
 using Shouldly;
 
 namespace PolicyDesk.Infrastructure.Tests.Security.PasswordHashing;
@@ -75,7 +76,7 @@ public class Argon2PasswordHasherTests
 
     private static (IPasswordHashing Hasher, string Password, string PasswordHash) CreateHasherWithHashedPassword()
     {
-        var hasher = PasswordHashingBuilder.Build();
+        var hasher = new Argon2PasswordHasher();
         var password = PasswordGenerator.Generate();
         var passwordHash = hasher.HashPassword(password);
         return (hasher, password, passwordHash);

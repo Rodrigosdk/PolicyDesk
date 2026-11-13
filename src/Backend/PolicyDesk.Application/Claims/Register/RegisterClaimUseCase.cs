@@ -41,7 +41,7 @@ internal class RegisterClaimUseCase(
         var committedAmount = await claimsReadOnlyRepository.SumCommittedAmountAsync(policy.Id, cancellationToken);
         policy.RegisterClaim(request.Valor, committedAmount);
 
-        var claim = new Claim(policy.Id, request.Descricao, request.Valor, request.DataOcorrencia);
+        var claim = Claim.Create(policy.Id, request.Descricao, request.Valor, request.DataOcorrencia);
 
         await claimsWriteOnlyRepository.AddAsync(claim);
         await unitOfWork.CommitAsync(cancellationToken);

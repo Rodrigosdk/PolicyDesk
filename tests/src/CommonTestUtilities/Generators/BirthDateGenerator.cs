@@ -1,7 +1,7 @@
 using Bogus;
 using CommonTestUtilities.Time;
 
-namespace CommonTestUtilities.Requests;
+namespace CommonTestUtilities.Generators;
 
 public static class BirthDateGenerator
 {

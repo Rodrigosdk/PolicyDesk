@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace CommonTestUtilities.Requests;
+namespace CommonTestUtilities.Generators;
 
 public static class CpfGenerator
 {

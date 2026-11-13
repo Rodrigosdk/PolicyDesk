@@ -1,6 +1,6 @@
 using CommonTestUtilities.Entities;
-using CommonTestUtilities.Repositories;
-using Moq;
+using CommonTestUtilities.Repositories.Claims;
+using CommonTestUtilities.Repositories.Policies;
 using PolicyDesk.Communication.Enums;
 using PolicyDesk.Application.Claims.Listing;
 using PolicyDesk.Domain.Entities;
@@ -38,7 +38,7 @@ public class ListClaimsUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.ListByPolicyAsync(Guid.NewGuid()));
+        await useCase.ListByPolicyAsync(Guid.NewGuid()).ShouldThrowAsync<NotFoundException>();
     }
 
     [Fact(DisplayName = nameof(Deve_RetornarSinistroMapeado_Quando_BuscarPorId))]
@@ -71,7 +71,7 @@ public class ListClaimsUseCaseTests
     {
         var useCase = CreateUseCase();
 
-        await Should.ThrowAsync<NotFoundException>(() => useCase.GetByIdAsync(Guid.NewGuid()));
+        await useCase.GetByIdAsync(Guid.NewGuid()).ShouldThrowAsync<NotFoundException>();
     }
 
     private static ListClaimsUseCase CreateUseCase(
@@ -79,14 +79,18 @@ public class ListClaimsUseCaseTests
         IEnumerable<Claim>? claims = null,
         Claim? claim = null)
     {
-        var claimsRepository = new ClaimsReadOnlyRepositoryBuilder();
+        var claimsReadOnlyRepositoryBuilder = new ClaimsReadOnlyRepositoryBuilder();
+        var policiesReadOnlyRepositoryBuilder = new PoliciesReadOnlyRepositoryBuilder();
+
         if (claims is not null)
-            claimsRepository.GetByPolicyId(claims);
+            claimsReadOnlyRepositoryBuilder.GetByPolicyId(claims);
+
         if (claim is not null)
-            claimsRepository.GetById(claim);
-        var policiesRepository = new PoliciesReadOnlyRepositoryBuilder();
+            claimsReadOnlyRepositoryBuilder.GetById(claim);
+
         if (policy is not null)
-            policiesRepository.GetById(policy);
-        return new ListClaimsUseCase(claimsRepository.Build(), policiesRepository.Build());
+            policiesReadOnlyRepositoryBuilder.GetById(policy);
+
+        return new ListClaimsUseCase(claimsReadOnlyRepositoryBuilder.Build(), policiesReadOnlyRepositoryBuilder.Build());
     }
 }

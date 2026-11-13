@@ -8,14 +8,10 @@ public static class RequestUserJsonBuilder
     public static RequestUserJson Build(
         string? name = null,
         string? email = null,
-        string? password = null)
-    {
-        var faker = new Faker();
-        return new RequestUserJson
-        {
-            Nome = name ?? faker.Name.FullName(),
-            Email = email ?? faker.Internet.Email(),
-            Senha = password ?? PasswordGenerator.Generate()
-        };
-    }
+        string? password = null) =>
+        new Faker<RequestUserJson>()
+            .RuleFor(request => request.Nome, f => name ?? f.Person.FullName)
+            .RuleFor(request => request.Email, f => email ?? f.Internet.Email(f.Person.FirstName, f.Person.LastName))
+            .RuleFor(request => request.Senha, f => password ?? f.Internet.Password(length: 12, prefix: "Aa1!"))
+            .Generate();
 }

@@ -1,6 +1,6 @@
 using Bogus;
 
-namespace CommonTestUtilities.Requests;
+namespace CommonTestUtilities.Generators;
 
 public static class PhoneGenerator
 {
